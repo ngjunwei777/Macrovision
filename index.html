@@ -562,8 +562,8 @@
      *   - group1-shard*.bin
      *   - labels.json (array of class names; same index order as model)
      *************************************************************/
-    const MODEL_URL  = new URL("models/foodsg233/model.json",  window.location.href).toString();
-    const LABELS_URL = new URL("models/foodsg233/labels.json", window.location.href).toString();
+    const MODEL_URL  = new URL("root/models/foodsg233/model.json",  window.location.href).toString();
+    const LABELS_URL = new URL("root/models/foodsg233/labels.json", window.location.href).toString();
 
     let foodModel = null;
     let foodLabels = null;
