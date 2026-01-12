@@ -2,7 +2,5 @@ index.html
 models/
   foodsg233/
     model.json
-    group1-shard1ofX.bin
-    group1-shard2ofX.bin
-    ...
+    group1-shard*.bin
     labels.json
