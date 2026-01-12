@@ -1,149 +1,164 @@
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J5KPDP9PFH"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J5KPDP9PFH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-J5KPDP9PFH');
+  </script>
 
-        gtag('config', 'G-J5KPDP9PFH');
-    </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HawkerSense - Qi-Han Wong</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .embed-container {
-            position: relative;
-            width: 100%;
-            height: calc(100vh - 140px);
-            min-height: 700px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        .embed-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
+  <!-- ✅ Updated title -->
+  <title>MacroVision - Ng Jun Wei</title>
 
-        .loading-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            transition: opacity 0.5s ease-out;
-        }
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
-        .loading-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .food-icon {
-            font-size: 4rem;
-            animation: float 2s ease-in-out infinite;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-    </style>
+  <style>
+    .embed-container {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 140px);
+      min-height: 700px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      background: #fff;
+    }
+    .embed-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.5s ease-out;
+    }
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .food-icon {
+      font-size: 4rem;
+      animation: float 2s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
 </head>
 
 <body class="bg-gray-50 text-gray-800 font-sans">
 
-    <!-- Navigation -->
-    <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/" class="text-xl font-bold text-orange-600">Qi-Han Wong</a>
-            <a href="/" class="text-gray-600 hover:text-orange-600 transition">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Portfolio
-            </a>
-        </div>
-    </nav>
+  <!-- ✅ Navigation (fixed: not Qi-Han Wong; includes working "Back to Portfolio") -->
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <!-- Brand goes to your portfolio home -->
+      <a href="/" class="text-xl font-bold text-orange-600">Ng Jun Wei</a>
 
-    <!-- Project Header -->
-    <header class="bg-gray-900 text-white">
-        <div class="max-w-7xl mx-auto px-4 py-8">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div>
-                    <div class="flex items-center gap-3 mb-3">
-                        <span
-                            class="bg-white/20 text-white text-xs px-3 py-1 rounded-full uppercase font-bold tracking-wide">
-                            Live App
-                        </span>
-                        <span class="text-gray-400 text-sm">Vision AI + Nutrition</span>
-                    </div>
-                    <h1 class="text-3xl md:text-4xl font-extrabold mb-3">🍛 HawkerSense</h1>
-                    <p class="text-gray-300 max-w-2xl">
-                        Teaching AI to 'see' the hidden calories in Singapore hawker food. Standard calorie trackers
-                        miss the context: the lard in Ban Mian, the sugar in Sambal, and the oil sheen on Char Kway
-                        Teow.
-                        HawkerSense uses Gemini's vision with "Singaporean Intuition" to spot these hidden calories.
-                    </p>
-                </div>
-                <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
-                    <span class="bg-orange-600 text-white text-xs px-3 py-1.5 rounded-full">Streamlit</span>
-                    <span class="bg-purple-600 text-white text-xs px-3 py-1.5 rounded-full">Gemini 3.0 Flash</span>
-                    <span class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-full">Pydantic</span>
-                </div>
-            </div>
-        </div>
-    </header>
+      <!-- Back to portfolio (change href if your portfolio route differs) -->
+      <a href="/" class="text-gray-600 hover:text-orange-600 transition">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Portfolio
+      </a>
+    </div>
+  </nav>
 
-    <!-- Dashboard Section -->
-    <section class="bg-gray-50 py-12">
-        <div class="max-w-4xl mx-auto px-4">
-            <h2 class="text-gray-800 text-xl font-bold mb-6 text-center">📊 Live Dashboard</h2>
-            <div style="border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-                <iframe src="/hawkersense/dashboard" style="width: 100%; height: 1100px; border: none;"></iframe>
-            </div>
-        </div>
-    </section>
+  <!-- ✅ Project Header (updated to match title) -->
+  <header class="bg-gray-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full uppercase font-bold tracking-wide">
+              Live App
+            </span>
+            <span class="text-gray-400 text-sm">Vision AI + Nutrition</span>
+          </div>
 
-    <!-- Try the App Section -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">🍜 Try HawkerSense</h2>
-        <div class="embed-container bg-white">
-            <div class="loading-overlay" id="loadingOverlay">
-                <div class="food-icon mb-4">🍜</div>
-                <p class="text-white/80 text-sm">Loading HawkerSense...</p>
-            </div>
-            <iframe src="https://hawkersense-n4ams7kydzs9zrhlca55c3.streamlit.app/?embed=true" id="appFrame"
-                allow="clipboard-write; camera" loading="lazy"
-                onload="document.getElementById('loadingOverlay').classList.add('hidden')">
-            </iframe>
+          <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
+
+          <p class="text-gray-300 max-w-2xl">
+            MacroVision is a vision-enabled nutrition assistant designed for real-world food contexts (especially
+            Singapore-style meals). Instead of generic calorie tracking, it focuses on practical estimation of hidden
+            oils, sugars, sauces, and portion assumptions — and turns those into usable macro and calorie insights.
+          </p>
         </div>
 
-        <div class="mt-6 text-center">
-            <a href="https://hawkersense-n4ams7kydzs9zrhlca55c3.streamlit.app/" target="_blank"
-                class="inline-flex items-center text-gray-500 hover:text-orange-600 transition text-sm">
-                <i class="fas fa-external-link-alt mr-2"></i>
-                Open in new tab for full experience
-            </a>
+        <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
+          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 rounded-full">Streamlit</span>
+          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 rounded-full">Gemini</span>
+          <span class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-full">Pydantic</span>
         </div>
-    </main>
+      </div>
+    </div>
+  </header>
+
+  <!-- ✅ Live Dashboard section: removed by default.
+       Reason: your original /hawkersense/dashboard is NOT "synced" with Streamlit unless you host a real page there.
+       If you DO have a real dashboard URL, uncomment ONE of the options below and set the src properly. -->
+
+  <!--
+  <section class="bg-gray-50 py-12">
+    <div class="max-w-4xl mx-auto px-4">
+      <h2 class="text-gray-800 text-xl font-bold mb-6 text-center">📊 Live Dashboard</h2>
+
+      <div style="border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+        OPTION A (Streamlit dashboard page - only works if your Streamlit app actually exposes this route/page)
+        <iframe src="https://YOUR-STREAMLIT-APP.streamlit.app/?embed=true&page=dashboard"
+                style="width: 100%; height: 1100px; border: none;"></iframe>
+
+        OPTION B (GitHub Pages dashboard - only works if you deployed a dashboard to GitHub Pages)
+        <iframe src="https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO/dashboard/"
+                style="width: 100%; height: 1100px; border: none;"></iframe>
+      </div>
+    </div>
+  </section>
+  -->
+
+  <!-- Try the App Section -->
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">🍽️ Try MacroVision</h2>
+
+    <div class="embed-container">
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="food-icon mb-4">🍜</div>
+        <p class="text-white/80 text-sm">Loading MacroVision...</p>
+      </div>
+
+      <!-- ✅ Main embedded Streamlit app (keep or replace with your new Streamlit URL) -->
+      <iframe
+        src="https://hawkersense-n4ams7kydzs9zrhlca55c3.streamlit.app/?embed=true"
+        id="appFrame"
+        allow="clipboard-write; camera"
+        loading="lazy"
+        onload="document.getElementById('loadingOverlay').classList.add('hidden')">
+      </iframe>
+    </div>
+
+    <div class="mt-6 text-center">
+      <a
+        href="https://hawkersense-n4ams7kydzs9zrhlca55c3.streamlit.app/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center text-gray-500 hover:text-orange-600 transition text-sm">
+        <i class="fas fa-external-link-alt mr-2"></i>
+        Open in new tab for full experience
+      </a>
+    </div>
+  </main>
 
 </body>
-
 </html>
