@@ -23,6 +23,7 @@
     .ok { background: #f0fdf4; border: 1px solid #bbf7d0; }
     .danger { background:#fef2f2; border:1px solid #fecaca; }
     .badge { display:inline-flex; align-items:center; gap:.35rem; padding:.2rem .55rem; border-radius:999px; font-size:12px; font-weight:700; }
+    .hint { background:#eff6ff; border:1px solid #bfdbfe; }
   </style>
 </head>
 
@@ -46,24 +47,23 @@
             <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
               Athlete App
             </span>
-            <span class="text-gray-300 text-sm">Singapore • IOC-style fueling • Gemini macros • drinks</span>
+            <span class="text-gray-300 text-sm">Singapore • Hawker-aware • IOC-style fueling • Gemini macros • drinks</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
           <p class="text-gray-300 max-w-2xl">
             Snap meals + drinks, let Gemini estimate macros (kcal/P/C/F), then correct items when AI blur blur.
-            Add multiple items (cai fan style), track drinks separately, and export a PDF with macrodistribution across
-            breakfast/snacks/lunch/dinner/pre/post-workout.
+            Pick from a Singapore hawker list — or let AI vision detect and auto-select the closest hawker dish.
+            Export a PDF with macrodistribution across breakfast/snacks/lunch/dinner/pre/post-workout.
           </p>
           <div class="mt-4 text-sm text-gray-200">
             MacroVision runs on expensive AI brains (GPUs). I’m keeping it free for the community.
             If this saved your macros today, <span class="font-semibold">tapang me a Kopi</span> to help keep the servers running! ☕
-            <span class="font-semibold">Built with ❤️ by Jun Wei</span>
           </div>
         </div>
 
         <div class="flex flex-wrap gap-2">
           <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">Gemini Vision</span>
-          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">Add Items</span>
+          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">Hawker List + Auto Match</span>
           <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Export</span>
         </div>
       </div>
@@ -243,10 +243,10 @@
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-extrabold">📸 Snap meal → Detect food + drink → Add items</h2>
+            <h2 class="text-xl font-extrabold">📸 Snap → AI detect → Hawker list match → Add items</h2>
             <p class="text-sm text-gray-600">
-              Use Gemini to detect <b>food</b> and <b>drink</b> separately. If confidence low, you’ll get a warning.
-              Add multiple items (cai fan) and the app will sum macros.
+              Gemini can detect from the photo and auto-match to a Singapore hawker dish list (so you can pick quickly).
+              Drinks detected separately. If confidence low, you’ll get a warning.
             </p>
           </div>
         </div>
@@ -281,6 +281,30 @@
             <div class="text-xs text-gray-600 mt-1">
               If Gemini confidence is below this, you’ll see a “please confirm” warning.
             </div>
+          </div>
+
+          <div class="hint rounded-xl p-3">
+            <div class="font-bold text-sm">🍛 Hawker List (editable)</div>
+            <div class="small text-gray-700 mt-1">
+              After AI detection, we auto-select the closest hawker dish below. You can still change it manually.
+            </div>
+          </div>
+
+          <label class="text-sm block">
+            <div class="text-gray-600 mb-1">Hawker dish list</div>
+            <select id="hawkerPick" class="w-full border rounded-lg px-3 py-2"></select>
+            <div class="text-xs text-gray-500 mt-1">
+              Tip: Use AI detect first → then it will auto-select a dish here.
+            </div>
+          </label>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <button id="useHawkerAsItemBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
+              ➕ Add selected hawker dish as item
+            </button>
+            <button id="autoMatchBtn" class="bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
+              🧠 AI match to hawker list (from last detection)
+            </button>
           </div>
         </div>
 
@@ -345,7 +369,7 @@
             </label>
 
             <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Portion multiplier (applies to Gemini macros too)</div>
+              <div class="text-gray-600 mb-1">Portion multiplier (applies to AI macros too)</div>
               <input id="portion" type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full" />
               <div class="text-xs text-gray-600 mt-1">x<span id="portionLabel" class="font-semibold">1.0</span></div>
             </label>
@@ -528,6 +552,45 @@
 
   <script>
     // ==============================
+    // Hawker list (SG)
+    // ==============================
+    const HAWKER_DISHES = [
+      "Chicken Rice (Steamed/Roasted)",
+      "Nasi Lemak",
+      "Cai Fan (Mixed Rice)",
+      "Bak Chor Mee",
+      "Fishball Noodles",
+      "Ban Mian (Soup/Dry)",
+      "Laksa",
+      "Char Kway Teow",
+      "Hokkien Mee",
+      "Wanton Mee",
+      "Roti Prata (Plain)",
+      "Roti Prata (Egg)",
+      "Mee Rebus",
+      "Mee Siam",
+      "Teochew Porridge",
+      "Satay (10 sticks)",
+      "Yong Tau Foo",
+      "Thunder Tea Rice (Lei Cha)",
+      "Economic Bee Hoon (with sides)",
+      "Mala Xiang Guo (Small)",
+      "Claypot Rice",
+      "Briyani (Chicken)",
+      "Fish Soup (Sliced fish)",
+      "Sliced Fish Bee Hoon Soup",
+      "Nasi Padang (Typical plate)",
+      "Duck Rice",
+      "Lor Mee",
+      "Chwee Kueh",
+      "Chee Cheong Fun",
+      "Carrot Cake (White/Black)",
+      "Popiah",
+      "Kaya Toast Set (with eggs)",
+      "Bak Kut Teh"
+    ];
+
+    // ==============================
     // Athlete target logic
     // ==============================
     const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
@@ -617,6 +680,45 @@
         carbs_g: round1(safeNum(m.carbs_g) * portion),
         fat_g: round1(safeNum(m.fat_g) * portion),
       };
+    }
+
+    function normalizeForMatch(s) {
+      return (s || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    // Basic string similarity (Dice coefficient on bigrams)
+    function diceCoeff(a, b) {
+      a = normalizeForMatch(a);
+      b = normalizeForMatch(b);
+      if (!a || !b) return 0;
+      if (a === b) return 1;
+      const bigrams = (str) => {
+        const arr = [];
+        for (let i = 0; i < str.length - 1; i++) arr.push(str.slice(i, i+2));
+        return arr;
+      };
+      const a2 = bigrams(a), b2 = bigrams(b);
+      const map = new Map();
+      a2.forEach(x => map.set(x, (map.get(x) || 0) + 1));
+      let inter = 0;
+      b2.forEach(x => {
+        const c = map.get(x) || 0;
+        if (c > 0) { inter++; map.set(x, c - 1); }
+      });
+      return (2 * inter) / (a2.length + b2.length);
+    }
+
+    function bestHawkerMatch(label) {
+      let best = { dish: HAWKER_DISHES[0], score: 0 };
+      for (const d of HAWKER_DISHES) {
+        const s = diceCoeff(label, d);
+        if (s > best.score) best = { dish: d, score: s };
+      }
+      return best;
     }
 
     // ==============================
@@ -871,7 +973,7 @@ Rules:
           setStatus("ok", baseMsg);
         }
 
-        // Put the macro estimate into the item editor (scaled by portion)
+        // Put estimate into item editor (scaled by portion)
         const portion = parseFloat($("portion").value || "1.0");
         const scaled = applyPortionMultiplier(lastGemini.macros, portion);
         $("itemLabel").value = lastGemini.dish;
@@ -885,15 +987,38 @@ Rules:
 
         $("applyGeminiBtn").disabled = false;
 
+        // AUTO-MATCH TO HAWKER LIST (only for FOOD)
+        if (kind === "food") {
+          autoMatchHawkerFromLabel(lastGemini.dish);
+        }
+
       } catch (e) {
         setStatus("warn", "Detection failed: " + e.message);
       }
     }
 
-    function applyGeminiToItem() {
-      if (!lastGemini) return;
-      // Already filled label/macros; this button just “confirms” and then adds item quickly.
-      addItem();
+    function autoMatchHawkerFromLabel(label) {
+      const match = bestHawkerMatch(label);
+      // select
+      const sel = $("hawkerPick");
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === match.dish) { sel.selectedIndex = i; break; }
+      }
+      // small status note (without overriding main detect status)
+      const scorePct = Math.round(match.score * 100);
+      if (scorePct >= 55) {
+        setStatus("ok", `Hawker auto-match: "${match.dish}" (${scorePct}% similarity). You can change it if needed.`);
+      } else {
+        setStatus("danger", `Hawker auto-match is weak (${scorePct}%). Please pick from list manually.`);
+      }
+    }
+
+    function aiMatchToHawkerList() {
+      if (!lastGemini || lastGemini.kind !== "food") {
+        setStatus("warn", "No FOOD detection found. Please run 'Detect FOOD' first.");
+        return;
+      }
+      autoMatchHawkerFromLabel(lastGemini.dish);
     }
 
     // ==============================
@@ -914,7 +1039,7 @@ Rules:
       list.innerHTML = "";
 
       if (!mealItems.length) {
-        list.innerHTML = `<div class="text-sm text-gray-500">No items yet. Detect food/drink or enter manually, then “Add item”.</div>`;
+        list.innerHTML = `<div class="text-sm text-gray-500">No items yet. Detect food/drink or pick from hawker list, then “Add item”.</div>`;
       } else {
         mealItems.forEach((it, idx) => {
           const badge = it.kind === "drink"
@@ -930,7 +1055,7 @@ Rules:
               <div class="font-extrabold">${badge} ${escapeHtml(it.label)}</div>
               <div class="text-xs text-gray-500">
                 Portion x${it.portion.toFixed(1)}
-                ${conf != null ? ` • Gemini ${conf}%` : ` • Manual`}
+                ${conf != null ? ` • Gemini ${conf}%` : ` • Manual/Hawker`}
               </div>
               <div class="text-sm mono font-bold mt-1">
                 ${it.macros.kcal} kcal | P ${it.macros.protein}g | C ${it.macros.carbs}g | F ${it.macros.fat}g
@@ -959,7 +1084,7 @@ Rules:
       $("mealSumP").textContent = round1(t.protein);
       $("mealSumC").textContent = round1(t.carbs);
       $("mealSumF").textContent = round1(t.fat);
-      render(); // re-check daily after meal builder changes (optional but nice)
+      render();
     }
 
     function addItem() {
@@ -972,7 +1097,7 @@ Rules:
       let c = clamp(safeNum($("itemC").value), 0, 700);
       let f = clamp(safeNum($("itemF").value), 0, 300);
 
-      const kind = lastGemini?.kind || "food"; // default
+      const kind = lastGemini?.kind || "food";
       const gem = lastGemini ? { dish: lastGemini.dish, confidence: lastGemini.confidence } : null;
 
       mealItems.push({
@@ -983,17 +1108,30 @@ Rules:
         gemini: gem
       });
 
-      // clear item editor
       $("itemLabel").value = "";
       $("itemKcal").value = 0;
       $("itemP").value = 0;
       $("itemC").value = 0;
       $("itemF").value = 0;
 
-      // keep lastGemini (so user can still refer), but disable apply button to avoid accidental double-add
       $("applyGeminiBtn").disabled = true;
-
       renderMealItems();
+    }
+
+    function addHawkerSelectedAsItem() {
+      const dish = $("hawkerPick").value;
+      // We don't have a reliable macro DB in this static file; we set 0 and prompt user to detect / edit.
+      // If you want: we can add a small local macro database later.
+      $("itemLabel").value = dish;
+      $("itemKcal").value = 0;
+      $("itemP").value = 0;
+      $("itemC").value = 0;
+      $("itemF").value = 0;
+      lastGemini = { kind: "food", dish: dish, confidence: null, macros: {kcal:0,protein_g:0,carbs_g:0,fat_g:0} };
+      $("lastTypeBadge").textContent = "🍽️ Food";
+      $("lastTypeBadge").className = "badge bg-orange-100 text-orange-800";
+      $("lastGeminiMeta").textContent = "Hawker list selection (no macros yet) — run Detect FOOD for an estimate or enter macros manually.";
+      setStatus("warn", "Hawker dish selected. Now run 'Detect FOOD' for macro estimate, or fill macros manually, then Add item.");
     }
 
     function clearMeal() {
@@ -1010,7 +1148,6 @@ Rules:
 
       const sum = sumMealItems();
 
-      // Build a readable label
       const label = mealItems.length === 1
         ? mealItems[0].label
         : `Meal (${mealItems.length} items): ` + mealItems.map(i => i.label).slice(0,4).join(" + ") + (mealItems.length > 4 ? " + ..." : "");
@@ -1025,7 +1162,6 @@ Rules:
         macros: { kcal: round1(sum.kcal), protein: round1(sum.protein), carbs: round1(sum.carbs), fat: round1(sum.fat) }
       });
 
-      // reset meal builder
       mealItems = [];
       $("mealNotes").value = "";
       renderMealItems();
@@ -1119,7 +1255,7 @@ Rules:
           return `
             <div class="border rounded-lg p-2 bg-gray-50">
               <div class="text-sm font-bold">${badge} ${escapeHtml(it.label)}</div>
-              <div class="text-xs text-gray-500">${conf != null ? `Gemini ${conf}%` : "Manual"} • portion x${it.portion.toFixed(1)}</div>
+              <div class="text-xs text-gray-500">${conf != null ? `Gemini ${conf}%` : "Manual/Hawker"} • portion x${it.portion.toFixed(1)}</div>
               <div class="text-xs mono font-bold mt-1">${it.macros.kcal} kcal | P ${it.macros.protein} C ${it.macros.carbs} F ${it.macros.fat}</div>
             </div>
           `;
@@ -1162,9 +1298,7 @@ Rules:
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: "pt", format: "a4" });
-      const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
-
       const margin = 40;
       let y = margin;
 
@@ -1180,38 +1314,14 @@ Rules:
       y += 18;
       doc.setTextColor(0);
 
-      const athleteTypeLabel = $("athleteType").options[$("athleteType").selectedIndex].textContent;
-      const seasonLabel = $("seasonPhase").options[$("seasonPhase").selectedIndex].textContent;
-      const dayLabel = $("dayIntensity").options[$("dayIntensity").selectedIndex].textContent;
-
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
-      doc.text("Athlete Mode", margin, y); y += 14;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(`Type: ${athleteTypeLabel}`, margin, y); y += 14;
-      doc.text(`Season phase: ${seasonLabel} | Day intensity: ${dayLabel}`, margin, y); y += 18;
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("Profile & Targets", margin, y); y += 14;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(`Sex: ${targets.sex} | Age: ${targets.age} | Height: ${targets.heightCm} cm | Weight: ${targets.weightKg} kg`, margin, y); y += 14;
-      const bfLine = (targets.bf !== null) ? ` (BF% ${targets.bf})` : "";
-      doc.text(`Equation: ${targets.eqLabel}${bfLine} | Activity: ${targets.activityLabel}`, margin, y); y += 14;
-      doc.text(`Goal: ${targets.goalLabel} | BMR: ${targets.bmr} | TDEE: ${targets.tdee} | Target kcal: ${targets.kcalTarget}`, margin, y); y += 18;
+      doc.text("Daily Intake vs Targets", margin, y); y += 8;
 
       const pVer = adequacyLabel(totals.protein, targets.pRange[0], targets.pRange[1]);
       const cVer = adequacyLabel(totals.carbs, targets.cRange[0], targets.cRange[1]);
       const fatTol = Math.max(10, 0.15 * targets.fTarget);
       const fVer = (Math.abs(totals.fat - targets.fTarget) <= fatTol) ? "On target-ish" : (totals.fat > targets.fTarget ? "High" : "Low");
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("Daily Intake vs Targets", margin, y); y += 8;
 
       doc.autoTable({
         startY: y + 10,
@@ -1260,39 +1370,6 @@ Rules:
         headStyles: { fillColor: [255, 247, 237], textColor: 20 },
       });
 
-      y = doc.lastAutoTable.finalY + 18;
-
-      // Logged meals with items (table)
-      if (entries.length) {
-        if (y > pageH - 240) { doc.addPage(); y = margin; }
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.text("Logged Meals (Items)", margin, y);
-        y += 8;
-
-        const rows = [];
-        entries.forEach((e) => {
-          const itemText = (e.items || []).map(it => {
-            const conf = (it.gemini?.confidence != null) ? `${Math.round(it.gemini.confidence*100)}%` : "manual";
-            const kind = it.kind === "drink" ? "Drink" : "Food";
-            return `${kind}: ${it.label} (${conf}) — ${it.macros.kcal}kcal P${it.macros.protein} C${it.macros.carbs} F${it.macros.fat}`;
-          }).join(" | ");
-          rows.push([e.mealSlot, e.macros.kcal, e.macros.protein, e.macros.carbs, e.macros.fat, itemText.slice(0, 160)]);
-        });
-
-        doc.autoTable({
-          startY: y + 10,
-          head: [["Meal", "kcal", "P", "C", "F", "Items (summary)"]],
-          body: rows,
-          margin: { left: margin, right: margin },
-          styles: { font: "helvetica", fontSize: 8 },
-          headStyles: { fillColor: [235, 245, 255], textColor: 20 },
-          columnStyles: { 5: { cellWidth: 260 } }
-        });
-
-        y = doc.lastAutoTable.finalY + 18;
-      }
-
       doc.setFontSize(9);
       doc.setTextColor(120);
       doc.text("© " + new Date().getFullYear() + " Ng Jun Wei & Ng Hong Wei. All rights reserved.", margin, pageH - 24);
@@ -1304,6 +1381,17 @@ Rules:
     // ==============================
     // Events / Init
     // ==============================
+    function populateHawkerList() {
+      const sel = $("hawkerPick");
+      sel.innerHTML = "";
+      HAWKER_DISHES.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = d;
+        sel.appendChild(opt);
+      });
+    }
+
     function bindEvents() {
       $("equation").addEventListener("change", () => {
         $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
@@ -1326,13 +1414,19 @@ Rules:
 
       $("detectFoodBtn").addEventListener("click", () => geminiDetect("food"));
       $("detectDrinkBtn").addEventListener("click", () => geminiDetect("drink"));
-      $("applyGeminiBtn").addEventListener("click", applyGeminiToItem);
+      $("applyGeminiBtn").addEventListener("click", () => {
+        // Add current item fields as item
+        addItem();
+      });
 
       $("portion").addEventListener("input", () => {
         $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
       });
 
       $("addItemBtn").addEventListener("click", addItem);
+      $("useHawkerAsItemBtn").addEventListener("click", addHawkerSelectedAsItem);
+      $("autoMatchBtn").addEventListener("click", aiMatchToHawkerList);
+
       $("clearMealBtn").addEventListener("click", clearMeal);
       $("finalizeMealBtn").addEventListener("click", finalizeMealToLog);
 
@@ -1356,6 +1450,7 @@ Rules:
     $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
     $("confThreshLabel").textContent = parseFloat($("confThresh").value || "0.6").toFixed(2);
 
+    populateHawkerList();
     bindEvents();
     renderMealItems();
     render();
