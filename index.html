@@ -1,164 +1,580 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J5KPDP9PFH"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-J5KPDP9PFH');
-  </script>
+# streamlit_app.py
+# MacroVision — Singapore-flavoured macro tracker with multi-photo capture + PDF export
+#
+# Run:
+#   streamlit run streamlit_app.py
+#
+# Notes:
+# - This version includes a *local* Singapore hawker food macro lookup (approximate).
+# - If you already have a Vision AI pipeline (Gemini/OpenAI/etc.), plug it into `vision_detect_food()`.
+# - Users can SNAP multiple photos, correct the detected food, and export a PDF summary by meal timing.
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+import io
+import re
+from datetime import datetime
+from typing import Dict, List, Any, Optional
 
-  <!-- ✅ Updated title -->
-  <title>MacroVision - Ng Jun Wei</title>
+import streamlit as st
+from PIL import Image
 
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+# PDF (ReportLab)
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
 
-  <style>
-    .embed-container {
-      position: relative;
-      width: 100%;
-      height: calc(100vh - 140px);
-      min-height: 700px;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-      background: #fff;
+
+# -----------------------------
+# Singapore-flavoured constants
+# -----------------------------
+
+APP_TITLE = "📷 MacroVision"
+APP_SUBTITLE = "Singapore-style food → macros you can actually use (with edits, because AI sometimes anyhow 😅)"
+
+DONATION_TEXT = (
+    "MacroVision runs on expensive AI brains (GPUs). I’m keeping it free for the community.\n"
+    "If this saved your macros today, **tapang me a Kopi** to help keep the servers running! ☕\n"
+    "**Built with ❤️ by Jun Wei**"
+)
+
+MEAL_SLOTS = [
+    "Breakfast",
+    "Snack (AM)",
+    "Lunch",
+    "Snack (PM)",
+    "Dinner",
+    "Pre-workout",
+    "Post-workout",
+]
+
+# A small, practical SG hawker starter list.
+# Values are approximate macros for a "typical" serving. Adjust/expand anytime.
+# Format: kcal, protein_g, carbs_g, fat_g
+SG_FOOD_DB: Dict[str, Dict[str, float]] = {
+    "Chicken Rice":               {"kcal": 650, "protein": 35, "carbs": 80, "fat": 20},
+    "Nasi Lemak":                 {"kcal": 720, "protein": 22, "carbs": 75, "fat": 35},
+    "Char Kway Teow":             {"kcal": 740, "protein": 20, "carbs": 90, "fat": 32},
+    "Hokkien Mee":                {"kcal": 700, "protein": 25, "carbs": 85, "fat": 28},
+    "Bak Chor Mee":               {"kcal": 620, "protein": 28, "carbs": 75, "fat": 20},
+    "Ban Mian (Soup)":            {"kcal": 560, "protein": 25, "carbs": 70, "fat": 16},
+    "Ban Mian (Dry)":             {"kcal": 650, "protein": 28, "carbs": 80, "fat": 22},
+    "Laksa":                      {"kcal": 680, "protein": 20, "carbs": 70, "fat": 35},
+    "Wanton Mee":                 {"kcal": 600, "protein": 22, "carbs": 80, "fat": 18},
+    "Fishball Noodles":           {"kcal": 520, "protein": 18, "carbs": 75, "fat": 12},
+    "Roti Prata (2 pcs) + curry": {"kcal": 650, "protein": 12, "carbs": 75, "fat": 32},
+    "Economic Rice (Cai Fan)":    {"kcal": 720, "protein": 30, "carbs": 90, "fat": 25},
+    "Briyani":                    {"kcal": 780, "protein": 28, "carbs": 95, "fat": 30},
+    "Satay (10 sticks)":          {"kcal": 520, "protein": 35, "carbs": 18, "fat": 34},
+    "Kaya Toast Set (kopi + eggs)": {"kcal": 520, "protein": 22, "carbs": 55, "fat": 22},
+    "Kopi (with condensed milk)": {"kcal": 120, "protein": 2, "carbs": 18, "fat": 4},
+    "Kopi O (sugar)":             {"kcal": 60,  "protein": 0, "carbs": 15, "fat": 0},
+    "Teh Tarik":                  {"kcal": 160, "protein": 4, "carbs": 24, "fat": 5},
+    "Milo Dinosaur":              {"kcal": 320, "protein": 8, "carbs": 50, "fat": 10},
+}
+
+SG_MODIFIERS = [
+    "Less rice",
+    "More rice",
+    "Less noodles",
+    "More noodles",
+    "Add egg",
+    "Extra meat",
+    "Less oil",
+    "Extra oil / oily",
+    "Less sugar",
+    "Extra sugar",
+    "Extra sambal",
+    "Extra gravy",
+    "No gravy",
+    "Soup version",
+    "Dry version",
+    "Small portion",
+    "Big portion",
+]
+
+# Modifier effects are coarse — intended to make the estimate directionally better.
+MODIFIER_RULES = {
+    "Less rice":         {"carbs": -20, "kcal": -80},
+    "More rice":         {"carbs": +25, "kcal": +100},
+    "Less noodles":      {"carbs": -20, "kcal": -80},
+    "More noodles":      {"carbs": +25, "kcal": +100},
+    "Add egg":           {"protein": +6, "fat": +5, "kcal": +80},
+    "Extra meat":        {"protein": +15, "fat": +8, "kcal": +140},
+    "Less oil":          {"fat": -8, "kcal": -72},
+    "Extra oil / oily":  {"fat": +10, "kcal": +90},
+    "Less sugar":        {"carbs": -10, "kcal": -40},
+    "Extra sugar":       {"carbs": +15, "kcal": +60},
+    "Extra sambal":      {"fat": +5, "carbs": +3, "kcal": +55},
+    "Extra gravy":       {"fat": +6, "carbs": +5, "kcal": +80},
+    "No gravy":          {"fat": -4, "carbs": -3, "kcal": -45},
+    "Soup version":      {"fat": -3, "kcal": -30},
+    "Dry version":       {"fat": +3, "kcal": +30},
+    "Small portion":     {"kcal": -120, "protein": -6, "carbs": -15, "fat": -4},
+    "Big portion":       {"kcal": +180, "protein": +8, "carbs": +25, "fat": +6},
+}
+
+
+# -----------------------------
+# Helper functions
+# -----------------------------
+
+def clamp(x: float, lo: float = 0.0, hi: float = 10_000.0) -> float:
+    return max(lo, min(hi, x))
+
+def round1(x: float) -> float:
+    return float(f"{x:.1f}")
+
+def normalize_food_name(name: str) -> str:
+    name = (name or "").strip()
+    name = re.sub(r"\s+", " ", name)
+    return name
+
+def fallback_food_suggestion(ai_guess: str) -> str:
+    """Try to map an AI guess to the closest known SG food name."""
+    guess = (ai_guess or "").lower().strip()
+    if not guess:
+        return "Economic Rice (Cai Fan)"
+    for food in SG_FOOD_DB.keys():
+        f = food.lower()
+        if guess in f or f in guess:
+            return food
+    # simple keyword heuristics
+    if "prata" in guess:
+        return "Roti Prata (2 pcs) + curry"
+    if "chicken" in guess and "rice" in guess:
+        return "Chicken Rice"
+    if "ban mian" in guess or "banmian" in guess:
+        return "Ban Mian (Soup)"
+    if "cai fan" in guess or "economical" in guess:
+        return "Economic Rice (Cai Fan)"
+    if "teh" in guess and "tarik" in guess:
+        return "Teh Tarik"
+    if "milo" in guess:
+        return "Milo Dinosaur"
+    return "Economic Rice (Cai Fan)"
+
+def estimate_macros(food: str, modifiers: List[str], portion_scale: float = 1.0) -> Dict[str, float]:
+    """Approx macro estimate using DB + modifier rules + portion scaling."""
+    food = normalize_food_name(food)
+    base = SG_FOOD_DB.get(food)
+
+    # Unknown dish fallback: assume "Economic Rice" as a reasonable default baseline.
+    if base is None:
+        base = SG_FOOD_DB["Economic Rice (Cai Fan)"].copy()
+
+    kcal = base["kcal"]
+    protein = base["protein"]
+    carbs = base["carbs"]
+    fat = base["fat"]
+
+    for m in modifiers or []:
+        delta = MODIFIER_RULES.get(m, {})
+        kcal += delta.get("kcal", 0)
+        protein += delta.get("protein", 0)
+        carbs += delta.get("carbs", 0)
+        fat += delta.get("fat", 0)
+
+    kcal *= portion_scale
+    protein *= portion_scale
+    carbs *= portion_scale
+    fat *= portion_scale
+
+    return {
+        "kcal": round1(clamp(kcal)),
+        "protein": round1(clamp(protein)),
+        "carbs": round1(clamp(carbs)),
+        "fat": round1(clamp(fat)),
     }
-    .embed-container iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    .loading-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      transition: opacity 0.5s ease-out;
-    }
-    .loading-overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-    .food-icon {
-      font-size: 4rem;
-      animation: float 2s ease-in-out infinite;
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-  </style>
-</head>
 
-<body class="bg-gray-50 text-gray-800 font-sans">
+def macro_percentages(kcal: float, protein_g: float, carbs_g: float, fat_g: float) -> Dict[str, float]:
+    """Compute macro distribution (% of calories) from grams."""
+    # Calories per gram
+    p_kcal = protein_g * 4
+    c_kcal = carbs_g * 4
+    f_kcal = fat_g * 9
+    total = max(1.0, p_kcal + c_kcal + f_kcal)  # avoid divide-by-zero
+    return {
+        "Protein %": round1(100 * p_kcal / total),
+        "Carbs %": round1(100 * c_kcal / total),
+        "Fat %": round1(100 * f_kcal / total),
+    }
 
-  <!-- ✅ Navigation (fixed: not Qi-Han Wong; includes working "Back to Portfolio") -->
-  <nav class="bg-white shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <!-- Brand goes to your portfolio home -->
-      <a href="/" class="text-xl font-bold text-orange-600">Ng Jun Wei</a>
+def img_to_jpeg_bytes(img: Image.Image, max_w: int = 900) -> bytes:
+    """Downscale and convert to JPEG bytes for embedding into PDF."""
+    img = img.convert("RGB")
+    w, h = img.size
+    if w > max_w:
+        new_h = int(h * (max_w / w))
+        img = img.resize((max_w, new_h))
+    bio = io.BytesIO()
+    img.save(bio, format="JPEG", quality=85)
+    return bio.getvalue()
 
-      <!-- Back to portfolio (change href if your portfolio route differs) -->
-      <a href="/" class="text-gray-600 hover:text-orange-600 transition">
-        <i class="fas fa-arrow-left mr-2"></i> Back to Portfolio
-      </a>
+def build_pdf_report(entries: List[Dict[str, Any]]) -> bytes:
+    """
+    Create a PDF:
+    - Title + timestamp
+    - Macrodistribution table by meal slot (Breakfast, Snack, Lunch, etc.)
+    - Optional photo thumbnails + dish notes (best-effort, may span pages)
+    """
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    # Header
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(2 * cm, height - 2.2 * cm, "MacroVision — Daily Macro Snapshot (SG)")
+    c.setFont("Helvetica", 10)
+    c.setFillColor(colors.grey)
+    c.drawString(2 * cm, height - 2.8 * cm, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+
+    c.setFillColor(colors.black)
+
+    # Build a meal-slot summary table
+    # For each slot, sum macros
+    slot_totals = {slot: {"kcal": 0, "protein": 0, "carbs": 0, "fat": 0} for slot in MEAL_SLOTS}
+    for e in entries:
+        slot = e.get("meal_slot", "Lunch")
+        m = e.get("macros", {})
+        if slot in slot_totals:
+            slot_totals[slot]["kcal"] += float(m.get("kcal", 0))
+            slot_totals[slot]["protein"] += float(m.get("protein", 0))
+            slot_totals[slot]["carbs"] += float(m.get("carbs", 0))
+            slot_totals[slot]["fat"] += float(m.get("fat", 0))
+
+    table_data = [
+        ["Meal", "kcal", "Protein (g)", "Carbs (g)", "Fat (g)", "P/C/F (%)"]
+    ]
+    grand = {"kcal": 0, "protein": 0, "carbs": 0, "fat": 0}
+
+    for slot in MEAL_SLOTS:
+        t = slot_totals[slot]
+        grand["kcal"] += t["kcal"]
+        grand["protein"] += t["protein"]
+        grand["carbs"] += t["carbs"]
+        grand["fat"] += t["fat"]
+
+        pct = macro_percentages(t["kcal"], t["protein"], t["carbs"], t["fat"])
+        pcf = f'{pct["Protein %"]}/{pct["Carbs %"]}/{pct["Fat %"]}'
+        table_data.append([
+            slot,
+            f'{round1(t["kcal"])}',
+            f'{round1(t["protein"])}',
+            f'{round1(t["carbs"])}',
+            f'{round1(t["fat"])}',
+            pcf
+        ])
+
+    grand_pct = macro_percentages(grand["kcal"], grand["protein"], grand["carbs"], grand["fat"])
+    table_data.append([
+        "TOTAL",
+        f'{round1(grand["kcal"])}',
+        f'{round1(grand["protein"])}',
+        f'{round1(grand["carbs"])}',
+        f'{round1(grand["fat"])}',
+        f'{grand_pct["Protein %"]}/{grand_pct["Carbs %"]}/{grand_pct["Fat %"]}'
+    ])
+
+    tbl = Table(table_data, colWidths=[4.0*cm, 2.0*cm, 3.0*cm, 3.0*cm, 2.7*cm, 3.3*cm])
+    tbl.setStyle(TableStyle([
+        ("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 10),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.lightgrey),
+        ("FONT", (0, 1), (-1, -1), "Helvetica", 9),
+        ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+        ("FONT", (0, -1), (-1, -1), "Helvetica-Bold", 10),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#FFF7ED")),  # warm SG-ish
+    ]))
+
+    # Draw table
+    y = height - 4.0 * cm
+    w, h = tbl.wrapOn(c, width - 4*cm, height)
+    tbl.drawOn(c, 2*cm, y - h)
+
+    y = y - h - 1.0 * cm
+
+    # Details section (photos + entries)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(2*cm, y, "Captured Meals (with edits)")
+    y -= 0.6 * cm
+
+    c.setFont("Helvetica", 9)
+    c.setFillColor(colors.grey)
+    c.drawString(2*cm, y, "Tip: This is an estimate. Hawker portions, oil, gravy, and sugar can vary wildly.")
+    c.setFillColor(colors.black)
+    y -= 0.8 * cm
+
+    thumb_w = 5.0 * cm
+    thumb_h = 3.5 * cm
+    gap = 0.6 * cm
+
+    for i, e in enumerate(entries, start=1):
+        if y < 4.0 * cm:
+            c.showPage()
+            y = height - 2.5 * cm
+
+        # Thumbnail (if available)
+        img_bytes = e.get("image_jpeg")
+        if img_bytes:
+            img_stream = io.BytesIO(img_bytes)
+            c.drawImage(img_stream, 2*cm, y - thumb_h, width=thumb_w, height=thumb_h, preserveAspectRatio=True, mask="auto")
+
+        # Text block
+        tx_x = 2*cm + thumb_w + gap
+        tx_y = y
+
+        food = e.get("final_food", "Unknown")
+        slot = e.get("meal_slot", "Meal")
+        mods = ", ".join(e.get("modifiers", []) or []) or "-"
+        notes = e.get("notes", "") or "-"
+        m = e.get("macros", {})
+
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(tx_x, tx_y, f"{i}. {slot} — {food}")
+        tx_y -= 0.45 * cm
+
+        c.setFont("Helvetica", 9)
+        c.drawString(tx_x, tx_y, f"Macros: {m.get('kcal',0)} kcal | P {m.get('protein',0)}g | C {m.get('carbs',0)}g | F {m.get('fat',0)}g")
+        tx_y -= 0.45 * cm
+
+        c.setFillColor(colors.grey)
+        c.drawString(tx_x, tx_y, f"Modifiers: {mods}")
+        tx_y -= 0.45 * cm
+        c.drawString(tx_x, tx_y, f"Notes: {notes[:90]}{'...' if len(notes)>90 else ''}")
+        c.setFillColor(colors.black)
+
+        y -= (thumb_h + 0.8*cm)
+
+    # Footer
+    c.setFont("Helvetica", 9)
+    c.setFillColor(colors.grey)
+    c.drawString(2*cm, 1.5*cm, "MacroVision — Built with ❤️ by Jun Wei • Singapore hawker edition")
+    c.setFillColor(colors.black)
+
+    c.save()
+    buffer.seek(0)
+    return buffer.read()
+
+
+# -----------------------------
+# Vision AI hook (placeholder)
+# -----------------------------
+def vision_detect_food(image: Image.Image) -> str:
+    """
+    Placeholder for Vision AI detection.
+    Replace this with your Gemini / OpenAI / custom model call.
+
+    For now: returns a cheeky default suggestion based on nothing.
+    """
+    # You can implement:
+    # - upload image bytes
+    # - call model
+    # - parse response dish name(s)
+    return "Cai Fan"
+
+
+# -----------------------------
+# Streamlit UI
+# -----------------------------
+st.set_page_config(page_title="MacroVision - Ng Jun Wei", layout="wide")
+
+st.markdown(
+    f"""
+    <div style="padding: 1rem 0 0.2rem 0;">
+      <h1 style="margin-bottom:0.2rem;">{APP_TITLE}</h1>
+      <div style="color:#6B7280; font-size: 1.05rem;">{APP_SUBTITLE}</div>
     </div>
-  </nav>
+    """,
+    unsafe_allow_html=True
+)
 
-  <!-- ✅ Project Header (updated to match title) -->
-  <header class="bg-gray-900 text-white">
-    <div class="max-w-7xl mx-auto px-4 py-8">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <div class="flex items-center gap-3 mb-3">
-            <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full uppercase font-bold tracking-wide">
-              Live App
-            </span>
-            <span class="text-gray-400 text-sm">Vision AI + Nutrition</span>
-          </div>
+with st.expander("☕ Kopi jar / About", expanded=False):
+    st.markdown(DONATION_TEXT)
 
-          <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
+# Session state
+if "entries" not in st.session_state:
+    st.session_state.entries = []  # list of dicts
+if "last_ai_guess" not in st.session_state:
+    st.session_state.last_ai_guess = ""
 
-          <p class="text-gray-300 max-w-2xl">
-            MacroVision is a vision-enabled nutrition assistant designed for real-world food contexts (especially
-            Singapore-style meals). Instead of generic calorie tracking, it focuses on practical estimation of hidden
-            oils, sugars, sauces, and portion assumptions — and turns those into usable macro and calorie insights.
-          </p>
-        </div>
+# Layout
+left, right = st.columns([1.15, 1])
 
-        <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
-          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 rounded-full">Streamlit</span>
-          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 rounded-full">Gemini</span>
-          <span class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-full">Pydantic</span>
-        </div>
-      </div>
-    </div>
-  </header>
+with left:
+    st.subheader("📸 Snap your food (multiple photos)")
+    st.caption("Take photo after photo. Assign each to a meal slot. Edit the dish name if AI blur blur.")
 
-  <!-- ✅ Live Dashboard section: removed by default.
-       Reason: your original /hawkersense/dashboard is NOT "synced" with Streamlit unless you host a real page there.
-       If you DO have a real dashboard URL, uncomment ONE of the options below and set the src properly. -->
+    meal_slot = st.selectbox("Meal timing", MEAL_SLOTS, index=2)
 
-  <!--
-  <section class="bg-gray-50 py-12">
-    <div class="max-w-4xl mx-auto px-4">
-      <h2 class="text-gray-800 text-xl font-bold mb-6 text-center">📊 Live Dashboard</h2>
+    # Camera input allows snapping on mobile; on desktop it may open webcam.
+    # Users can snap multiple times; each time you click "Add this capture", it stores one entry.
+    cam_img = st.camera_input("Snap a photo")
 
-      <div style="border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-        OPTION A (Streamlit dashboard page - only works if your Streamlit app actually exposes this route/page)
-        <iframe src="https://YOUR-STREAMLIT-APP.streamlit.app/?embed=true&page=dashboard"
-                style="width: 100%; height: 1100px; border: none;"></iframe>
+    # Alternatively allow upload (in case camera permission issues)
+    uploaded = st.file_uploader("…or upload from phone gallery", type=["jpg", "jpeg", "png"])
 
-        OPTION B (GitHub Pages dashboard - only works if you deployed a dashboard to GitHub Pages)
-        <iframe src="https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO/dashboard/"
-                style="width: 100%; height: 1100px; border: none;"></iframe>
-      </div>
-    </div>
-  </section>
-  -->
+    img_source = cam_img if cam_img is not None else uploaded
 
-  <!-- Try the App Section -->
-  <main class="max-w-7xl mx-auto px-4 py-8">
-    <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">🍽️ Try MacroVision</h2>
+    if img_source is not None:
+        img = Image.open(img_source).convert("RGB")
+        st.image(img, caption="Captured", use_container_width=True)
 
-    <div class="embed-container">
-      <div class="loading-overlay" id="loadingOverlay">
-        <div class="food-icon mb-4">🍜</div>
-        <p class="text-white/80 text-sm">Loading MacroVision...</p>
-      </div>
+        # AI detect (placeholder)
+        ai_guess = vision_detect_food(img)
+        st.session_state.last_ai_guess = ai_guess
 
-      <!-- ✅ Main embedded Streamlit app (keep or replace with your new Streamlit URL) -->
-      <iframe
-        src="https://hawkersense-n4ams7kydzs9zrhlca55c3.streamlit.app/?embed=true"
-        id="appFrame"
-        allow="clipboard-write; camera"
-        loading="lazy"
-        onload="document.getElementById('loadingOverlay').classList.add('hidden')">
-      </iframe>
-    </div>
+        st.markdown("### 🛠️ Confirm / edit detected food (SG context)")
+        st.caption("AI sometimes anyhow. You correct, then the macros become more legit.")
 
-    <div class="mt-6 text-center">
-      <a
-        href="https://hawkersense-n4ams7kydzs9zrhlca55c3.streamlit.app/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center text-gray-500 hover:text-orange-600 transition text-sm">
-        <i class="fas fa-external-link-alt mr-2"></i>
-        Open in new tab for full experience
-      </a>
-    </div>
-  </main>
+        # Suggest closest known food
+        suggested = fallback_food_suggestion(ai_guess)
 
-</body>
-</html>
+        colA, colB = st.columns([1, 1])
+
+        with colA:
+            picked_food = st.selectbox(
+                "Pick from SG hawker list",
+                options=list(SG_FOOD_DB.keys()),
+                index=list(SG_FOOD_DB.keys()).index(suggested) if suggested in SG_FOOD_DB else 0
+            )
+
+        with colB:
+            custom_food = st.text_input(
+                "Or type your own (overrides selection)",
+                value=ai_guess,
+                placeholder="e.g., 'Ban Mian dry add egg', 'Cai Fan: sweet & sour pork + cabbage'"
+            )
+
+        final_food = normalize_food_name(custom_food) if normalize_food_name(custom_food) else picked_food
+
+        modifiers = st.multiselect("Modifiers (optional)", SG_MODIFIERS)
+        portion_scale = st.slider("Portion size", min_value=0.5, max_value=2.0, value=1.0, step=0.1)
+        notes = st.text_area("Notes (optional)", placeholder="e.g., extra油, lots of gravy, added luncheon meat, small portion")
+
+        macros = estimate_macros(final_food if final_food in SG_FOOD_DB else picked_food, modifiers, portion_scale)
+
+        # If user typed something unknown, we still estimate from picked baseline; but we display their typed name.
+        display_macros = macros
+
+        pct = macro_percentages(display_macros["kcal"], display_macros["protein"], display_macros["carbs"], display_macros["fat"])
+
+        st.markdown("#### ✅ Estimated macros (roughly, don’t flame me 😅)")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("kcal", display_macros["kcal"])
+        c2.metric("Protein (g)", display_macros["protein"])
+        c3.metric("Carbs (g)", display_macros["carbs"])
+        c4.metric("Fat (g)", display_macros["fat"])
+
+        st.caption(f"Macro distribution (by calories): Protein {pct['Protein %']}% • Carbs {pct['Carbs %']}% • Fat {pct['Fat %']}%")
+
+        add_btn = st.button("➕ Add this capture to today", type="primary")
+
+        if add_btn:
+            st.session_state.entries.append({
+                "timestamp": datetime.now().isoformat(timespec="seconds"),
+                "meal_slot": meal_slot,
+                "ai_guess": ai_guess,
+                "final_food": final_food,       # user-facing name
+                "baseline_food": picked_food,   # the macro base
+                "modifiers": modifiers,
+                "portion_scale": portion_scale,
+                "notes": notes,
+                "macros": display_macros,
+                "image_jpeg": img_to_jpeg_bytes(img),
+            })
+            st.success("Added! Snap the next one 👌")
+
+with right:
+    st.subheader("📋 Today’s log (by meal slot)")
+    st.caption("Review, remove entries, and export a PDF with macro tables for Breakfast/Snacks/Lunch/Dinner/Pre/Post-workout.")
+
+    entries: List[Dict[str, Any]] = st.session_state.entries
+
+    if not entries:
+        st.info("No entries yet. Snap a photo on the left to start.")
+    else:
+        # Show summary table by slot
+        slot_totals = {slot: {"kcal": 0, "protein": 0, "carbs": 0, "fat": 0} for slot in MEAL_SLOTS}
+        for e in entries:
+            slot = e.get("meal_slot", "Lunch")
+            m = e.get("macros", {})
+            if slot in slot_totals:
+                slot_totals[slot]["kcal"] += float(m.get("kcal", 0))
+                slot_totals[slot]["protein"] += float(m.get("protein", 0))
+                slot_totals[slot]["carbs"] += float(m.get("carbs", 0))
+                slot_totals[slot]["fat"] += float(m.get("fat", 0))
+
+        # Render in Streamlit as a clean table
+        table_rows = []
+        grand = {"kcal": 0, "protein": 0, "carbs": 0, "fat": 0}
+        for slot in MEAL_SLOTS:
+            t = slot_totals[slot]
+            grand["kcal"] += t["kcal"]
+            grand["protein"] += t["protein"]
+            grand["carbs"] += t["carbs"]
+            grand["fat"] += t["fat"]
+            p = macro_percentages(t["kcal"], t["protein"], t["carbs"], t["fat"])
+            table_rows.append({
+                "Meal": slot,
+                "kcal": round1(t["kcal"]),
+                "Protein (g)": round1(t["protein"]),
+                "Carbs (g)": round1(t["carbs"]),
+                "Fat (g)": round1(t["fat"]),
+                "P/C/F (%)": f"{p['Protein %']}/{p['Carbs %']}/{p['Fat %']}",
+            })
+
+        grand_p = macro_percentages(grand["kcal"], grand["protein"], grand["carbs"], grand["fat"])
+        table_rows.append({
+            "Meal": "TOTAL",
+            "kcal": round1(grand["kcal"]),
+            "Protein (g)": round1(grand["protein"]),
+            "Carbs (g)": round1(grand["carbs"]),
+            "Fat (g)": round1(grand["fat"]),
+            "P/C/F (%)": f"{grand_p['Protein %']}/{grand_p['Carbs %']}/{grand_p['Fat %']}",
+        })
+
+        st.dataframe(table_rows, use_container_width=True, hide_index=True)
+
+        st.divider()
+        st.markdown("### 🧾 Captures")
+        st.caption("If wrong dish, no shame — delete and re-add with corrected dish. (Next version can support in-place edit.)")
+
+        # List entries with delete controls
+        for idx, e in enumerate(entries):
+            with st.container():
+                cols = st.columns([1, 2, 1])
+                with cols[0]:
+                    if e.get("image_jpeg"):
+                        st.image(e["image_jpeg"], use_container_width=True)
+                with cols[1]:
+                    st.markdown(f"**{e.get('meal_slot','Meal')}** — {e.get('final_food','Unknown')}")
+                    st.caption(f"AI guess: {e.get('ai_guess','-')} • Portion x{e.get('portion_scale',1.0)}")
+                    mods = ", ".join(e.get("modifiers", []) or []) or "-"
+                    st.write(f"**Macros:** {e['macros']['kcal']} kcal | P {e['macros']['protein']}g | C {e['macros']['carbs']}g | F {e['macros']['fat']}g")
+                    st.caption(f"Modifiers: {mods}")
+                    if e.get("notes"):
+                        st.caption(f"Notes: {e['notes']}")
+                with cols[2]:
+                    if st.button("🗑️ Delete", key=f"del_{idx}"):
+                        st.session_state.entries.pop(idx)
+                        st.rerun()
+
+        st.divider()
+        st.markdown("### 📄 Export PDF")
+        st.caption("Exports a PDF with a macrodistribution table across Breakfast/Snacks/Lunch/Dinner/Pre/Post-workout + thumbnails.")
+
+        pdf_bytes = build_pdf_report(st.session_state.entries)
+        st.download_button(
+            label="⬇️ Download PDF report",
+            data=pdf_bytes,
+            file_name=f"MacroVision_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+            mime="application/pdf",
+            type="primary"
+        )
+
+        st.caption("Next makan, next snap. MacroVision got your back. 🇸🇬🍜")
+
+st.divider()
+st.caption("Disclaimer: Estimates are approximate. Hawker portion size, oil, sugar, sauces, and ingredients vary by stall and day.")
