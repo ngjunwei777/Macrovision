@@ -18,6 +18,9 @@
     .mono { font-variant-numeric: tabular-nums; }
     video { background: #111827; border-radius: 12px; }
     .thumb { border-radius: 12px; overflow:hidden; }
+    .small { font-size: 12px; }
+    .warn { background: #fff7ed; border: 1px solid #fed7aa; }
+    .ok { background: #f0fdf4; border: 1px solid #bbf7d0; }
   </style>
 </head>
 
@@ -41,12 +44,12 @@
             <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
               Athlete App
             </span>
-            <span class="text-gray-300 text-sm">Singapore • IOC-style fueling • Macros</span>
+            <span class="text-gray-300 text-sm">Singapore • IOC-style fueling • Gemini macros</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
           <p class="text-gray-300 max-w-2xl">
-            Athlete-first macro tracker for real makan. Snap multiple photos, correct the dish when the AI blur blur,
-            and export a PDF meal-by-meal (breakfast/snacks/lunch/dinner/pre/post-workout).
+            Snap multiple meals, let Gemini estimate macros (kcal/P/C/F), then correct if needed.
+            Export a PDF with macrodistribution across breakfast/snacks/lunch/dinner/pre/post-workout.
           </p>
           <div class="mt-4 text-sm text-gray-200">
             MacroVision runs on expensive AI brains (GPUs). I’m keeping it free for the community.
@@ -56,7 +59,7 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">IOC-style</span>
+          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">Gemini Vision</span>
           <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">Season-aware</span>
           <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Export</span>
         </div>
@@ -72,7 +75,7 @@
         <div>
           <h2 class="text-xl font-extrabold">👤 Athlete Profile → TDEE → Fueling Targets</h2>
           <p class="text-gray-600 text-sm">
-            Designed for athletes: pick your athlete type + season phase (off/pre/in-season). Targets adapt using IOC-style carb bands,
+            Pick athlete type + season phase (off/pre/in-season). Targets adapt using IOC-style carb bands,
             ISSN-style protein guidance, and AMDR fat boundaries.
           </p>
         </div>
@@ -116,22 +119,20 @@
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Athlete type</div>
               <select id="athleteType" class="w-full border rounded-lg px-3 py-2">
-                <option value="skill">Skill/Power (e.g., sprint, jumps, combat, team skill)</option>
-                <option value="mixed" selected>Mixed / Team Sport (e.g., football, basketball, rugby)</option>
-                <option value="endurance">Endurance (e.g., running, cycling, triathlon)</option>
-                <option value="strength">Strength/Hypertrophy (e.g., weightlifting, bodybuilding)</option>
+                <option value="skill">Skill/Power (sprint/jumps/combat)</option>
+                <option value="mixed" selected>Mixed / Team Sport (football/basketball/rugby)</option>
+                <option value="endurance">Endurance (running/cycling/tri)</option>
+                <option value="strength">Strength/Hypertrophy (WL/BB)</option>
               </select>
-              <div class="text-xs text-gray-500 mt-1">Used to auto-suggest carb band & protein focus.</div>
             </label>
 
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Season phase</div>
               <select id="seasonPhase" class="w-full border rounded-lg px-3 py-2">
-                <option value="off">Off-season (build capacity / body comp)</option>
-                <option value="pre" selected>Pre-season (higher volume / conditioning)</option>
-                <option value="in">In-season (performance + recovery)</option>
+                <option value="off">Off-season</option>
+                <option value="pre" selected>Pre-season</option>
+                <option value="in">In-season</option>
               </select>
-              <div class="text-xs text-gray-500 mt-1">Adjusts calorie and carb targets for training load.</div>
             </label>
 
             <label class="text-sm block">
@@ -142,7 +143,6 @@
                 <option value="hard">Hard / long / double sessions</option>
                 <option value="comp">Competition day</option>
               </select>
-              <div class="text-xs text-gray-500 mt-1">Fine-tunes carb target (g/kg) for the day.</div>
             </label>
           </div>
         </div>
@@ -162,13 +162,12 @@
             <label id="bfWrap" class="text-sm block hidden">
               <div class="text-gray-600 mb-1">Estimated body fat %</div>
               <input id="bfPercent" type="number" min="5" max="45" value="18" class="w-full border rounded-lg px-3 py-2" />
-              <div class="text-xs text-gray-500 mt-1">Use a rough estimate if unsure.</div>
             </label>
 
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Activity level (TDEE)</div>
               <select id="activity" class="w-full border rounded-lg px-3 py-2">
-                <option value="1.2">Sedentary (desk job, little exercise)</option>
+                <option value="1.2">Sedentary</option>
                 <option value="1.375">Light (1–3 days/wk)</option>
                 <option value="1.55">Moderate (3–5 days/wk)</option>
                 <option value="1.725" selected>Very active (6–7 days/wk)</option>
@@ -198,7 +197,7 @@
             </label>
 
             <div class="text-xs text-gray-600 bg-white border rounded-lg p-3">
-              <div class="font-bold mb-1">Auto rules (athlete-consistent)</div>
+              <div class="font-bold mb-1">How targets are set</div>
               <div>• Carb target adapts by athlete type + season + day intensity</div>
               <div>• Protein target adapts by goal (ISSN-style ranges)</div>
               <div>• Fat stays within AMDR 20–35% kcal</div>
@@ -236,14 +235,34 @@
 
     <!-- CAPTURE + LOG -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
       <!-- Capture -->
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-extrabold">📸 Fueling log (multiple photos)</h2>
-            <p class="text-sm text-gray-600">Snap / upload, assign meal timing, pick SG dish + modifiers, then add to log.</p>
+            <h2 class="text-xl font-extrabold">📸 Snap meal → Gemini estimates macros</h2>
+            <p class="text-sm text-gray-600">Gemini returns dish + kcal/P/C/F. You can edit label + adjust portion before logging.</p>
           </div>
-          <div class="text-xs text-gray-500">Athlete version</div>
+        </div>
+
+        <!-- Proxy config -->
+        <div class="mt-4 grid grid-cols-1 gap-3">
+          <div class="warn rounded-xl p-3">
+            <div class="font-bold text-sm">✅ GitHub Pages note</div>
+            <div class="small text-gray-700 mt-1">
+              GitHub Pages is static-only, so you must call Gemini via a proxy (Cloudflare Worker / Vercel / Netlify).
+              Paste your proxy URL below.
+            </div>
+          </div>
+          <label class="text-sm block">
+            <div class="text-gray-600 mb-1">Proxy endpoint URL</div>
+            <input id="proxyUrl" class="w-full border rounded-lg px-3 py-2"
+                   placeholder="https://YOUR-WORKER-NAME.YOURSUBDOMAIN.workers.dev" />
+          </label>
+          <label class="text-sm block">
+            <div class="text-gray-600 mb-1">Gemini model</div>
+            <input id="geminiModel" class="w-full border rounded-lg px-3 py-2" value="gemini-2.0-flash" />
+          </label>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -256,7 +275,9 @@
                 Stop
               </button>
             </div>
+
             <video id="video" autoplay playsinline class="w-full h-64"></video>
+
             <div class="flex gap-2">
               <button id="snapBtn" class="flex-1 bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
                 📸 Snap
@@ -266,6 +287,7 @@
                 ⬆️ Upload
               </label>
             </div>
+
             <canvas id="canvas" class="hidden"></canvas>
           </div>
 
@@ -275,6 +297,17 @@
               <img id="previewImg" class="w-full rounded-lg hidden" alt="preview" />
               <div id="noPreview" class="text-sm text-gray-500">No photo yet. Snap/upload to preview.</div>
             </div>
+
+            <div class="flex gap-2">
+              <button id="detectBtn" class="flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
+                ✨ Detect + estimate macros (Gemini)
+              </button>
+              <button id="useSuggestionBtn" class="flex-1 bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200" disabled>
+                Apply Gemini result
+              </button>
+            </div>
+
+            <div id="detectStatus" class="hidden rounded-xl p-3 small"></div>
 
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Meal timing</div>
@@ -290,52 +323,55 @@
             </label>
 
             <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Pick from SG hawker list</div>
-              <select id="foodSelect" class="w-full border rounded-lg px-3 py-2"></select>
+              <div class="text-gray-600 mb-1">Food label (editable)</div>
+              <input id="customFood" class="w-full border rounded-lg px-3 py-2"
+                     placeholder="Gemini will fill this. You can override, e.g., Cai Fan: steamed egg + tofu + veg" />
             </label>
 
             <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Or type your own dish (label override)</div>
-              <input id="customFood" class="w-full border rounded-lg px-3 py-2" placeholder="e.g., Cai Fan: sweet & sour pork + cabbage" />
-            </label>
-
-            <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Modifiers (optional)</div>
-              <select id="modifiers" multiple class="w-full border rounded-lg px-3 py-2 h-28"></select>
-              <div class="text-xs text-gray-500 mt-1">Ctrl/⌘ click for multi-select.</div>
-            </label>
-
-            <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Portion size</div>
+              <div class="text-gray-600 mb-1">Portion multiplier (applies to Gemini macros too)</div>
               <input id="portion" type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full" />
               <div class="text-xs text-gray-600 mt-1">x<span id="portionLabel" class="font-semibold">1.0</span></div>
             </label>
 
-            <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Notes</div>
-              <textarea id="notes" class="w-full border rounded-lg px-3 py-2" rows="2" placeholder="e.g., extra油, lots of gravy, added luncheon meat"></textarea>
-            </label>
+            <div class="bg-white border rounded-xl p-3">
+              <div class="flex items-center justify-between">
+                <div class="font-bold">Macro source</div>
+                <select id="macroSource" class="border rounded-lg px-3 py-2 text-sm">
+                  <option value="gemini" selected>Gemini estimate</option>
+                  <option value="manual">Manual entry</option>
+                </select>
+              </div>
 
-            <div class="grid grid-cols-4 gap-2">
-              <div class="bg-gray-50 rounded-lg p-2">
-                <div class="text-xs text-gray-500">kcal</div>
-                <div class="font-extrabold mono" id="mKcal">-</div>
+              <div class="grid grid-cols-4 gap-2 mt-3">
+                <div class="bg-gray-50 rounded-lg p-2">
+                  <div class="text-xs text-gray-500">kcal</div>
+                  <input id="mKcalIn" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                </div>
+                <div class="bg-gray-50 rounded-lg p-2">
+                  <div class="text-xs text-gray-500">Protein (g)</div>
+                  <input id="mPIn" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                </div>
+                <div class="bg-gray-50 rounded-lg p-2">
+                  <div class="text-xs text-gray-500">Carbs (g)</div>
+                  <input id="mCIn" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                </div>
+                <div class="bg-gray-50 rounded-lg p-2">
+                  <div class="text-xs text-gray-500">Fat (g)</div>
+                  <input id="mFIn" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                </div>
               </div>
-              <div class="bg-gray-50 rounded-lg p-2">
-                <div class="text-xs text-gray-500">Protein</div>
-                <div class="font-extrabold mono" id="mP">-</div>
-              </div>
-              <div class="bg-gray-50 rounded-lg p-2">
-                <div class="text-xs text-gray-500">Carbs</div>
-                <div class="font-extrabold mono" id="mC">-</div>
-              </div>
-              <div class="bg-gray-50 rounded-lg p-2">
-                <div class="text-xs text-gray-500">Fat</div>
-                <div class="font-extrabold mono" id="mF">-</div>
-              </div>
+
+              <div class="text-xs text-gray-500 mt-2" id="geminiMeta">No Gemini estimate yet.</div>
             </div>
 
-            <button id="addEntryBtn" class="w-full bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-gray-800">
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Notes</div>
+              <textarea id="notes" class="w-full border rounded-lg px-3 py-2" rows="2"
+                        placeholder="e.g., extra oil, added egg, gravy heavy"></textarea>
+            </label>
+
+            <button id="addEntryBtn" class="w-full bg-orange-600 text-white px-4 py-3 rounded-xl hover:bg-orange-700">
               ➕ Add meal to log
             </button>
           </div>
@@ -348,11 +384,11 @@
           <div>
             <h2 class="text-xl font-extrabold">📋 Daily fueling check (athlete)</h2>
             <p class="text-sm text-gray-600">
-              Checks intake vs your targets. Use this for consistency across season phases.
+              Intake vs targets + meal-by-meal macrodistribution. Export to PDF for athlete reporting.
             </p>
           </div>
           <div class="flex gap-2">
-            <button id="exportPdfBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">
+            <button id="exportPdfBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">
               📄 Export PDF
             </button>
             <button id="clearBtn" class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">
@@ -411,16 +447,16 @@
         <div class="mt-6 bg-gray-50 rounded-xl p-4">
           <div class="font-bold mb-2">🧠 Micronutrients (athlete checklist)</div>
           <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1">
-            <li><b>Iron</b> (oxygen transport): red meat, ikan bilis, spinach/leafy greens, legumes; pair with <b>Vitamin C</b>.</li>
+            <li><b>Iron</b> (oxygen transport): red meat, ikan bilis, leafy greens, legumes; pair with <b>Vitamin C</b>.</li>
             <li><b>Calcium + Vitamin D</b> (bone & muscle): dairy/tofu/small fish with bones; sunlight/fortified foods.</li>
             <li><b>B Vitamins</b> (energy metabolism): whole grains, meats, eggs, leafy greens.</li>
-            <li><b>Magnesium + Zinc</b> (muscle/repair/immunity): nuts/seeds, seafood, meat, legumes.</li>
-            <li><b>Antioxidants</b> (Vitamins C & E): fruits/veg; nuts/seeds for recovery.</li>
+            <li><b>Magnesium + Zinc</b> (repair/immunity): nuts/seeds, seafood, meat, legumes.</li>
+            <li><b>Antioxidants</b> (Vitamins C & E): fruits/veg; nuts/seeds.</li>
           </ul>
         </div>
 
         <div class="text-xs text-gray-500 mt-4">
-          Disclaimer: Estimates are approximate. Fueling targets are general guidance.
+          Disclaimer: AI estimates vary. Always sanity-check.
         </div>
       </div>
     </section>
@@ -428,60 +464,10 @@
 
   <script>
     // -----------------------------
-    // SG food DB (baseline per typical serving)
+    // Athlete target logic
     // -----------------------------
-    const SG_FOOD_DB = {
-      "Chicken Rice":                 {kcal:650, protein:35, carbs:80, fat:20},
-      "Nasi Lemak":                   {kcal:720, protein:22, carbs:75, fat:35},
-      "Char Kway Teow":               {kcal:740, protein:20, carbs:90, fat:32},
-      "Hokkien Mee":                  {kcal:700, protein:25, carbs:85, fat:28},
-      "Bak Chor Mee":                 {kcal:620, protein:28, carbs:75, fat:20},
-      "Ban Mian (Soup)":              {kcal:560, protein:25, carbs:70, fat:16},
-      "Ban Mian (Dry)":               {kcal:650, protein:28, carbs:80, fat:22},
-      "Laksa":                        {kcal:680, protein:20, carbs:70, fat:35},
-      "Wanton Mee":                   {kcal:600, protein:22, carbs:80, fat:18},
-      "Fishball Noodles":             {kcal:520, protein:18, carbs:75, fat:12},
-      "Roti Prata (2 pcs) + curry":   {kcal:650, protein:12, carbs:75, fat:32},
-      "Economic Rice (Cai Fan)":      {kcal:720, protein:30, carbs:90, fat:25},
-      "Briyani":                      {kcal:780, protein:28, carbs:95, fat:30},
-      "Satay (10 sticks)":            {kcal:520, protein:35, carbs:18, fat:34},
-      "Kaya Toast Set (kopi + eggs)": {kcal:520, protein:22, carbs:55, fat:22},
-      "Kopi (with condensed milk)":   {kcal:120, protein:2,  carbs:18, fat:4},
-      "Kopi O (sugar)":               {kcal:60,  protein:0,  carbs:15, fat:0},
-      "Teh Tarik":                    {kcal:160, protein:4,  carbs:24, fat:5},
-      "Milo Dinosaur":                {kcal:320, protein:8,  carbs:50, fat:10},
-    };
-
     const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
 
-    const MODIFIERS = [
-      "Less rice","More rice","Less noodles","More noodles","Add egg","Extra meat",
-      "Less oil","Extra oil / oily","Less sugar","Extra sugar","Extra sambal",
-      "Extra gravy","No gravy","Soup version","Dry version","Small portion","Big portion"
-    ];
-
-    const MOD_RULES = {
-      "Less rice":         {carbs:-20, kcal:-80},
-      "More rice":         {carbs:+25, kcal:+100},
-      "Less noodles":      {carbs:-20, kcal:-80},
-      "More noodles":      {carbs:+25, kcal:+100},
-      "Add egg":           {protein:+6, fat:+5, kcal:+80},
-      "Extra meat":        {protein:+15, fat:+8, kcal:+140},
-      "Less oil":          {fat:-8, kcal:-72},
-      "Extra oil / oily":  {fat:+10, kcal:+90},
-      "Less sugar":        {carbs:-10, kcal:-40},
-      "Extra sugar":       {carbs:+15, kcal:+60},
-      "Extra sambal":      {fat:+5, carbs:+3, kcal:+55},
-      "Extra gravy":       {fat:+6, carbs:+5, kcal:+80},
-      "No gravy":          {fat:-4, carbs:-3, kcal:-45},
-      "Soup version":      {fat:-3, kcal:-30},
-      "Dry version":       {fat:+3, kcal:+30},
-      "Small portion":     {kcal:-120, protein:-6, carbs:-15, fat:-4},
-      "Big portion":       {kcal:+180, protein:+8, carbs:+25, fat:+6}
-    };
-
-    // Athlete-aware: base carb bands by athlete type (IOC-ish)
-    // (low/high g/kg). We'll then nudge based on season phase + day intensity.
     const ATHLETE_CARB_BASE = {
       skill:    [3.0, 5.0],
       strength: [3.0, 6.0],
@@ -489,14 +475,12 @@
       endurance:[6.0, 10.0],
     };
 
-    // Season nudges (affect carbs + kcal a bit)
     const SEASON_NUDGE = {
-      off: { carbShift: -0.5, kcalShift: 0 },      // often body comp / lower volume
-      pre: { carbShift: +0.5, kcalShift: +100 },   // higher volume conditioning
-      in:  { carbShift: +0.3, kcalShift: +150 },   // performance & recovery
+      off: { carbShift: -0.5, kcalShift: 0 },
+      pre: { carbShift: +0.5, kcalShift: +100 },
+      in:  { carbShift: +0.3, kcalShift: +150 },
     };
 
-    // Day intensity nudges
     const DAY_NUDGE = {
       easy: { carbShift: -0.5, kcalShift: 0 },
       normal:{ carbShift: 0.0, kcalShift: 0 },
@@ -504,7 +488,6 @@
       comp: { carbShift: +1.5, kcalShift: +350 },
     };
 
-    // Goals (kcal adjust + protein ranges, ISSN-ish)
     const GOALS = {
       gain:     {kcalAdjust: +250, proteinGkg: [1.6, 2.2]},
       maintain: {kcalAdjust: 0,    proteinGkg: [1.4, 2.0]},
@@ -520,13 +503,15 @@
     let currentImageDataUrl = null;
     let stream = null;
 
+    // Gemini result cache
+    let lastGemini = null; // {dish, confidence, macros:{kcal,protein_g,carbs_g,fat_g}, ...}
+
     // -----------------------------
-    // DOM helpers
+    // Helpers
     // -----------------------------
     const $ = (id) => document.getElementById(id);
     const round1 = (x) => Math.round(x * 10) / 10;
     const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
-    function getSelectedOptions(selectEl) { return Array.from(selectEl.selectedOptions).map(o => o.value); }
 
     function escapeHtml(s) {
       return (s || "").replace(/[&<>"']/g, (c) => ({
@@ -540,28 +525,18 @@
       return { p: round1(100*pK/total), c: round1(100*cK/total), f: round1(100*fK/total) };
     }
 
-    // -----------------------------
-    // Populate selects
-    // -----------------------------
-    function initSelects() {
-      const foodSel = $("foodSelect");
-      foodSel.innerHTML = "";
-      Object.keys(SG_FOOD_DB).forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        foodSel.appendChild(opt);
-      });
-      foodSel.value = "Economic Rice (Cai Fan)";
+    function setStatus(kind, text) {
+      const el = $("detectStatus");
+      el.classList.remove("hidden");
+      el.classList.remove("warn","ok");
+      el.classList.add(kind === "ok" ? "ok" : "warn");
+      el.textContent = text;
+    }
 
-      const modSel = $("modifiers");
-      modSel.innerHTML = "";
-      MODIFIERS.forEach(m => {
-        const opt = document.createElement("option");
-        opt.value = m;
-        opt.textContent = m;
-        modSel.appendChild(opt);
-      });
+    function dataUrlToBase64(dataUrl) {
+      const parts = (dataUrl || "").split(",");
+      if (parts.length < 2) return null;
+      return parts[1];
     }
 
     // -----------------------------
@@ -576,19 +551,14 @@
       return 370 + 21.6 * lbm;
     }
 
-    // Athlete-consistent carb range (g/kg) based on athlete type + season + intensity
     function athleteCarbRangeGkg(athleteType, seasonPhase, dayIntensity) {
       const base = ATHLETE_CARB_BASE[athleteType] || [4.0, 7.0];
       const season = SEASON_NUDGE[seasonPhase] || { carbShift: 0, kcalShift: 0 };
       const day = DAY_NUDGE[dayIntensity] || { carbShift: 0, kcalShift: 0 };
-
       const shift = season.carbShift + day.carbShift;
-      let lo = base[0] + shift;
-      let hi = base[1] + shift;
 
-      // keep sane bounds
-      lo = clamp(lo, 2.0, 12.0);
-      hi = clamp(hi, Math.max(lo + 0.5, 3.0), 12.0);
+      let lo = clamp(base[0] + shift, 2.0, 12.0);
+      let hi = clamp(base[1] + shift, Math.max(lo + 0.5, 3.0), 12.0);
       return [round1(lo), round1(hi)];
     }
 
@@ -616,99 +586,263 @@
       const season = SEASON_NUDGE[seasonPhase] || { carbShift: 0, kcalShift: 0 };
       const day = DAY_NUDGE[dayIntensity] || { carbShift: 0, kcalShift: 0 };
 
-      // kcal target = tdee + goal + season + day (small nudges)
       const kcalTarget = tdee + goalCfg.kcalAdjust + season.kcalShift + day.kcalShift;
 
-      // protein range (ISSN-ish) per goal
       const pLo = goalCfg.proteinGkg[0] * weightKg;
       const pHi = goalCfg.proteinGkg[1] * weightKg;
       const pTarget = (pLo + pHi) / 2;
 
-      // carbs (IOC-ish) auto from athlete type + season + intensity
       const carbGkgRange = athleteCarbRangeGkg(athleteType, seasonPhase, dayIntensity);
       const cLo = carbGkgRange[0] * weightKg;
       const cHi = carbGkgRange[1] * weightKg;
       let cTarget = (cLo + cHi) / 2;
 
-      // fat target from AMDR
       let fatRatio = clamp(fatPref, AMDR_FAT[0], AMDR_FAT[1]);
       let fTarget = (kcalTarget * fatRatio) / 9;
 
-      // If macros exceed kcal, reduce carbs to lower bound
       const kcalFrom = (p, c, f) => p*4 + c*4 + f*9;
       let total = kcalFrom(pTarget, cTarget, fTarget);
       if (total > kcalTarget) {
         const excess = total - kcalTarget;
-        const carbReduction = excess / 4;
-        cTarget = Math.max(cLo, cTarget - carbReduction);
+        cTarget = Math.max(cLo, cTarget - (excess / 4));
       }
 
-      const out = {
-        bmr: round1(bmr),
-        tdee: round1(tdee),
+      $("bmrOut").textContent = round1(bmr);
+      $("tdeeOut").textContent = round1(tdee);
+      $("kcalTargetOut").textContent = round1(kcalTarget);
+      $("pTargetOut").textContent = round1(pTarget);
+      $("cTargetOut").textContent = round1(cTarget);
+      $("fTargetOut").textContent = round1(fTarget);
+      $("pRangeOut").textContent = `${round1(pLo)}–${round1(pHi)} g`;
+      $("cRangeOut").textContent = `${round1(cLo)}–${round1(cHi)} g`;
+
+      return {
+        sex, age, heightCm, weightKg,
+        athleteType, seasonPhase, dayIntensity,
+        bmr: round1(bmr), tdee: round1(tdee),
         kcalTarget: round1(kcalTarget),
-        pTarget: round1(pTarget),
-        cTarget: round1(cTarget),
-        fTarget: round1(fTarget),
+        pTarget: round1(pTarget), cTarget: round1(cTarget), fTarget: round1(fTarget),
         pRange: [round1(pLo), round1(pHi)],
         cRange: [round1(cLo), round1(cHi)],
         fatRatioPct: round1(fatRatio * 100),
-        athleteType, seasonPhase, dayIntensity,
-        weightKg, sex, age, heightCm,
         eqLabel: (eq === "mifflin") ? "Mifflin-St Jeor" : "Katch-McArdle",
         bf: (eq === "katch") ? bf : null,
         activityLabel: $("activity").options[$("activity").selectedIndex].textContent,
         goalLabel: $("goal").options[$("goal").selectedIndex].textContent,
       };
-
-      // Update UI
-      $("bmrOut").textContent = out.bmr;
-      $("tdeeOut").textContent = out.tdee;
-      $("kcalTargetOut").textContent = out.kcalTarget;
-      $("pTargetOut").textContent = out.pTarget;
-      $("cTargetOut").textContent = out.cTarget;
-      $("fTargetOut").textContent = out.fTarget;
-      $("pRangeOut").textContent = `${out.pRange[0]}–${out.pRange[1]} g`;
-      $("cRangeOut").textContent = `${out.cRange[0]}–${out.cRange[1]} g`;
-
-      return out;
     }
 
     // -----------------------------
-    // Macros estimation
+    // Camera
     // -----------------------------
-    function estimateMacros(baselineFood, modifiers, portion) {
-      const base = SG_FOOD_DB[baselineFood] || SG_FOOD_DB["Economic Rice (Cai Fan)"];
-      let kcal = base.kcal, p = base.protein, c = base.carbs, f = base.fat;
-
-      (modifiers || []).forEach(m => {
-        const d = MOD_RULES[m] || {};
-        kcal += (d.kcal || 0);
-        p += (d.protein || 0);
-        c += (d.carbs || 0);
-        f += (d.fat || 0);
-      });
-
-      kcal *= portion; p *= portion; c *= portion; f *= portion;
-
-      return {kcal: round1(clamp(kcal,0,99999)), protein: round1(clamp(p,0,9999)), carbs: round1(clamp(c,0,9999)), fat: round1(clamp(f,0,9999))};
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+        $("video").srcObject = stream;
+      } catch (e) {
+        alert("Camera error: " + e.message + "\nTry HTTPS + permissions, or use Upload.");
+      }
     }
 
-    function updateMacroPreview() {
-      const baseline = $("foodSelect").value;
-      const modifiers = getSelectedOptions($("modifiers"));
+    function stopCamera() {
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+      $("video").srcObject = null;
+    }
+
+    function setPreview(dataUrl) {
+      currentImageDataUrl = dataUrl;
+      $("previewImg").src = dataUrl;
+      $("previewImg").classList.remove("hidden");
+      $("noPreview").classList.add("hidden");
+
+      // reset gemini cache
+      lastGemini = null;
+      $("useSuggestionBtn").disabled = true;
+      $("detectStatus").classList.add("hidden");
+      $("geminiMeta").textContent = "No Gemini estimate yet.";
+      // keep manual fields as-is; user may want to use manual
+    }
+
+    function snapPhoto() {
+      const video = $("video");
+      if (!video || !video.videoWidth) {
+        alert("Camera not ready. Start camera first, or upload an image.");
+        return;
+      }
+      const canvas = $("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      setPreview(canvas.toDataURL("image/jpeg", 0.85));
+    }
+
+    function handleUpload(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => setPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+
+    // -----------------------------
+    // Gemini prompt (Option B: macros too)
+    // -----------------------------
+    function buildGeminiPrompt() {
+      return `
+You are an expert Singapore sports nutrition assistant for athletes.
+Look at the food photo and estimate (1) dish name in Singapore context, (2) calories and macronutrients.
+
+Return STRICT JSON ONLY with this schema (no markdown, no commentary):
+{
+  "dish": string,
+  "confidence": number,              // 0..1
+  "candidates": string[],            // up to 5
+  "notes": string,                   // short: visible cues + SG terms
+  "portion_assumption": string,      // e.g., "1 hawker serving", "2 prata", "1 bowl"
+  "components": string[],            // up to 8, e.g., ["noodles","egg","minced pork","sambal"]
+  "macros": {
+    "kcal": number,
+    "protein_g": number,
+    "carbs_g": number,
+    "fat_g": number
+  },
+  "micronutrient_flags": {           // optional hints; not lab-accurate
+    "iron": "low|ok|high|unknown",
+    "calcium_vitD": "low|ok|high|unknown",
+    "b_vitamins": "low|ok|high|unknown",
+    "magnesium_zinc": "low|ok|high|unknown",
+    "antioxidants_CE": "low|ok|high|unknown"
+  }
+}
+
+Rules:
+- Use Singapore dish names: chicken rice, cai fan, prata, ban mian, laksa, char kway teow, bak chor mee, nasi lemak, briyani, etc.
+- If it looks like cai fan / mixed items, set dish like "Cai Fan: <items>" and estimate macros for the whole plate.
+- If uncertain, keep confidence low and include candidates.
+- Macros should be plausible for a hawker serving and internally consistent.
+      `.trim();
+    }
+
+    function safeNum(x) {
+      const n = Number(x);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function applyPortionMultiplier(m, portion) {
+      return {
+        kcal: round1(safeNum(m.kcal) * portion),
+        protein_g: round1(safeNum(m.protein_g) * portion),
+        carbs_g: round1(safeNum(m.carbs_g) * portion),
+        fat_g: round1(safeNum(m.fat_g) * portion),
+      };
+    }
+
+    async function geminiDetect() {
+      if (!currentImageDataUrl) { alert("No photo yet. Snap or upload first."); return; }
+
+      const proxyUrl = ($("proxyUrl").value || "").trim();
+      if (!proxyUrl) { setStatus("warn", "Please paste your Proxy URL first."); return; }
+
+      $("useSuggestionBtn").disabled = true;
+      lastGemini = null;
+      setStatus("warn", "Calling Gemini…");
+
+      const model = ($("geminiModel").value || "gemini-2.0-flash").trim();
+      const imageBase64 = dataUrlToBase64(currentImageDataUrl);
+      const mimeType = "image/jpeg";
+      const prompt = buildGeminiPrompt();
+
+      try {
+        const r = await fetch(proxyUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64, mimeType, prompt, model })
+        });
+        if (!r.ok) throw new Error(`Proxy error ${r.status}`);
+
+        const obj = await r.json();
+
+        if (obj?.error) {
+          setStatus("warn", `Gemini/proxy returned error: ${obj.error}`);
+          return;
+        }
+
+        const dish = (obj?.dish || "").toString().trim();
+        if (!dish) {
+          setStatus("warn", "No dish returned. Try a clearer photo.");
+          return;
+        }
+
+        // Normalize
+        lastGemini = {
+          dish,
+          confidence: safeNum(obj?.confidence),
+          candidates: Array.isArray(obj?.candidates) ? obj.candidates.slice(0,5).map(String) : [],
+          notes: (obj?.notes || "").toString().trim(),
+          portion_assumption: (obj?.portion_assumption || "").toString().trim(),
+          components: Array.isArray(obj?.components) ? obj.components.slice(0,8).map(String) : [],
+          macros: {
+            kcal: safeNum(obj?.macros?.kcal),
+            protein_g: safeNum(obj?.macros?.protein_g),
+            carbs_g: safeNum(obj?.macros?.carbs_g),
+            fat_g: safeNum(obj?.macros?.fat_g),
+          },
+          micronutrient_flags: obj?.micronutrient_flags || {}
+        };
+
+        const confPct = Math.round(lastGemini.confidence * 100);
+        const meta =
+          `Gemini: "${lastGemini.dish}" (${confPct}%). Portion: ${lastGemini.portion_assumption || "assumed 1 serving"}.` +
+          (lastGemini.notes ? ` Notes: ${lastGemini.notes}` : "");
+
+        setStatus("ok", meta);
+        $("useSuggestionBtn").disabled = false;
+
+      } catch (e) {
+        setStatus("warn", "Detection failed: " + e.message);
+      }
+    }
+
+    function applyGemini() {
+      if (!lastGemini) return;
+
+      // Set label
+      $("customFood").value = lastGemini.dish;
+
+      // Apply macros into inputs, respecting current portion slider
       const portion = parseFloat($("portion").value || "1.0");
-      $("portionLabel").textContent = portion.toFixed(1);
+      const scaled = applyPortionMultiplier(lastGemini.macros, portion);
 
-      const m = estimateMacros(baseline, modifiers, portion);
-      $("mKcal").textContent = m.kcal;
-      $("mP").textContent = m.protein;
-      $("mC").textContent = m.carbs;
-      $("mF").textContent = m.fat;
+      $("mKcalIn").value = Math.max(0, Math.round(scaled.kcal));
+      $("mPIn").value = Math.max(0, round1(scaled.protein_g));
+      $("mCIn").value = Math.max(0, round1(scaled.carbs_g));
+      $("mFIn").value = Math.max(0, round1(scaled.fat_g));
+
+      $("macroSource").value = "gemini";
+
+      const confPct = Math.round(lastGemini.confidence * 100);
+      $("geminiMeta").textContent =
+        `Using Gemini estimate (${confPct}%) • ${lastGemini.portion_assumption || "1 serving"} • components: ${lastGemini.components?.length ? lastGemini.components.join(", ") : "—"}`;
+
+      $("useSuggestionBtn").disabled = true;
+    }
+
+    function onPortionChange() {
+      $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+
+      // If macro source is gemini + we have lastGemini, rescale live
+      const source = $("macroSource").value;
+      if (source === "gemini" && lastGemini?.macros) {
+        const portion = parseFloat($("portion").value || "1.0");
+        const scaled = applyPortionMultiplier(lastGemini.macros, portion);
+        $("mKcalIn").value = Math.max(0, Math.round(scaled.kcal));
+        $("mPIn").value = Math.max(0, round1(scaled.protein_g));
+        $("mCIn").value = Math.max(0, round1(scaled.carbs_g));
+        $("mFIn").value = Math.max(0, round1(scaled.fat_g));
+      }
     }
 
     // -----------------------------
-    // Totals + meal table
+    // Logging + totals
     // -----------------------------
     function calcTotals() {
       return entries.reduce((acc, e) => {
@@ -726,6 +860,49 @@
       return "Sufficient";
     }
 
+    function addEntry() {
+      if (!currentImageDataUrl) { alert("No photo yet. Snap or upload first."); return; }
+
+      const mealSlot = $("mealSlot").value;
+      const label = ($("customFood").value || "").trim() || "Meal";
+
+      const portion = parseFloat($("portion").value || "1.0");
+      const notes = ($("notes").value || "").trim();
+      const source = $("macroSource").value;
+
+      let kcal = safeNum($("mKcalIn").value);
+      let p = safeNum($("mPIn").value);
+      let c = safeNum($("mCIn").value);
+      let f = safeNum($("mFIn").value);
+
+      // Basic sanity clamp
+      kcal = clamp(kcal, 0, 5000);
+      p = clamp(p, 0, 400);
+      c = clamp(c, 0, 700);
+      f = clamp(f, 0, 300);
+
+      entries.push({
+        ts: new Date().toISOString(),
+        mealSlot,
+        label,
+        portion,
+        notes,
+        macroSource: source,
+        macros: { kcal: round1(kcal), protein: round1(p), carbs: round1(c), fat: round1(f) },
+        imgDataUrl: currentImageDataUrl,
+        gemini: lastGemini ? {
+          dish: lastGemini.dish,
+          confidence: lastGemini.confidence,
+          portion_assumption: lastGemini.portion_assumption,
+          notes: lastGemini.notes
+        } : null
+      });
+
+      // Reset note (keep photo so user can add another quickly if they want)
+      $("notes").value = "";
+      render();
+    }
+
     function render() {
       const targets = computeTargets();
       const totals = calcTotals();
@@ -738,11 +915,9 @@
       const deltaK = round1(totals.kcal - targets.kcalTarget);
       $("deltaKcal").textContent = (deltaK >= 0 ? "+" : "") + deltaK;
 
-      // Protein/Carb verdicts
       const pVer = adequacyLabel(totals.protein, targets.pRange[0], targets.pRange[1]);
       const cVer = adequacyLabel(totals.carbs, targets.cRange[0], targets.cRange[1]);
 
-      // Fat verdict
       const fatTarget = targets.fTarget;
       const fatTol = Math.max(10, 0.15 * fatTarget);
       let fVer = "On target-ish";
@@ -752,15 +927,14 @@
       $("verC").textContent = `${cVer} (target ${targets.cRange[0]}–${targets.cRange[1]} g)`;
       $("verF").textContent = `${fVer} (target ~${targets.fTarget} g; fat AMDR ${targets.fatRatioPct}% kcal)`;
 
-      // Meal table
+      // meal table
       const bySlot = {};
       MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, protein:0, carbs:0, fat:0});
       entries.forEach(e => {
-        const s = e.mealSlot;
-        bySlot[s].kcal += e.macros.kcal;
-        bySlot[s].protein += e.macros.protein;
-        bySlot[s].carbs += e.macros.carbs;
-        bySlot[s].fat += e.macros.fat;
+        bySlot[e.mealSlot].kcal += e.macros.kcal;
+        bySlot[e.mealSlot].protein += e.macros.protein;
+        bySlot[e.mealSlot].carbs += e.macros.carbs;
+        bySlot[e.mealSlot].fat += e.macros.fat;
       });
 
       const tbody = $("mealTableBody");
@@ -780,7 +954,7 @@
         tbody.appendChild(tr);
       });
 
-      // Entries list
+      // entries list
       const list = $("entriesList");
       list.innerHTML = "";
       entries.forEach((e, idx) => {
@@ -791,13 +965,13 @@
             ${e.imgDataUrl ? `<img src="${e.imgDataUrl}" class="w-full h-full object-cover" alt="thumb">` : ""}
           </div>
           <div class="flex-1">
-            <div class="font-extrabold">${e.mealSlot} — ${escapeHtml(e.finalFoodLabel)}</div>
-            <div class="text-xs text-gray-500">Baseline: ${escapeHtml(e.baselineFood)} • Portion x${e.portion.toFixed(1)}</div>
+            <div class="font-extrabold">${e.mealSlot} — ${escapeHtml(e.label)}</div>
+            <div class="text-xs text-gray-500">Source: ${escapeHtml(e.macroSource)} • Portion x${e.portion.toFixed(1)}</div>
             <div class="text-sm mt-1 mono font-bold">
               ${e.macros.kcal} kcal | P ${e.macros.protein}g | C ${e.macros.carbs}g | F ${e.macros.fat}g
             </div>
-            <div class="text-xs text-gray-600 mt-1">Modifiers: ${e.modifiers.length ? e.modifiers.map(escapeHtml).join(", ") : "-"}</div>
             ${e.notes ? `<div class="text-xs text-gray-600 mt-1">Notes: ${escapeHtml(e.notes)}</div>` : ""}
+            ${e.gemini?.dish ? `<div class="text-xs text-gray-600 mt-1">Gemini: ${escapeHtml(e.gemini.dish)} (${Math.round((e.gemini.confidence||0)*100)}%)</div>` : ""}
           </div>
           <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del="${idx}">
             🗑️
@@ -813,96 +987,6 @@
           render();
         });
       });
-    }
-
-    // -----------------------------
-    // Camera
-    // -----------------------------
-    async function startCamera() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-        $("video").srcObject = stream;
-      } catch (e) {
-        alert("Camera error: " + e.message + "\nTry HTTPS + permissions, or use Upload.");
-      }
-    }
-
-    function stopCamera() {
-      if (stream) {
-        stream.getTracks().forEach(t => t.stop());
-        stream = null;
-      }
-      $("video").srcObject = null;
-    }
-
-    function setPreview(dataUrl) {
-      currentImageDataUrl = dataUrl;
-      $("previewImg").src = dataUrl;
-      $("previewImg").classList.remove("hidden");
-      $("noPreview").classList.add("hidden");
-    }
-
-    function snapPhoto() {
-      const video = $("video");
-      if (!video || !video.videoWidth) {
-        alert("Camera not ready. Start camera first, or upload an image.");
-        return;
-      }
-      const canvas = $("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-      setPreview(dataUrl);
-    }
-
-    function handleUpload(file) {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => setPreview(reader.result);
-      reader.readAsDataURL(file);
-    }
-
-    // -----------------------------
-    // Add entry
-    // -----------------------------
-    function addEntry() {
-      if (!currentImageDataUrl) {
-        alert("No photo yet. Snap or upload first.");
-        return;
-      }
-
-      const mealSlot = $("mealSlot").value;
-      const baselineFood = $("foodSelect").value;
-      const custom = ($("customFood").value || "").trim();
-      const finalFoodLabel = custom ? custom : baselineFood;
-
-      const modifiers = getSelectedOptions($("modifiers"));
-      const portion = parseFloat($("portion").value || "1.0");
-      const notes = ($("notes").value || "").trim();
-
-      const macros = estimateMacros(baselineFood, modifiers, portion);
-
-      entries.push({
-        ts: new Date().toISOString(),
-        mealSlot,
-        baselineFood,
-        finalFoodLabel,
-        modifiers,
-        portion,
-        notes,
-        macros,
-        imgDataUrl: currentImageDataUrl
-      });
-
-      $("notes").value = "";
-      $("customFood").value = "";
-      $("modifiers").selectedIndex = -1;
-      $("portion").value = "1.0";
-      $("portionLabel").textContent = "1.0";
-      updateMacroPreview();
-      render();
     }
 
     // -----------------------------
@@ -932,7 +1016,6 @@
       y += 18;
       doc.setTextColor(0);
 
-      // Athlete mode summary
       const athleteTypeLabel = $("athleteType").options[$("athleteType").selectedIndex].textContent;
       const seasonLabel = $("seasonPhase").options[$("seasonPhase").selectedIndex].textContent;
       const dayLabel = $("dayIntensity").options[$("dayIntensity").selectedIndex].textContent;
@@ -946,33 +1029,25 @@
       doc.text(`Type: ${athleteTypeLabel}`, margin, y); y += 14;
       doc.text(`Season phase: ${seasonLabel} | Day intensity: ${dayLabel}`, margin, y); y += 18;
 
-      // Profile summary
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.text("Profile & Targets", margin, y); y += 14;
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      const eqLabel = targets.eqLabel;
-      const sex = targets.sex;
-      const age = targets.age;
-      const height = targets.heightCm;
-      const weight = targets.weightKg;
-      doc.text(`Sex: ${sex} | Age: ${age} | Height: ${height} cm | Weight: ${weight} kg`, margin, y); y += 14;
-
+      doc.text(`Sex: ${targets.sex} | Age: ${targets.age} | Height: ${targets.heightCm} cm | Weight: ${targets.weightKg} kg`, margin, y); y += 14;
       const bfLine = (targets.bf !== null) ? ` (BF% ${targets.bf})` : "";
-      doc.text(`Equation: ${eqLabel}${bfLine} | Activity: ${targets.activityLabel}`, margin, y); y += 14;
+      doc.text(`Equation: ${targets.eqLabel}${bfLine} | Activity: ${targets.activityLabel}`, margin, y); y += 14;
       doc.text(`Goal: ${targets.goalLabel} | BMR: ${targets.bmr} | TDEE: ${targets.tdee} | Target kcal: ${targets.kcalTarget}`, margin, y); y += 18;
-
-      // Intake vs target
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("Daily Intake vs Targets", margin, y); y += 8;
 
       const pVer = adequacyLabel(totals.protein, targets.pRange[0], targets.pRange[1]);
       const cVer = adequacyLabel(totals.carbs, targets.cRange[0], targets.cRange[1]);
       const fatTol = Math.max(10, 0.15 * targets.fTarget);
       const fVer = (Math.abs(totals.fat - targets.fTarget) <= fatTol) ? "On target-ish" : (totals.fat > targets.fTarget ? "High" : "Low");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Daily Intake vs Targets", margin, y); y += 8;
 
       doc.autoTable({
         startY: y + 10,
@@ -990,7 +1065,6 @@
 
       y = doc.lastAutoTable.finalY + 18;
 
-      // Macrodistribution by meal
       const bySlot = {};
       MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, protein:0, carbs:0, fat:0});
       entries.forEach(e => {
@@ -1000,9 +1074,9 @@
         bySlot[e.mealSlot].fat += e.macros.fat;
       });
 
+      if (y > pageH - 220) { doc.addPage(); y = margin; }
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
-      if (y > pageH - 220) { doc.addPage(); y = margin; }
       doc.text("Macrodistribution by Meal Timing", margin, y);
       y += 8;
 
@@ -1023,29 +1097,6 @@
 
       y = doc.lastAutoTable.finalY + 18;
 
-      // Micronutrients checklist
-      if (y > pageH - 140) { doc.addPage(); y = margin; }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("Micronutrients (athlete checklist; not computed from photos)", margin, y);
-      y += 14;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      const microLines = [
-        "• Iron (oxygen transport): red meat, ikan bilis, leafy greens, legumes; pair with Vitamin C.",
-        "• Calcium + Vitamin D (bone & muscle): dairy/tofu/small fish with bones; sunlight/fortified foods.",
-        "• B Vitamins (energy metabolism): whole grains, meats, eggs, leafy greens.",
-        "• Magnesium + Zinc (muscle/repair/immunity): nuts/seeds, seafood, meat, legumes.",
-        "• Antioxidants (Vitamins C & E): fruits/veg; nuts/seeds for recovery."
-      ];
-      microLines.forEach(line => {
-        if (y > pageH - 60) { doc.addPage(); y = margin; }
-        doc.text(line, margin, y);
-        y += 14;
-      });
-
-      // Thumbnails
       if (entries.length) {
         if (y > pageH - 200) { doc.addPage(); y = margin; }
         doc.setFont("helvetica", "bold");
@@ -1060,15 +1111,8 @@
         for (let i = 0; i < entries.length; i++) {
           const e = entries[i];
 
-          if (x + thumbW > pageW - margin) {
-            x = margin;
-            y += thumbH + 55;
-          }
-          if (y + thumbH + 50 > pageH - margin) {
-            doc.addPage();
-            x = margin;
-            y = margin;
-          }
+          if (x + thumbW > pageW - margin) { x = margin; y += thumbH + 62; }
+          if (y + thumbH + 55 > pageH - margin) { doc.addPage(); x = margin; y = margin; }
 
           try { doc.addImage(e.imgDataUrl, "JPEG", x, y, thumbW, thumbH); } catch (_) {}
 
@@ -1076,8 +1120,9 @@
           doc.setFont("helvetica", "bold");
           doc.text(`${i+1}. ${e.mealSlot}`, x, y + thumbH + 12);
           doc.setFont("helvetica", "normal");
-          doc.text((e.finalFoodLabel || "").slice(0, 34), x, y + thumbH + 24);
+          doc.text((e.label || "").slice(0, 34), x, y + thumbH + 24);
           doc.text(`${e.macros.kcal} kcal | P ${e.macros.protein} C ${e.macros.carbs} F ${e.macros.fat}`, x, y + thumbH + 36);
+          if (e.gemini?.dish) doc.text(`Gemini: ${(e.gemini.dish||"").slice(0,34)}`, x, y + thumbH + 48);
 
           x += thumbW + gap;
         }
@@ -1092,113 +1137,36 @@
     }
 
     // -----------------------------
-    // Camera + UI
+    // Events
     // -----------------------------
-    async function startCamera() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-        $("video").srcObject = stream;
-      } catch (e) {
-        alert("Camera error: " + e.message + "\nTry HTTPS + permissions, or use Upload.");
-      }
-    }
-
-    function stopCamera() {
-      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-      $("video").srcObject = null;
-    }
-
-    function setPreview(dataUrl) {
-      currentImageDataUrl = dataUrl;
-      $("previewImg").src = dataUrl;
-      $("previewImg").classList.remove("hidden");
-      $("noPreview").classList.add("hidden");
-    }
-
-    function snapPhoto() {
-      const video = $("video");
-      if (!video || !video.videoWidth) {
-        alert("Camera not ready. Start camera first, or upload an image.");
-        return;
-      }
-      const canvas = $("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      setPreview(canvas.toDataURL("image/jpeg", 0.85));
-    }
-
-    function handleUpload(file) {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => setPreview(reader.result);
-      reader.readAsDataURL(file);
-    }
-
-    function addEntry() {
-      if (!currentImageDataUrl) {
-        alert("No photo yet. Snap or upload first.");
-        return;
-      }
-
-      const mealSlot = $("mealSlot").value;
-      const baselineFood = $("foodSelect").value;
-      const custom = ($("customFood").value || "").trim();
-      const finalFoodLabel = custom ? custom : baselineFood;
-
-      const modifiers = getSelectedOptions($("modifiers"));
-      const portion = parseFloat($("portion").value || "1.0");
-      const notes = ($("notes").value || "").trim();
-
-      const macros = estimateMacros(baselineFood, modifiers, portion);
-
-      entries.push({
-        ts: new Date().toISOString(),
-        mealSlot,
-        baselineFood,
-        finalFoodLabel,
-        modifiers,
-        portion,
-        notes,
-        macros,
-        imgDataUrl: currentImageDataUrl
-      });
-
-      $("notes").value = "";
-      $("customFood").value = "";
-      $("modifiers").selectedIndex = -1;
-      $("portion").value = "1.0";
-      $("portionLabel").textContent = "1.0";
-      updateMacroPreview();
-      render();
-    }
-
     function bindEvents() {
       $("equation").addEventListener("change", () => {
-        const isKatch = $("equation").value === "katch";
-        $("bfWrap").classList.toggle("hidden", !isKatch);
+        $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
         render();
       });
 
-      [
-        "sex","age","heightCm","weightKg","bfPercent","activity","goal",
-        "athleteType","seasonPhase","dayIntensity","fatPref"
-      ].forEach(id => {
-        $(id).addEventListener("input", () => {
-          if (id === "fatPref") $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
-          render();
+      ["sex","age","heightCm","weightKg","bfPercent","activity","goal","athleteType","seasonPhase","dayIntensity","fatPref"]
+        .forEach(id => {
+          $(id).addEventListener("input", () => {
+            if (id === "fatPref") $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
+            render();
+          });
+          $(id).addEventListener("change", render);
         });
-        $(id).addEventListener("change", render);
-      });
-
-      $("foodSelect").addEventListener("change", updateMacroPreview);
-      $("modifiers").addEventListener("change", updateMacroPreview);
-      $("portion").addEventListener("input", updateMacroPreview);
 
       $("startCamBtn").addEventListener("click", startCamera);
       $("stopCamBtn").addEventListener("click", stopCamera);
       $("snapBtn").addEventListener("click", snapPhoto);
       $("uploadInput").addEventListener("change", (e) => handleUpload(e.target.files[0]));
+
+      $("detectBtn").addEventListener("click", geminiDetect);
+      $("useSuggestionBtn").addEventListener("click", applyGemini);
+
+      $("portion").addEventListener("input", onPortionChange);
+      $("macroSource").addEventListener("change", () => {
+        // If switching back to gemini and we have cache, rescale now
+        if ($("macroSource").value === "gemini" && lastGemini?.macros) onPortionChange();
+      });
 
       $("addEntryBtn").addEventListener("click", addEntry);
       $("exportPdfBtn").addEventListener("click", exportPdf);
@@ -1213,10 +1181,10 @@
     // -----------------------------
     // Init
     // -----------------------------
-    initSelects();
     $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
     $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
-    updateMacroPreview();
+    $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+
     bindEvents();
     render();
 
