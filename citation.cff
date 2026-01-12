@@ -1,0 +1,11 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Ng"
+  given-names: "Jun Wei"
+  orcid: "https://orcid.org/0000-0001-8634-1938"
+title: "MacroVision"
+version: 1.0.0
+url: https://ngjunwei777.github.io/Mocap_gait-lab/
+date-released: 2026-01-12
+url: "https://ngjunwei777.github.io/Macrovision/"
