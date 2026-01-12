@@ -8,6 +8,10 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
+  <!-- TensorFlow.js + MobileNet (client-side AI, no proxy) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+
   <!-- jsPDF + AutoTable -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
@@ -16,7 +20,6 @@
     .card { border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
     .pill { border-radius: 999px; }
     .mono { font-variant-numeric: tabular-nums; }
-    video { background: #111827; border-radius: 12px; }
     .thumb { border-radius: 12px; overflow:hidden; }
     .small { font-size: 12px; }
     .warn { background: #fff7ed; border: 1px solid #fed7aa; }
@@ -24,6 +27,9 @@
     .danger { background:#fef2f2; border:1px solid #fecaca; }
     .badge { display:inline-flex; align-items:center; gap:.35rem; padding:.2rem .55rem; border-radius:999px; font-size:12px; font-weight:700; }
     .hint { background:#eff6ff; border:1px solid #bfdbfe; }
+    video { background:#111827; border-radius:12px; }
+    .overlayWrap { position: relative; }
+    #overlayCanvas { position:absolute; inset:0; pointer-events:none; border-radius:12px; }
   </style>
 </head>
 
@@ -47,23 +53,21 @@
             <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
               Athlete App
             </span>
-            <span class="text-gray-300 text-sm">Singapore • Hawker-aware • IOC-style fueling • Gemini macros • drinks</span>
+            <span class="text-gray-300 text-sm">Singapore-optimised • On-device AI • Live detection overlay • PDF export</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
           <p class="text-gray-300 max-w-2xl">
-            Snap meals + drinks, let Gemini estimate macros (kcal/P/C/F), then correct items when AI blur blur.
-            Pick from a Singapore hawker list — or let AI vision detect and auto-select the closest hawker dish.
-            Export a PDF with macrodistribution across breakfast/snacks/lunch/dinner/pre/post-workout.
+            Camera runs on-device AI (no proxy) to guess what you’re eating, then estimates macros using a Singapore-aware
+            dish matcher + macro database + heuristics. You can always edit name/macros because food is messy.
           </p>
           <div class="mt-4 text-sm text-gray-200">
-            MacroVision runs on expensive AI brains (GPUs). I’m keeping it free for the community.
-            If this saved your macros today, <span class="font-semibold">tapang me a Kopi</span> to help keep the servers running! ☕
+            Developed by Jun Wei and tested by Hong Wei. <span class="font-semibold">Created by Ng Brothers.</span>
           </div>
         </div>
 
         <div class="flex flex-wrap gap-2">
-          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">Gemini Vision</span>
-          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">Hawker List + Auto Match</span>
+          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">On-device AI</span>
+          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">SG Dish Matcher</span>
           <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Export</span>
         </div>
       </div>
@@ -72,14 +76,25 @@
 
   <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
+    <!-- QUICK NOTE -->
+    <section class="card p-5 bg-white">
+      <div class="warn rounded-xl p-3">
+        <div class="font-extrabold">Important (real talk)</div>
+        <div class="text-sm text-gray-700 mt-1">
+          This app runs AI locally (no server). It can <b>recognise food-ish labels</b>, but macros are still estimates because
+          portion size, oil, sugar, sauces, and hidden ingredients can’t be “seen” perfectly.
+          Always sanity-check or edit macros.
+        </div>
+      </div>
+    </section>
+
     <!-- PROFILE / TDEE / ATHLETE MODE -->
     <section class="bg-white card p-5">
       <div class="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 class="text-xl font-extrabold">👤 Athlete Profile → TDEE → Fueling Targets</h2>
           <p class="text-gray-600 text-sm">
-            Pick athlete type + season phase (off/pre/in-season). Targets adapt using IOC-style carb bands,
-            ISSN-style protein guidance, and AMDR fat boundaries.
+            Targets adapt using athlete type + season + day intensity (IOC-style carb bands, ISSN-style protein ranges, AMDR fat).
           </p>
         </div>
         <div class="text-xs text-gray-500">
@@ -222,7 +237,6 @@
         <div class="bg-white border rounded-xl p-3">
           <div class="text-xs text-gray-500">Target kcal/day</div>
           <div class="text-2xl font-extrabold mono"><span id="kcalTargetOut">-</span></div>
-          <div class="text-xs text-gray-500 mt-1">Season/day may nudge this.</div>
         </div>
         <div class="bg-white border rounded-xl p-3">
           <div class="text-xs text-gray-500">Targets (P/C/F)</div>
@@ -243,68 +257,19 @@
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-extrabold">📸 Snap → AI detect → Hawker list match → Add items</h2>
+            <h2 class="text-xl font-extrabold">📸 Live AI detection (no proxy) → macro estimate → add items</h2>
             <p class="text-sm text-gray-600">
-              Gemini can detect from the photo and auto-match to a Singapore hawker dish list (so you can pick quickly).
-              Drinks detected separately. If confidence low, you’ll get a warning.
+              Camera shows live predicted label + confidence. When you snap, it will estimate macros using SG dish matcher + macro DB.
+              Works beyond hawker too (e.g., “burger”, “salad”, “pizza”) but SG dishes get better matching.
             </p>
           </div>
         </div>
 
-        <!-- Proxy config -->
-        <div class="mt-4 grid grid-cols-1 gap-3">
-          <div class="warn rounded-xl p-3">
-            <div class="font-bold text-sm">✅ GitHub Pages note</div>
-            <div class="small text-gray-700 mt-1">
-              GitHub Pages is static-only, so Gemini must be called via a proxy (Cloudflare Worker / Vercel / Netlify).
-              Paste your proxy URL below.
-            </div>
-          </div>
-          <label class="text-sm block">
-            <div class="text-gray-600 mb-1">Proxy endpoint URL</div>
-            <input id="proxyUrl" class="w-full border rounded-lg px-3 py-2"
-                   placeholder="https://YOUR-WORKER-NAME.YOURSUBDOMAIN.workers.dev" />
-          </label>
-          <label class="text-sm block">
-            <div class="text-gray-600 mb-1">Gemini model</div>
-            <input id="geminiModel" class="w-full border rounded-lg px-3 py-2" value="gemini-2.0-flash" />
-          </label>
-
-          <div class="bg-gray-50 rounded-xl p-3">
-            <div class="flex items-center justify-between gap-3 flex-wrap">
-              <div class="text-sm font-bold">Confidence warning threshold</div>
-              <div class="text-sm mono">
-                <input id="confThresh" type="range" min="0.3" max="0.9" step="0.05" value="0.6" class="align-middle" />
-                <span id="confThreshLabel" class="font-extrabold">0.60</span>
-              </div>
-            </div>
-            <div class="text-xs text-gray-600 mt-1">
-              If Gemini confidence is below this, you’ll see a “please confirm” warning.
-            </div>
-          </div>
-
-          <div class="hint rounded-xl p-3">
-            <div class="font-bold text-sm">🍛 Hawker List (editable)</div>
-            <div class="small text-gray-700 mt-1">
-              After AI detection, we auto-select the closest hawker dish below. You can still change it manually.
-            </div>
-          </div>
-
-          <label class="text-sm block">
-            <div class="text-gray-600 mb-1">Hawker dish list</div>
-            <select id="hawkerPick" class="w-full border rounded-lg px-3 py-2"></select>
-            <div class="text-xs text-gray-500 mt-1">
-              Tip: Use AI detect first → then it will auto-select a dish here.
-            </div>
-          </label>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <button id="useHawkerAsItemBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
-              ➕ Add selected hawker dish as item
-            </button>
-            <button id="autoMatchBtn" class="bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
-              🧠 AI match to hawker list (from last detection)
-            </button>
+        <div class="mt-4 hint rounded-xl p-3">
+          <div class="font-bold text-sm">How it estimates macros</div>
+          <div class="small text-gray-700 mt-1">
+            On-device AI guesses a label → matcher maps it to a food entry → macro DB gives typical serving macros.
+            If unknown, heuristics give a conservative estimate and you can edit.
           </div>
         </div>
 
@@ -319,19 +284,33 @@
               </button>
             </div>
 
-            <video id="video" autoplay playsinline class="w-full h-64"></video>
+            <div class="overlayWrap">
+              <video id="video" autoplay playsinline class="w-full h-64"></video>
+              <canvas id="overlayCanvas"></canvas>
+            </div>
 
-            <div class="flex gap-2">
-              <button id="snapBtn" class="flex-1 bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
+            <div class="grid grid-cols-2 gap-2">
+              <button id="snapBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
                 📸 Snap
               </button>
-              <label class="flex-1 bg-white border px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-center">
+              <label class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-center">
                 <input id="uploadInput" type="file" accept="image/*" class="hidden" />
                 ⬆️ Upload
               </label>
             </div>
 
-            <canvas id="canvas" class="hidden"></canvas>
+            <canvas id="captureCanvas" class="hidden"></canvas>
+
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="font-bold text-sm mb-1">Live detection</div>
+              <div class="text-sm">
+                <span class="badge bg-gray-100 text-gray-900" id="liveLabelBadge">—</span>
+                <span class="mono text-gray-700 ml-2" id="liveConf">—</span>
+              </div>
+              <div class="text-xs text-gray-500 mt-2">
+                Tip: move closer + reduce clutter for better guesses.
+              </div>
+            </div>
           </div>
 
           <div class="space-y-3">
@@ -341,19 +320,7 @@
               <div id="noPreview" class="text-sm text-gray-500">No photo yet. Snap/upload to preview.</div>
             </div>
 
-            <div class="grid grid-cols-1 gap-2">
-              <button id="detectFoodBtn" class="bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
-                🍽️ Detect FOOD + macros (Gemini)
-              </button>
-              <button id="detectDrinkBtn" class="bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
-                🥤 Detect DRINK + macros (Gemini)
-              </button>
-              <button id="applyGeminiBtn" class="bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200" disabled>
-                Apply last Gemini result → Add as item
-              </button>
-            </div>
-
-            <div id="detectStatus" class="hidden rounded-xl p-3 small"></div>
+            <div id="statusBox" class="hidden rounded-xl p-3 small"></div>
 
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Meal timing</div>
@@ -369,22 +336,19 @@
             </label>
 
             <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Portion multiplier (applies to AI macros too)</div>
+              <div class="text-gray-600 mb-1">Portion multiplier</div>
               <input id="portion" type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full" />
               <div class="text-xs text-gray-600 mt-1">x<span id="portionLabel" class="font-semibold">1.0</span></div>
             </label>
 
             <div class="bg-white border rounded-xl p-3">
-              <div class="flex items-center justify-between gap-3 flex-wrap">
-                <div class="font-bold">Item editor (manual override allowed)</div>
-                <span id="lastTypeBadge" class="badge bg-gray-100 text-gray-900">—</span>
-              </div>
+              <div class="font-bold">Item editor (always editable)</div>
 
               <div class="mt-3 space-y-2">
                 <label class="text-sm block">
-                  <div class="text-gray-600 mb-1">Item label (editable)</div>
+                  <div class="text-gray-600 mb-1">Detected / selected food name</div>
                   <input id="itemLabel" class="w-full border rounded-lg px-3 py-2"
-                         placeholder="e.g., Cai Fan: steamed egg / tofu / veg OR Kopi C Kosong" />
+                         placeholder="e.g., Chicken rice, Char kway teow, Burger, Salad, Kopi C" />
                 </label>
 
                 <div class="grid grid-cols-4 gap-2">
@@ -406,10 +370,10 @@
                   </div>
                 </div>
 
-                <div class="text-xs text-gray-500" id="lastGeminiMeta">No Gemini result yet.</div>
+                <div class="text-xs text-gray-500" id="metaLine">No detection yet.</div>
 
                 <button id="addItemBtn" class="w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
-                  ➕ Add this item to meal (food/drink)
+                  ➕ Add this item to meal
                 </button>
               </div>
             </div>
@@ -431,12 +395,13 @@
           <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div class="font-extrabold">Current meal items</div>
-              <div class="text-xs text-gray-600">Add multiple food items + drinks, then finalize meal.</div>
+              <div class="text-xs text-gray-600">Add multiple items, then finalize meal.</div>
             </div>
             <button id="clearMealBtn" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
               Clear meal items
             </button>
           </div>
+
           <div id="mealItemsList" class="mt-3 space-y-2"></div>
 
           <div class="grid grid-cols-4 gap-2 mt-4">
@@ -538,7 +503,7 @@
         </div>
 
         <div class="text-xs text-gray-500 mt-4">
-          Disclaimer: AI estimates vary. Always sanity-check.
+          Disclaimer: On-device AI + macro DB = estimates. Always sanity-check.
         </div>
       </div>
     </section>
@@ -546,97 +511,146 @@
 
   <footer class="py-8">
     <div class="max-w-7xl mx-auto px-4 text-xs text-gray-500">
-      © <span id="yearNow"></span> Ng Jun Wei &amp; Ng Hong Wei. All rights reserved.
+      © <span id="yearNow"></span> Ng Jun Wei &amp; Ng Hong Wei. Developed by Jun Wei and tested by Hong Wei. Created by Ng Brothers.
     </div>
   </footer>
 
   <script>
     // ==============================
-    // Hawker list (SG)
+    // Macro DB (typical servings) — you can expand this
+    // kcal, P, C, F
     // ==============================
-    const HAWKER_DISHES = [
-      "Chicken Rice (Steamed/Roasted)",
-      "Nasi Lemak",
-      "Cai Fan (Mixed Rice)",
-      "Bak Chor Mee",
-      "Fishball Noodles",
-      "Ban Mian (Soup/Dry)",
-      "Laksa",
-      "Char Kway Teow",
-      "Hokkien Mee",
-      "Wanton Mee",
-      "Roti Prata (Plain)",
-      "Roti Prata (Egg)",
-      "Mee Rebus",
-      "Mee Siam",
-      "Teochew Porridge",
-      "Satay (10 sticks)",
-      "Yong Tau Foo",
-      "Thunder Tea Rice (Lei Cha)",
-      "Economic Bee Hoon (with sides)",
-      "Mala Xiang Guo (Small)",
-      "Claypot Rice",
-      "Briyani (Chicken)",
-      "Fish Soup (Sliced fish)",
-      "Sliced Fish Bee Hoon Soup",
-      "Nasi Padang (Typical plate)",
-      "Duck Rice",
-      "Lor Mee",
-      "Chwee Kueh",
-      "Chee Cheong Fun",
-      "Carrot Cake (White/Black)",
-      "Popiah",
-      "Kaya Toast Set (with eggs)",
-      "Bak Kut Teh"
+    const MACRO_DB = [
+      { name: "Chicken Rice", keys: ["chicken rice","hainanese chicken rice"], kcal: 650, p: 35, c: 75, f: 20 },
+      { name: "Char Kway Teow", keys: ["char kway teow","fried kway teow"], kcal: 750, p: 20, c: 90, f: 30 },
+      { name: "Laksa", keys: ["laksa"], kcal: 700, p: 25, c: 70, f: 35 },
+      { name: "Ban Mian", keys: ["ban mian","noodle soup","noodles soup"], kcal: 600, p: 25, c: 75, f: 18 },
+      { name: "Bak Chor Mee", keys: ["bak chor mee","minced meat noodles"], kcal: 680, p: 28, c: 85, f: 22 },
+      { name: "Nasi Lemak", keys: ["nasi lemak"], kcal: 720, p: 25, c: 80, f: 32 },
+      { name: "Wanton Mee", keys: ["wanton mee","wonton mee"], kcal: 620, p: 24, c: 80, f: 18 },
+      { name: "Fish Soup", keys: ["fish soup"], kcal: 420, p: 35, c: 35, f: 10 },
+      { name: "Yong Tau Foo", keys: ["yong tau foo"], kcal: 500, p: 28, c: 50, f: 15 },
+      { name: "Satay (10 sticks)", keys: ["satay"], kcal: 550, p: 35, c: 20, f: 35 },
+
+      // Generic non-hawker
+      { name: "Burger", keys: ["burger","cheeseburger","hamburger"], kcal: 550, p: 28, c: 45, f: 28 },
+      { name: "Pizza (2 slices)", keys: ["pizza"], kcal: 600, p: 25, c: 70, f: 22 },
+      { name: "Salad (with protein)", keys: ["salad"], kcal: 450, p: 35, c: 25, f: 20 },
+      { name: "Sushi (8 pcs)", keys: ["sushi"], kcal: 520, p: 22, c: 80, f: 12 },
+
+      // Drinks
+      { name: "Kopi (with sugar+milk)", keys: ["coffee","kopi"], kcal: 140, p: 3, c: 22, f: 4 },
+      { name: "Kopi C (less milk)", keys: ["kopi c"], kcal: 100, p: 2, c: 16, f: 3 },
+      { name: "Teh Tarik", keys: ["tea","teh","teh tarik"], kcal: 180, p: 4, c: 28, f: 5 },
+      { name: "Bubble Tea", keys: ["bubble tea","boba"], kcal: 380, p: 4, c: 75, f: 8 },
+      { name: "Isotonic Drink (500ml)", keys: ["sports drink","isotonic"], kcal: 120, p: 0, c: 30, f: 0 }
     ];
+
+    // ==============================
+    // SG matcher helpers
+    // ==============================
+    const normalize = (s) => (s || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g," ")
+      .replace(/\s+/g," ")
+      .trim();
+
+    function bestDbMatch(label) {
+      const q = normalize(label);
+      let best = null, bestScore = 0;
+
+      for (const row of MACRO_DB) {
+        for (const k of row.keys) {
+          const key = normalize(k);
+          const score = similarity(q, key);
+          if (score > bestScore) { bestScore = score; best = row; }
+        }
+      }
+      return { best, bestScore };
+    }
+
+    // Dice coefficient on bigrams for quick matching
+    function similarity(a, b) {
+      a = normalize(a); b = normalize(b);
+      if (!a || !b) return 0;
+      if (a === b) return 1;
+      const bigrams = (str) => {
+        const arr = [];
+        for (let i=0;i<str.length-1;i++) arr.push(str.slice(i,i+2));
+        return arr;
+      };
+      const A = bigrams(a), B = bigrams(b);
+      const map = new Map();
+      A.forEach(x => map.set(x, (map.get(x)||0)+1));
+      let inter = 0;
+      B.forEach(x => {
+        const c = map.get(x)||0;
+        if (c>0) { inter++; map.set(x,c-1); }
+      });
+      return (2*inter)/(A.length+B.length);
+    }
+
+    function heuristicMacros(label) {
+      // Conservative fallback if DB match is weak
+      const s = normalize(label);
+      // defaults
+      let kcal = 500, p=20, c=60, f=15;
+
+      if (s.includes("rice")) { kcal=650; p=25; c=85; f=18; }
+      if (s.includes("noodle") || s.includes("noodles")) { kcal=620; p=22; c=80; f=18; }
+      if (s.includes("fried")) { kcal += 120; f += 8; }
+      if (s.includes("soup")) { kcal -= 120; f -= 6; }
+      if (s.includes("salad")) { kcal=400; p=30; c=25; f=18; }
+      if (s.includes("burger")) { kcal=550; p=28; c=45; f=28; }
+      if (s.includes("pizza")) { kcal=600; p=25; c=70; f=22; }
+      if (s.includes("coffee") || s.includes("kopi") || s.includes("tea") || s.includes("teh")) { kcal=120; p=2; c=20; f=3; }
+
+      return { kcal, p, c, f };
+    }
 
     // ==============================
     // Athlete target logic
     // ==============================
     const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
-
     const ATHLETE_CARB_BASE = {
       skill:    [3.0, 5.0],
       strength: [3.0, 6.0],
       mixed:    [4.0, 7.0],
       endurance:[6.0, 10.0],
     };
-
     const SEASON_NUDGE = {
       off: { carbShift: -0.5, kcalShift: 0 },
       pre: { carbShift: +0.5, kcalShift: +100 },
       in:  { carbShift: +0.3, kcalShift: +150 },
     };
-
     const DAY_NUDGE = {
       easy: { carbShift: -0.5, kcalShift: 0 },
       normal:{ carbShift: 0.0, kcalShift: 0 },
       hard: { carbShift: +1.0, kcalShift: +250 },
       comp: { carbShift: +1.5, kcalShift: +350 },
     };
-
     const GOALS = {
       gain:     {kcalAdjust: +250, proteinGkg: [1.6, 2.2]},
       maintain: {kcalAdjust: 0,    proteinGkg: [1.4, 2.0]},
       lose:     {kcalAdjust: -500, proteinGkg: [2.3, 3.1]},
     };
-
     const AMDR_FAT = [0.20, 0.35];
 
     // ==============================
     // State
     // ==============================
-    let entries = [];       // daily logged meals
-    let mealItems = [];     // current "meal builder" items (food + drink)
+    let entries = [];
+    let mealItems = [];
     let currentImageDataUrl = null;
     let stream = null;
 
-    // last Gemini result cache
-    // { kind: "food"|"drink", dish, confidence, macros:{kcal,protein_g,carbs_g,fat_g}, portion_assumption, notes, components[] }
-    let lastGemini = null;
+    // TF model + live loop
+    let mobileNetModel = null;
+    let liveLoopRunning = false;
+    let lastLive = { label: "", prob: 0, top3: [] };
 
     // ==============================
-    // Helpers
+    // DOM helpers
     // ==============================
     const $ = (id) => document.getElementById(id);
     const round1 = (x) => Math.round(x * 10) / 10;
@@ -645,13 +659,11 @@
       const n = Number(x);
       return Number.isFinite(n) ? n : 0;
     };
-
     function escapeHtml(s) {
       return (s || "").replace(/[&<>"']/g, (c) => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
       }[c]));
     }
-
     function macroPercentages(p, c, f) {
       const pK = p * 4, cK = c * 4, fK = f * 9;
       const total = Math.max(1, pK + cK + fK);
@@ -659,66 +671,12 @@
     }
 
     function setStatus(kind, text) {
-      const el = $("detectStatus");
+      const el = $("statusBox");
       el.classList.remove("hidden","warn","ok","danger");
       if (kind === "ok") el.classList.add("ok");
       else if (kind === "danger") el.classList.add("danger");
       else el.classList.add("warn");
       el.textContent = text;
-    }
-
-    function dataUrlToBase64(dataUrl) {
-      const parts = (dataUrl || "").split(",");
-      if (parts.length < 2) return null;
-      return parts[1];
-    }
-
-    function applyPortionMultiplier(m, portion) {
-      return {
-        kcal: round1(safeNum(m.kcal) * portion),
-        protein_g: round1(safeNum(m.protein_g) * portion),
-        carbs_g: round1(safeNum(m.carbs_g) * portion),
-        fat_g: round1(safeNum(m.fat_g) * portion),
-      };
-    }
-
-    function normalizeForMatch(s) {
-      return (s || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-    }
-
-    // Basic string similarity (Dice coefficient on bigrams)
-    function diceCoeff(a, b) {
-      a = normalizeForMatch(a);
-      b = normalizeForMatch(b);
-      if (!a || !b) return 0;
-      if (a === b) return 1;
-      const bigrams = (str) => {
-        const arr = [];
-        for (let i = 0; i < str.length - 1; i++) arr.push(str.slice(i, i+2));
-        return arr;
-      };
-      const a2 = bigrams(a), b2 = bigrams(b);
-      const map = new Map();
-      a2.forEach(x => map.set(x, (map.get(x) || 0) + 1));
-      let inter = 0;
-      b2.forEach(x => {
-        const c = map.get(x) || 0;
-        if (c > 0) { inter++; map.set(x, c - 1); }
-      });
-      return (2 * inter) / (a2.length + b2.length);
-    }
-
-    function bestHawkerMatch(label) {
-      let best = { dish: HAWKER_DISHES[0], score: 0 };
-      for (const d of HAWKER_DISHES) {
-        const s = diceCoeff(label, d);
-        if (s > best.score) best = { dish: d, score: s };
-      }
-      return best;
     }
 
     // ==============================
@@ -732,18 +690,15 @@
       const lbm = weightKg * (1 - bfPercent / 100);
       return 370 + 21.6 * lbm;
     }
-
     function athleteCarbRangeGkg(athleteType, seasonPhase, dayIntensity) {
       const base = ATHLETE_CARB_BASE[athleteType] || [4.0, 7.0];
       const season = SEASON_NUDGE[seasonPhase] || { carbShift: 0, kcalShift: 0 };
       const day = DAY_NUDGE[dayIntensity] || { carbShift: 0, kcalShift: 0 };
       const shift = season.carbShift + day.carbShift;
-
       let lo = clamp(base[0] + shift, 2.0, 12.0);
       let hi = clamp(base[1] + shift, Math.max(lo + 0.5, 3.0), 12.0);
       return [round1(lo), round1(hi)];
     }
-
     function computeTargets() {
       const sex = $("sex").value;
       const age = parseFloat($("age").value || "0");
@@ -801,237 +756,254 @@
       return {
         sex, age, heightCm, weightKg,
         athleteType, seasonPhase, dayIntensity,
-        bmr: round1(bmr), tdee: round1(tdee),
         kcalTarget: round1(kcalTarget),
-        pTarget: round1(pTarget), cTarget: round1(cTarget), fTarget: round1(fTarget),
         pRange: [round1(pLo), round1(pHi)],
         cRange: [round1(cLo), round1(cHi)],
+        fTarget: round1(fTarget),
         fatRatioPct: round1(fatRatio * 100),
-        eqLabel: (eq === "mifflin") ? "Mifflin-St Jeor" : "Katch-McArdle",
-        bf: (eq === "katch") ? bf : null,
-        activityLabel: $("activity").options[$("activity").selectedIndex].textContent,
-        goalLabel: $("goal").options[$("goal").selectedIndex].textContent,
       };
     }
 
     // ==============================
-    // Camera
+    // Camera + live AI
     // ==============================
+    async function loadModelIfNeeded() {
+      if (mobileNetModel) return;
+      setStatus("warn", "Loading AI model (first time may take a bit)...");
+      mobileNetModel = await mobilenet.load({ version: 2, alpha: 1.0 });
+      setStatus("ok", "AI model loaded. Start camera.");
+    }
+
     async function startCamera() {
+      await loadModelIfNeeded();
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
         $("video").srcObject = stream;
+
+        // resize overlay canvas once video metadata is ready
+        $("video").onloadedmetadata = () => {
+          resizeOverlay();
+          if (!liveLoopRunning) {
+            liveLoopRunning = true;
+            liveLoop();
+          }
+        };
       } catch (e) {
         alert("Camera error: " + e.message + "\nTry HTTPS + permissions, or use Upload.");
       }
     }
 
     function stopCamera() {
+      liveLoopRunning = false;
       if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
       $("video").srcObject = null;
+      clearOverlay();
+      $("liveLabelBadge").textContent = "—";
+      $("liveConf").textContent = "—";
     }
 
+    function resizeOverlay() {
+      const v = $("video");
+      const c = $("overlayCanvas");
+      if (!v.videoWidth) return;
+      c.width = v.videoWidth;
+      c.height = v.videoHeight;
+      c.style.width = v.clientWidth + "px";
+      c.style.height = v.clientHeight + "px";
+    }
+
+    function clearOverlay() {
+      const c = $("overlayCanvas");
+      const ctx = c.getContext("2d");
+      ctx.clearRect(0, 0, c.width, c.height);
+    }
+
+    function drawOverlay(label, prob, mappedName, source) {
+      const c = $("overlayCanvas");
+      const ctx = c.getContext("2d");
+      ctx.clearRect(0,0,c.width,c.height);
+
+      const w = c.width, h = c.height;
+      const pad = 18;
+
+      const confPct = Math.round(prob * 100);
+      const line1 = `${label} (${confPct}%)`;
+      const line2 = mappedName ? `→ ${mappedName} [${source}]` : "";
+
+      ctx.save();
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = "#111827";
+      ctx.fillRect(0, 0, w, 70);
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 22px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillText(line1, pad, 30);
+
+      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillStyle = "#e5e7eb";
+      ctx.fillText(line2, pad, 55);
+
+      ctx.restore();
+    }
+
+    async function liveLoop() {
+      if (!liveLoopRunning) return;
+      const v = $("video");
+      if (!v || !v.videoWidth || !mobileNetModel) {
+        requestAnimationFrame(liveLoop);
+        return;
+      }
+
+      try {
+        // classify current frame
+        const preds = await mobileNetModel.classify(v, 3);
+        if (preds && preds.length) {
+          const top = preds[0];
+          lastLive = {
+            label: top.className,
+            prob: top.probability,
+            top3: preds.map(p => ({label:p.className, prob:p.probability}))
+          };
+
+          const liveLabel = top.className;
+          const liveProb = top.probability;
+
+          // Try match to SG DB for better on-screen suggestion
+          const match = bestDbMatch(liveLabel);
+          let mappedName = "";
+          let source = "";
+          if (match.best && match.bestScore >= 0.35) {
+            mappedName = match.best.name;
+            source = "SG DB";
+          } else {
+            // if no good db match, show heuristic category
+            const h = heuristicMacros(liveLabel);
+            mappedName = "Generic estimate";
+            source = "Heuristic";
+          }
+
+          $("liveLabelBadge").textContent = liveLabel;
+          $("liveConf").textContent = `Confidence: ${Math.round(liveProb*100)}%`;
+          drawOverlay(liveLabel, liveProb, mappedName, source);
+        }
+      } catch (e) {
+        // ignore transient errors
+      }
+
+      // run at a manageable cadence
+      setTimeout(() => requestAnimationFrame(liveLoop), 650);
+    }
+
+    // ==============================
+    // Capture snapshot / upload
+    // ==============================
     function setPreview(dataUrl) {
       currentImageDataUrl = dataUrl;
       $("previewImg").src = dataUrl;
       $("previewImg").classList.remove("hidden");
       $("noPreview").classList.add("hidden");
-
-      lastGemini = null;
-      $("applyGeminiBtn").disabled = true;
-      $("detectStatus").classList.add("hidden");
-      $("lastGeminiMeta").textContent = "No Gemini result yet.";
-      $("lastTypeBadge").textContent = "—";
-      $("lastTypeBadge").className = "badge bg-gray-100 text-gray-900";
+      $("statusBox").classList.add("hidden");
+      $("metaLine").textContent = "Ready. Click ‘Estimate macros from snapshot’ by snapping (auto) or edit manually.";
     }
 
-    function snapPhoto() {
-      const video = $("video");
-      if (!video || !video.videoWidth) {
-        alert("Camera not ready. Start camera first, or upload an image.");
+    async function snapPhoto() {
+      const v = $("video");
+      if (!v || !v.videoWidth) {
+        setStatus("warn", "Camera not ready. Start camera first, or upload an image.");
         return;
       }
-      const canvas = $("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      setPreview(canvas.toDataURL("image/jpeg", 0.85));
+      const canvas = $("captureCanvas");
+      canvas.width = v.videoWidth;
+      canvas.height = v.videoHeight;
+      canvas.getContext("2d").drawImage(v, 0, 0);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      setPreview(dataUrl);
+
+      // On snap: use last live detection as label, estimate macros
+      await estimateFromLabel(lastLive.label, lastLive.prob);
     }
 
     function handleUpload(file) {
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => setPreview(reader.result);
+      reader.onload = async () => {
+        setPreview(reader.result);
+        // For upload: try classify the uploaded image using the model on an <img>
+        await estimateFromUploadedImage();
+      };
       reader.readAsDataURL(file);
     }
 
-    // ==============================
-    // Gemini prompt: food vs drink
-    // ==============================
-    function buildGeminiPrompt(kind) {
-      const isDrink = kind === "drink";
-      return `
-You are an expert Singapore sports nutrition assistant for athletes.
-Look at the image and estimate the ${isDrink ? "DRINK" : "FOOD"} in Singapore context.
+    async function estimateFromUploadedImage() {
+      await loadModelIfNeeded();
+      const img = new Image();
+      img.src = currentImageDataUrl;
+      await new Promise(res => img.onload = res);
 
-Return STRICT JSON ONLY (no markdown, no extra text):
-{
-  "kind": "${isDrink ? "drink" : "food"}",
-  "dish": string,
-  "confidence": number,              // 0..1
-  "candidates": string[],            // up to 5
-  "notes": string,                   // short: visible cues + SG terms
-  "portion_assumption": string,      // e.g., "1 hawker serving", "1 cup", "500ml bottle"
-  "components": string[],            // up to 8 (for cai fan: list visible items)
-  "macros": {
-    "kcal": number,
-    "protein_g": number,
-    "carbs_g": number,
-    "fat_g": number
-  }
-}
-
-Rules:
-- Use Singapore names.
-- For drinks: be specific: Kopi, Kopi C, Teh Tarik, Milo, bubble tea, isotonic drink, soy milk, etc.
-- If unclear, keep confidence low and give candidates.
-- Macros must be plausible and internally consistent.
-      `.trim();
-    }
-
-    async function geminiDetect(kind) {
-      if (!currentImageDataUrl) { alert("No photo yet. Snap or upload first."); return; }
-
-      const proxyUrl = ($("proxyUrl").value || "").trim();
-      if (!proxyUrl) { setStatus("warn", "Please paste your Proxy URL first."); return; }
-
-      const model = ($("geminiModel").value || "gemini-2.0-flash").trim();
-      const imageBase64 = dataUrlToBase64(currentImageDataUrl);
-      const mimeType = "image/jpeg";
-      const prompt = buildGeminiPrompt(kind);
-
-      $("applyGeminiBtn").disabled = true;
-      lastGemini = null;
-
-      setStatus("warn", `Calling Gemini for ${kind.toUpperCase()}…`);
-
-      try {
-        const r = await fetch(proxyUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageBase64, mimeType, prompt, model })
-        });
-        if (!r.ok) throw new Error(`Proxy error ${r.status}`);
-
-        const obj = await r.json();
-        if (obj?.error) {
-          setStatus("warn", `Gemini/proxy error: ${obj.error}`);
-          return;
-        }
-
-        const dish = (obj?.dish || "").toString().trim();
-        if (!dish) {
-          setStatus("warn", "No dish returned. Try clearer image / angle.");
-          return;
-        }
-
-        // normalize
-        lastGemini = {
-          kind: kind,
-          dish,
-          confidence: safeNum(obj?.confidence),
-          candidates: Array.isArray(obj?.candidates) ? obj.candidates.slice(0,5).map(String) : [],
-          notes: (obj?.notes || "").toString().trim(),
-          portion_assumption: (obj?.portion_assumption || "").toString().trim(),
-          components: Array.isArray(obj?.components) ? obj.components.slice(0,8).map(String) : [],
-          macros: {
-            kcal: safeNum(obj?.macros?.kcal),
-            protein_g: safeNum(obj?.macros?.protein_g),
-            carbs_g: safeNum(obj?.macros?.carbs_g),
-            fat_g: safeNum(obj?.macros?.fat_g),
-          }
-        };
-
-        const conf = lastGemini.confidence;
-        const thresh = parseFloat($("confThresh").value || "0.6");
-        const confPct = Math.round(conf * 100);
-
-        // badge
-        $("lastTypeBadge").textContent = kind === "drink" ? "🥤 Drink" : "🍽️ Food";
-        $("lastTypeBadge").className = kind === "drink"
-          ? "badge bg-blue-100 text-blue-800"
-          : "badge bg-orange-100 text-orange-800";
-
-        const baseMsg =
-          `Gemini (${kind}) suggests: "${lastGemini.dish}" (${confPct}%). Portion: ${lastGemini.portion_assumption || "assumed"}.` +
-          (lastGemini.notes ? ` Notes: ${lastGemini.notes}` : "") +
-          (lastGemini.candidates?.length ? ` Candidates: ${lastGemini.candidates.join(", ")}.` : "");
-
-        if (conf < thresh) {
-          setStatus("danger", `⚠️ Low confidence (below ${thresh.toFixed(2)}). Please confirm/edit. ${baseMsg}`);
-        } else {
-          setStatus("ok", baseMsg);
-        }
-
-        // Put estimate into item editor (scaled by portion)
-        const portion = parseFloat($("portion").value || "1.0");
-        const scaled = applyPortionMultiplier(lastGemini.macros, portion);
-        $("itemLabel").value = lastGemini.dish;
-        $("itemKcal").value = Math.max(0, Math.round(scaled.kcal));
-        $("itemP").value = Math.max(0, round1(scaled.protein_g));
-        $("itemC").value = Math.max(0, round1(scaled.carbs_g));
-        $("itemF").value = Math.max(0, round1(scaled.fat_g));
-
-        $("lastGeminiMeta").textContent =
-          `Last Gemini (${kind}) • ${confPct}% • ${lastGemini.portion_assumption || "1 serving"} • components: ${lastGemini.components?.length ? lastGemini.components.join(", ") : "—"}`;
-
-        $("applyGeminiBtn").disabled = false;
-
-        // AUTO-MATCH TO HAWKER LIST (only for FOOD)
-        if (kind === "food") {
-          autoMatchHawkerFromLabel(lastGemini.dish);
-        }
-
-      } catch (e) {
-        setStatus("warn", "Detection failed: " + e.message);
-      }
-    }
-
-    function autoMatchHawkerFromLabel(label) {
-      const match = bestHawkerMatch(label);
-      // select
-      const sel = $("hawkerPick");
-      for (let i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value === match.dish) { sel.selectedIndex = i; break; }
-      }
-      // small status note (without overriding main detect status)
-      const scorePct = Math.round(match.score * 100);
-      if (scorePct >= 55) {
-        setStatus("ok", `Hawker auto-match: "${match.dish}" (${scorePct}% similarity). You can change it if needed.`);
-      } else {
-        setStatus("danger", `Hawker auto-match is weak (${scorePct}%). Please pick from list manually.`);
-      }
-    }
-
-    function aiMatchToHawkerList() {
-      if (!lastGemini || lastGemini.kind !== "food") {
-        setStatus("warn", "No FOOD detection found. Please run 'Detect FOOD' first.");
+      const preds = await mobileNetModel.classify(img, 3);
+      const top = preds?.[0];
+      if (!top) {
+        setStatus("warn", "Could not detect from uploaded image. Please type food name + macros manually.");
         return;
       }
-      autoMatchHawkerFromLabel(lastGemini.dish);
+      lastLive = { label: top.className, prob: top.probability, top3: preds.map(p => ({label:p.className, prob:p.probability})) };
+      $("liveLabelBadge").textContent = top.className;
+      $("liveConf").textContent = `Confidence: ${Math.round(top.probability*100)}%`;
+      await estimateFromLabel(top.className, top.probability);
+    }
+
+    async function estimateFromLabel(label, prob) {
+      const portion = parseFloat($("portion").value || "1.0");
+
+      const m = bestDbMatch(label);
+      let finalName = label;
+      let macros = null;
+      let source = "";
+
+      if (m.best && m.bestScore >= 0.35) {
+        finalName = m.best.name;
+        macros = { kcal: m.best.kcal, p: m.best.p, c: m.best.c, f: m.best.f };
+        source = `SG DB match (${Math.round(m.bestScore*100)}%)`;
+      } else {
+        macros = heuristicMacros(label);
+        source = "Heuristic estimate (no strong DB match)";
+      }
+
+      // scale by portion
+      macros = {
+        kcal: Math.round(macros.kcal * portion),
+        p: round1(macros.p * portion),
+        c: round1(macros.c * portion),
+        f: round1(macros.f * portion),
+      };
+
+      $("itemLabel").value = finalName;
+      $("itemKcal").value = macros.kcal;
+      $("itemP").value = macros.p;
+      $("itemC").value = macros.c;
+      $("itemF").value = macros.f;
+
+      const confPct = Math.round((prob || 0) * 100);
+      $("metaLine").textContent = `Detected: "${label}" (${confPct}%). ${source}. You can edit name/macros.`;
+      if ((prob || 0) < 0.45) {
+        setStatus("danger", `Low confidence (${confPct}%). Please confirm/edit. ${source}`);
+      } else {
+        setStatus("ok", `Estimated from "${label}" (${confPct}%). ${source}`);
+      }
     }
 
     // ==============================
-    // Meal builder (items)
+    // Meal builder
     // ==============================
     function sumMealItems() {
       return mealItems.reduce((acc, it) => {
-        acc.kcal += it.macros.kcal;
-        acc.protein += it.macros.protein;
-        acc.carbs += it.macros.carbs;
-        acc.fat += it.macros.fat;
+        acc.kcal += it.kcal;
+        acc.p += it.p;
+        acc.c += it.c;
+        acc.f += it.f;
         return acc;
-      }, {kcal:0, protein:0, carbs:0, fat:0});
+      }, {kcal:0, p:0, c:0, f:0});
     }
 
     function renderMealItems() {
@@ -1039,26 +1011,17 @@ Rules:
       list.innerHTML = "";
 
       if (!mealItems.length) {
-        list.innerHTML = `<div class="text-sm text-gray-500">No items yet. Detect food/drink or pick from hawker list, then “Add item”.</div>`;
+        list.innerHTML = `<div class="text-sm text-gray-500">No items yet. Snap/upload or type manually, then “Add item”.</div>`;
       } else {
         mealItems.forEach((it, idx) => {
-          const badge = it.kind === "drink"
-            ? `<span class="badge bg-blue-100 text-blue-800">🥤 Drink</span>`
-            : `<span class="badge bg-orange-100 text-orange-800">🍽️ Food</span>`;
-
-          const conf = (it.gemini?.confidence != null) ? Math.round(it.gemini.confidence * 100) : null;
-
           const row = document.createElement("div");
           row.className = "bg-white border rounded-xl p-3 flex items-start gap-3";
           row.innerHTML = `
             <div class="flex-1">
-              <div class="font-extrabold">${badge} ${escapeHtml(it.label)}</div>
-              <div class="text-xs text-gray-500">
-                Portion x${it.portion.toFixed(1)}
-                ${conf != null ? ` • Gemini ${conf}%` : ` • Manual/Hawker`}
-              </div>
+              <div class="font-extrabold">${escapeHtml(it.label)}</div>
+              <div class="text-xs text-gray-500">From: ${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
               <div class="text-sm mono font-bold mt-1">
-                ${it.macros.kcal} kcal | P ${it.macros.protein}g | C ${it.macros.carbs}g | F ${it.macros.fat}g
+                ${it.kcal} kcal | P ${it.p}g | C ${it.c}g | F ${it.f}g
               </div>
             </div>
             <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
@@ -1074,38 +1037,36 @@ Rules:
           });
         });
       }
-
       updateMealSums();
     }
 
     function updateMealSums() {
       const t = sumMealItems();
       $("mealSumKcal").textContent = round1(t.kcal);
-      $("mealSumP").textContent = round1(t.protein);
-      $("mealSumC").textContent = round1(t.carbs);
-      $("mealSumF").textContent = round1(t.fat);
+      $("mealSumP").textContent = round1(t.p);
+      $("mealSumC").textContent = round1(t.c);
+      $("mealSumF").textContent = round1(t.f);
       render();
     }
 
     function addItem() {
       const label = ($("itemLabel").value || "").trim();
-      if (!label) { alert("Please enter an item label (food/drink)."); return; }
+      if (!label) { alert("Please enter a food name."); return; }
 
       const portion = parseFloat($("portion").value || "1.0");
-      let kcal = clamp(safeNum($("itemKcal").value), 0, 5000);
-      let p = clamp(safeNum($("itemP").value), 0, 400);
-      let c = clamp(safeNum($("itemC").value), 0, 700);
-      let f = clamp(safeNum($("itemF").value), 0, 300);
+      const kcal = clamp(safeNum($("itemKcal").value), 0, 5000);
+      const p = clamp(safeNum($("itemP").value), 0, 400);
+      const c = clamp(safeNum($("itemC").value), 0, 700);
+      const f = clamp(safeNum($("itemF").value), 0, 300);
 
-      const kind = lastGemini?.kind || "food";
-      const gem = lastGemini ? { dish: lastGemini.dish, confidence: lastGemini.confidence } : null;
+      const confPct = Math.round((lastLive.prob || 0) * 100);
+      const source = (label && bestDbMatch(label).best) ? "SG DB/Heuristic" : "Manual";
 
       mealItems.push({
-        kind,
-        label,
+        label, kcal, p, c, f,
         portion,
-        macros: { kcal: round1(kcal), protein: round1(p), carbs: round1(c), fat: round1(f) },
-        gemini: gem
+        confPct,
+        source: source
       });
 
       $("itemLabel").value = "";
@@ -1113,25 +1074,9 @@ Rules:
       $("itemP").value = 0;
       $("itemC").value = 0;
       $("itemF").value = 0;
+      $("metaLine").textContent = "Item added. You can snap again for next item.";
 
-      $("applyGeminiBtn").disabled = true;
       renderMealItems();
-    }
-
-    function addHawkerSelectedAsItem() {
-      const dish = $("hawkerPick").value;
-      // We don't have a reliable macro DB in this static file; we set 0 and prompt user to detect / edit.
-      // If you want: we can add a small local macro database later.
-      $("itemLabel").value = dish;
-      $("itemKcal").value = 0;
-      $("itemP").value = 0;
-      $("itemC").value = 0;
-      $("itemF").value = 0;
-      lastGemini = { kind: "food", dish: dish, confidence: null, macros: {kcal:0,protein_g:0,carbs_g:0,fat_g:0} };
-      $("lastTypeBadge").textContent = "🍽️ Food";
-      $("lastTypeBadge").className = "badge bg-orange-100 text-orange-800";
-      $("lastGeminiMeta").textContent = "Hawker list selection (no macros yet) — run Detect FOOD for an estimate or enter macros manually.";
-      setStatus("warn", "Hawker dish selected. Now run 'Detect FOOD' for macro estimate, or fill macros manually, then Add item.");
     }
 
     function clearMeal() {
@@ -1141,11 +1086,10 @@ Rules:
     }
 
     function finalizeMealToLog() {
-      if (!mealItems.length) { alert("No meal items yet. Add food/drink items first."); return; }
+      if (!mealItems.length) { alert("No meal items yet. Add items first."); return; }
 
       const mealSlot = $("mealSlot").value;
       const notes = ($("mealNotes").value || "").trim();
-
       const sum = sumMealItems();
 
       const label = mealItems.length === 1
@@ -1159,7 +1103,7 @@ Rules:
         notes,
         imgDataUrl: currentImageDataUrl,
         items: mealItems.map(i => ({...i})),
-        macros: { kcal: round1(sum.kcal), protein: round1(sum.protein), carbs: round1(sum.carbs), fat: round1(sum.fat) }
+        macros: { kcal: round1(sum.kcal), p: round1(sum.p), c: round1(sum.c), f: round1(sum.f) }
       });
 
       mealItems = [];
@@ -1176,11 +1120,11 @@ Rules:
     function calcTotals() {
       return entries.reduce((acc, e) => {
         acc.kcal += e.macros.kcal;
-        acc.protein += e.macros.protein;
-        acc.carbs += e.macros.carbs;
-        acc.fat += e.macros.fat;
+        acc.p += e.macros.p;
+        acc.c += e.macros.c;
+        acc.f += e.macros.f;
         return acc;
-      }, {kcal:0, protein:0, carbs:0, fat:0});
+      }, {kcal:0, p:0, c:0, f:0});
     }
 
     function adequacyLabel(value, lo, hi) {
@@ -1194,73 +1138,64 @@ Rules:
       const totals = calcTotals();
 
       $("totKcal").textContent = round1(totals.kcal);
-      $("totP").textContent = round1(totals.protein);
-      $("totC").textContent = round1(totals.carbs);
-      $("totF").textContent = round1(totals.fat);
+      $("totP").textContent = round1(totals.p);
+      $("totC").textContent = round1(totals.c);
+      $("totF").textContent = round1(totals.f);
 
       const deltaK = round1(totals.kcal - targets.kcalTarget);
       $("deltaKcal").textContent = (deltaK >= 0 ? "+" : "") + deltaK;
 
-      const pVer = adequacyLabel(totals.protein, targets.pRange[0], targets.pRange[1]);
-      const cVer = adequacyLabel(totals.carbs, targets.cRange[0], targets.cRange[1]);
+      const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
+      const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
 
       const fatTarget = targets.fTarget;
       const fatTol = Math.max(10, 0.15 * fatTarget);
       let fVer = "On target-ish";
-      if (Math.abs(totals.fat - fatTarget) > fatTol) fVer = (totals.fat > fatTarget) ? "High" : "Low";
+      if (Math.abs(totals.f - fatTarget) > fatTol) fVer = (totals.f > fatTarget) ? "High" : "Low";
 
       $("verP").textContent = `${pVer} (target ${targets.pRange[0]}–${targets.pRange[1]} g)`;
       $("verC").textContent = `${cVer} (target ${targets.cRange[0]}–${targets.cRange[1]} g)`;
       $("verF").textContent = `${fVer} (target ~${targets.fTarget} g; fat AMDR ${targets.fatRatioPct}% kcal)`;
 
-      // meal table
       const bySlot = {};
-      MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, protein:0, carbs:0, fat:0});
+      MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
       entries.forEach(e => {
         bySlot[e.mealSlot].kcal += e.macros.kcal;
-        bySlot[e.mealSlot].protein += e.macros.protein;
-        bySlot[e.mealSlot].carbs += e.macros.carbs;
-        bySlot[e.mealSlot].fat += e.macros.fat;
+        bySlot[e.mealSlot].p += e.macros.p;
+        bySlot[e.mealSlot].c += e.macros.c;
+        bySlot[e.mealSlot].f += e.macros.f;
       });
 
       const tbody = $("mealTableBody");
       tbody.innerHTML = "";
       MEAL_SLOTS.forEach(slot => {
         const t = bySlot[slot];
-        const pct = macroPercentages(t.protein, t.carbs, t.fat);
+        const pct = macroPercentages(t.p, t.c, t.f);
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td class="p-3 border-b font-semibold">${slot}</td>
           <td class="p-3 border-b text-center mono">${round1(t.kcal)}</td>
-          <td class="p-3 border-b text-center mono">${round1(t.protein)}</td>
-          <td class="p-3 border-b text-center mono">${round1(t.carbs)}</td>
-          <td class="p-3 border-b text-center mono">${round1(t.fat)}</td>
+          <td class="p-3 border-b text-center mono">${round1(t.p)}</td>
+          <td class="p-3 border-b text-center mono">${round1(t.c)}</td>
+          <td class="p-3 border-b text-center mono">${round1(t.f)}</td>
           <td class="p-3 border-b text-center mono">${pct.p}/${pct.c}/${pct.f}</td>
         `;
         tbody.appendChild(tr);
       });
 
-      // logged entries list with nested items
       const list = $("entriesList");
       list.innerHTML = "";
       entries.forEach((e, idx) => {
+        const itemsHtml = (e.items || []).map((it) => `
+          <div class="border rounded-lg p-2 bg-gray-50">
+            <div class="text-sm font-bold">${escapeHtml(it.label)}</div>
+            <div class="text-xs text-gray-500">${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
+            <div class="text-xs mono font-bold mt-1">${it.kcal} kcal | P ${it.p} C ${it.c} F ${it.f}</div>
+          </div>
+        `).join("");
+
         const card = document.createElement("div");
         card.className = "border rounded-xl p-3 flex gap-3 items-start";
-
-        const itemsHtml = (e.items || []).map((it) => {
-          const badge = it.kind === "drink"
-            ? `<span class="badge bg-blue-100 text-blue-800">🥤 Drink</span>`
-            : `<span class="badge bg-orange-100 text-orange-800">🍽️ Food</span>`;
-          const conf = (it.gemini?.confidence != null) ? Math.round(it.gemini.confidence * 100) : null;
-          return `
-            <div class="border rounded-lg p-2 bg-gray-50">
-              <div class="text-sm font-bold">${badge} ${escapeHtml(it.label)}</div>
-              <div class="text-xs text-gray-500">${conf != null ? `Gemini ${conf}%` : "Manual/Hawker"} • portion x${it.portion.toFixed(1)}</div>
-              <div class="text-xs mono font-bold mt-1">${it.macros.kcal} kcal | P ${it.macros.protein} C ${it.macros.carbs} F ${it.macros.fat}</div>
-            </div>
-          `;
-        }).join("");
-
         card.innerHTML = `
           <div class="thumb w-24 h-24 bg-gray-100 flex-shrink-0">
             ${e.imgDataUrl ? `<img src="${e.imgDataUrl}" class="w-full h-full object-cover" alt="thumb">` : ""}
@@ -1268,7 +1203,7 @@ Rules:
           <div class="flex-1">
             <div class="font-extrabold">${e.mealSlot} — ${escapeHtml(e.label)}</div>
             <div class="text-sm mt-1 mono font-bold">
-              ${e.macros.kcal} kcal | P ${e.macros.protein}g | C ${e.macros.carbs}g | F ${e.macros.fat}g
+              ${e.macros.kcal} kcal | P ${e.macros.p}g | C ${e.macros.c}g | F ${e.macros.f}g
             </div>
             ${e.notes ? `<div class="text-xs text-gray-600 mt-1">Notes: ${escapeHtml(e.notes)}</div>` : ""}
             <div class="mt-2 space-y-2">${itemsHtml || ""}</div>
@@ -1314,23 +1249,23 @@ Rules:
       y += 18;
       doc.setTextColor(0);
 
+      const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
+      const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
+      const fatTol = Math.max(10, 0.15 * targets.fTarget);
+      const fVer = (Math.abs(totals.f - targets.fTarget) <= fatTol) ? "On target-ish" : (totals.f > targets.fTarget ? "High" : "Low");
+
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.text("Daily Intake vs Targets", margin, y); y += 8;
-
-      const pVer = adequacyLabel(totals.protein, targets.pRange[0], targets.pRange[1]);
-      const cVer = adequacyLabel(totals.carbs, targets.cRange[0], targets.cRange[1]);
-      const fatTol = Math.max(10, 0.15 * targets.fTarget);
-      const fVer = (Math.abs(totals.fat - targets.fTarget) <= fatTol) ? "On target-ish" : (totals.fat > targets.fTarget ? "High" : "Low");
 
       doc.autoTable({
         startY: y + 10,
         head: [["Metric", "Intake", "Target / Range", "Verdict"]],
         body: [
           ["Calories (kcal)", round1(totals.kcal).toString(), targets.kcalTarget.toString(), ""],
-          ["Protein (g)", round1(totals.protein).toString(), `${targets.pRange[0]}–${targets.pRange[1]}`, pVer],
-          ["Carbs (g)", round1(totals.carbs).toString(), `${targets.cRange[0]}–${targets.cRange[1]}`, cVer],
-          ["Fat (g)", round1(totals.fat).toString(), `${targets.fTarget} (fat AMDR ${targets.fatRatioPct}% kcal)`, fVer],
+          ["Protein (g)", round1(totals.p).toString(), `${targets.pRange[0]}–${targets.pRange[1]}`, pVer],
+          ["Carbs (g)", round1(totals.c).toString(), `${targets.cRange[0]}–${targets.cRange[1]}`, cVer],
+          ["Fat (g)", round1(totals.f).toString(), `${targets.fTarget} (fat AMDR ${targets.fatRatioPct}% kcal)`, fVer],
         ],
         margin: { left: margin, right: margin },
         styles: { font: "helvetica", fontSize: 9 },
@@ -1341,12 +1276,12 @@ Rules:
 
       // Macrodistribution
       const bySlot = {};
-      MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, protein:0, carbs:0, fat:0});
+      MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
       entries.forEach(e => {
         bySlot[e.mealSlot].kcal += e.macros.kcal;
-        bySlot[e.mealSlot].protein += e.macros.protein;
-        bySlot[e.mealSlot].carbs += e.macros.carbs;
-        bySlot[e.mealSlot].fat += e.macros.fat;
+        bySlot[e.mealSlot].p += e.macros.p;
+        bySlot[e.mealSlot].c += e.macros.c;
+        bySlot[e.mealSlot].f += e.macros.f;
       });
 
       if (y > pageH - 220) { doc.addPage(); y = margin; }
@@ -1357,8 +1292,8 @@ Rules:
 
       const mealRows = MEAL_SLOTS.map(slot => {
         const t = bySlot[slot];
-        const pct = macroPercentages(t.protein, t.carbs, t.fat);
-        return [slot, round1(t.kcal), round1(t.protein), round1(t.carbs), round1(t.fat), `${pct.p}/${pct.c}/${pct.f}`];
+        const pct = macroPercentages(t.p, t.c, t.f);
+        return [slot, round1(t.kcal), round1(t.p), round1(t.c), round1(t.f), `${pct.p}/${pct.c}/${pct.f}`];
       });
 
       doc.autoTable({
@@ -1372,7 +1307,7 @@ Rules:
 
       doc.setFontSize(9);
       doc.setTextColor(120);
-      doc.text("© " + new Date().getFullYear() + " Ng Jun Wei & Ng Hong Wei. All rights reserved.", margin, pageH - 24);
+      doc.text(`© ${new Date().getFullYear()} Ng Jun Wei & Ng Hong Wei. Developed by Jun Wei and tested by Hong Wei. Created by Ng Brothers.`, margin, pageH - 24);
       doc.setTextColor(0);
 
       doc.save(`MacroVision_Athlete_Report_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"")}.pdf`);
@@ -1381,17 +1316,6 @@ Rules:
     // ==============================
     // Events / Init
     // ==============================
-    function populateHawkerList() {
-      const sel = $("hawkerPick");
-      sel.innerHTML = "";
-      HAWKER_DISHES.forEach(d => {
-        const opt = document.createElement("option");
-        opt.value = d;
-        opt.textContent = d;
-        sel.appendChild(opt);
-      });
-    }
-
     function bindEvents() {
       $("equation").addEventListener("change", () => {
         $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
@@ -1412,34 +1336,21 @@ Rules:
       $("snapBtn").addEventListener("click", snapPhoto);
       $("uploadInput").addEventListener("change", (e) => handleUpload(e.target.files[0]));
 
-      $("detectFoodBtn").addEventListener("click", () => geminiDetect("food"));
-      $("detectDrinkBtn").addEventListener("click", () => geminiDetect("drink"));
-      $("applyGeminiBtn").addEventListener("click", () => {
-        // Add current item fields as item
-        addItem();
-      });
-
       $("portion").addEventListener("input", () => {
         $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
       });
 
-      $("addItemBtn").addEventListener("click", addItem);
-      $("useHawkerAsItemBtn").addEventListener("click", addHawkerSelectedAsItem);
-      $("autoMatchBtn").addEventListener("click", aiMatchToHawkerList);
+      window.addEventListener("resize", resizeOverlay);
 
+      $("addItemBtn").addEventListener("click", addItem);
       $("clearMealBtn").addEventListener("click", clearMeal);
       $("finalizeMealBtn").addEventListener("click", finalizeMealToLog);
-
       $("exportPdfBtn").addEventListener("click", exportPdf);
 
       $("clearBtn").addEventListener("click", () => {
         if (!confirm("Clear all logged meals for today?")) return;
         entries = [];
         render();
-      });
-
-      $("confThresh").addEventListener("input", () => {
-        $("confThreshLabel").textContent = parseFloat($("confThresh").value).toFixed(2);
       });
     }
 
@@ -1448,9 +1359,7 @@ Rules:
     $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
     $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
     $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
-    $("confThreshLabel").textContent = parseFloat($("confThresh").value || "0.6").toFixed(2);
 
-    populateHawkerList();
     bindEvents();
     renderMealItems();
     render();
