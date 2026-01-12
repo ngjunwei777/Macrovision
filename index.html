@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MacroVision - Ng Jun Wei</title>
 
-  <!-- Helps GitHub Pages resolve relative paths consistently -->
-  <base href="./">
-
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
-  <!-- TFJS -->
+  <!-- TFJS only (FoodSG-233 custom model is served as static files from GitHub Pages) -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 
   <!-- jsPDF + AutoTable -->
@@ -21,214 +18,531 @@
   <style>
     .card { border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
     .pill { border-radius: 999px; }
-    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    video { background:#111827; border-radius:12px; width:100%; height:18rem; object-fit:cover; }
-    .overlayWrap { position: relative; }
-    #overlayCanvas { position:absolute; inset:0; pointer-events:none; border-radius:12px; }
+    .mono { font-variant-numeric: tabular-nums; }
+    .thumb { border-radius: 12px; overflow:hidden; }
+    .small { font-size: 12px; }
     .warn { background: #fff7ed; border: 1px solid #fed7aa; }
     .ok { background: #f0fdf4; border: 1px solid #bbf7d0; }
     .danger { background:#fef2f2; border:1px solid #fecaca; }
-    .small { font-size: 12px; }
+    .badge { display:inline-flex; align-items:center; gap:.35rem; padding:.2rem .55rem; border-radius:999px; font-size:12px; font-weight:700; }
+    .hint { background:#eff6ff; border:1px solid #bfdbfe; }
+    video { background:#111827; border-radius:12px; }
+    .overlayWrap { position: relative; }
+    #overlayCanvas { position:absolute; inset:0; pointer-events:none; border-radius:12px; }
+    .stickyBar { position: sticky; top: 0; z-index: 20; }
   </style>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
 
-  <!-- NAV -->
-  <nav class="bg-white shadow-sm sticky top-0 z-20">
+  <!-- CLEAN BRAND BAR (logo + MacroVision only) -->
+  <nav class="bg-white shadow-sm stickyBar">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <!-- Food logo -->
-        <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true">
-          <defs>
-            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#fb923c"></stop>
-              <stop offset="1" stop-color="#ea580c"></stop>
-            </linearGradient>
-          </defs>
-          <path d="M20 16c0 4-6 6-6 10s6 6 6 10" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
-          <path d="M32 12c0 5-7 7-7 12s7 7 7 12" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
-          <path d="M44 16c0 4-6 6-6 10s6 6 6 10" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
-          <path d="M14 34h36c0 12-8 22-18 22S14 46 14 34z" fill="url(#g)"/>
-          <path d="M10 34h44" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
-          <path d="M18 58h28" stroke="#6b7280" stroke-width="3" stroke-linecap="round"/>
-        </svg>
-        <div>
-          <div class="font-extrabold text-lg -mb-0.5">MacroVision</div>
-          <div class="text-xs text-gray-500">FoodSG-233 • TFJS • Athlete Fueling</div>
+        <!-- Clean food logo (SVG) -->
+        <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center border">
+          <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true">
+            <defs>
+              <linearGradient id="mvG" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#fb923c"></stop>
+                <stop offset="1" stop-color="#ea580c"></stop>
+              </linearGradient>
+            </defs>
+            <!-- steam -->
+            <path d="M20 14c0 4-6 6-6 10s6 6 6 10" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
+            <path d="M32 10c0 5-7 7-7 12s7 7 7 12" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
+            <path d="M44 14c0 4-6 6-6 10s6 6 6 10" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
+            <!-- bowl -->
+            <path d="M14 34h36c0 12-8 22-18 22S14 46 14 34z" fill="url(#mvG)"/>
+            <path d="M10 34h44" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
+            <path d="M18 58h28" stroke="#6b7280" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="leading-tight">
+          <div class="font-extrabold text-lg text-gray-900">MacroVision</div>
+          <div class="text-xs text-gray-500">FoodSG-233 • Athlete Fueling • SG-Optimised</div>
         </div>
       </div>
 
-      <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill font-bold">Live</span>
+      <div class="flex items-center gap-2">
+        <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill font-bold">Live</span>
+      </div>
     </div>
   </nav>
 
   <!-- HEADER -->
   <header class="bg-gray-900 text-white">
-    <div class="max-w-7xl mx-auto px-4 py-8">
-      <h1 class="text-3xl md:text-4xl font-extrabold mb-2">📷 MacroVision</h1>
-      <p class="text-gray-300 max-w-3xl">
-        Fully in-browser food/drink recognition (no proxy) using FoodSG-233 TFJS model files hosted with your GitHub Pages site.
-        Snap multiple photos, edit detected items, log by meal timing, and export to PDF.
-      </p>
-      <div class="mt-3 text-sm text-gray-200">
-        Developed by Jun Wei and tested by Hong Wei. <span class="font-semibold">Created by Ng Brothers.</span>
+    <div class="max-w-7xl mx-auto px-4 py-10">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
+        <div>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
+              Athlete App
+            </span>
+            <span class="text-gray-300 text-sm">Singapore-optimised • FoodSG-233 • Live overlay • PDF export</span>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
+          <p class="text-gray-300 max-w-2xl">
+            Runs a custom <b>FoodSG-233</b> classifier fully in-browser (no proxy, no server) to identify foods,
+            then estimates macros using a Singapore-aware macro database + editable overrides.
+          </p>
+          <div class="mt-4 text-sm text-gray-200">
+            Developed by Jun Wei and tested by Hong Wei. <span class="font-semibold">Created by Ng Brothers.</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">FoodSG-233 TFJS</span>
+          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">SG Macro DB</span>
+          <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Athlete Report</span>
+        </div>
       </div>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
-    <!-- MODEL PATH TROUBLESHOOTER -->
-    <section class="card bg-white p-5">
-      <h2 class="text-xl font-extrabold">🧰 Model Path Troubleshooter (Fixes your labels.json 404)</h2>
-      <p class="text-sm text-gray-600 mt-1">
-        The app will auto-try multiple base paths. If all fail, your model files are not in the published Pages folder (or case mismatched).
-      </p>
-
-      <div id="modelStatus" class="mt-4 warn rounded-xl p-3 small">Model not loaded yet.</div>
-
-      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-        <div class="bg-gray-50 border rounded-lg p-2">
-          <div class="text-gray-500">Current page URL</div>
-          <div class="mono break-all" id="dbgPageUrl"></div>
+    <!-- NOTE -->
+    <section class="card p-5 bg-white">
+      <div class="warn rounded-xl p-3">
+        <div class="font-extrabold">Important</div>
+        <div class="text-sm text-gray-700 mt-1">
+          Food recognition is done by <b>FoodSG-233</b> in your browser. Macros are <b>estimates</b>
+          (portion size, oil, sugar, sauces are hard). You can always edit food name + macros before logging.
         </div>
-        <div class="bg-gray-50 border rounded-lg p-2">
-          <div class="text-gray-500">Chosen MODEL_BASE</div>
-          <div class="mono break-all" id="dbgChosenBase">—</div>
+        <div class="text-xs text-gray-600 mt-2">
+          ✅ No proxy needed. Your model files must exist at <span class="mono">/models/foodsg233/</span> in your GitHub Pages repo:
+          <span class="mono">model.json</span>, shards, and <span class="mono">labels.json</span>.
         </div>
-      </div>
-
-      <div class="mt-3 flex flex-wrap gap-2">
-        <button id="testModelBtn" type="button" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-          Test model paths now
-        </button>
-        <button id="openChosenLabelsBtn" type="button" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-          Open chosen labels.json
-        </button>
-        <button id="openChosenModelBtn" type="button" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-          Open chosen model.json
-        </button>
-      </div>
-
-      <div class="mt-3 text-xs text-gray-600">
-        Required structure (case-sensitive):
-        <span class="mono">models/foodsg233/labels.json</span>,
-        <span class="mono">models/foodsg233/model.json</span>,
-        and shard <span class="mono">.bin</span> files.
-        <br/>
-        If your GitHub Pages source is <b>/docs</b>, you must put them in:
-        <span class="mono">docs/models/foodsg233/...</span>
-      </div>
-
-      <div class="mt-4">
-        <div class="font-bold text-sm mb-2">Attempt log</div>
-        <div id="attemptLog" class="text-xs mono bg-gray-50 border rounded-xl p-3 whitespace-pre-wrap"></div>
       </div>
     </section>
 
-    <!-- CAMERA + CAPTURE -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="card bg-white p-5">
-        <h2 class="text-xl font-extrabold">📸 Camera</h2>
-        <p class="text-sm text-gray-600 mt-1">Camera works even if model fails (you can still manual-enter items).</p>
-
-        <div class="mt-4 flex gap-2">
-          <button id="startCamBtn" type="button" class="flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
-            <i class="fa fa-camera mr-2"></i>Start Camera
-          </button>
-          <button id="stopCamBtn" type="button" class="flex-1 bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200">
-            Stop
-          </button>
+    <!-- PROFILE / TDEE / ATHLETE MODE -->
+    <section class="bg-white card p-5">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 class="text-xl font-extrabold">👤 Athlete Profile → TDEE → Fueling Targets</h2>
+          <p class="text-gray-600 text-sm">
+            Targets adapt using athlete type + season + day intensity (IOC-style carb bands, ISSN-style protein ranges, AMDR fat).
+          </p>
         </div>
-
-        <div class="overlayWrap mt-3">
-          <video id="video" autoplay playsinline muted></video>
-          <canvas id="overlayCanvas"></canvas>
+        <div class="text-xs text-gray-500">
+          *General guidance, not medical advice.
         </div>
+      </div>
 
-        <div class="grid grid-cols-2 gap-2 mt-3">
-          <button id="snapBtn" type="button" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
-            📸 Snap
-          </button>
-          <label class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-center">
-            <input id="uploadInput" type="file" accept="image/*" class="hidden" />
-            ⬆️ Upload
-          </label>
-        </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-5">
+        <!-- Basics -->
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="font-bold mb-3">Basics</div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-sm">
+              <div class="text-gray-600 mb-1">Sex</div>
+              <select id="sex" class="w-full border rounded-lg px-3 py-2">
+                <option>Male</option>
+                <option>Female</option>
+              </select>
+            </label>
+            <label class="text-sm">
+              <div class="text-gray-600 mb-1">Age</div>
+              <input id="age" type="number" min="10" max="90" value="20" class="w-full border rounded-lg px-3 py-2" />
+            </label>
 
-        <canvas id="captureCanvas" class="hidden"></canvas>
-
-        <div class="mt-3 bg-gray-50 border rounded-xl p-3">
-          <div class="font-bold text-sm mb-1">Live detection</div>
-          <div class="text-sm">
-            <span class="mono font-bold" id="liveLabel">—</span>
-            <span class="mono text-gray-700 ml-2" id="liveConf">—</span>
+            <label class="text-sm">
+              <div class="text-gray-600 mb-1">Height (cm)</div>
+              <input id="heightCm" type="number" min="120" max="220" step="0.5" value="175" class="w-full border rounded-lg px-3 py-2" />
+            </label>
+            <label class="text-sm">
+              <div class="text-gray-600 mb-1">Body mass (kg)</div>
+              <input id="weightKg" type="number" min="30" max="200" step="0.5" value="75" class="w-full border rounded-lg px-3 py-2" />
+            </label>
           </div>
         </div>
 
-        <div id="camStatus" class="mt-3 warn rounded-xl p-3 small">Ready.</div>
+        <!-- Athlete mode -->
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="font-bold mb-3">Athlete Mode (IOC)</div>
+          <div class="space-y-3">
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Athlete type</div>
+              <select id="athleteType" class="w-full border rounded-lg px-3 py-2">
+                <option value="skill">Skill/Power (sprint/jumps/combat)</option>
+                <option value="mixed" selected>Mixed / Team Sport (football/basketball/rugby)</option>
+                <option value="endurance">Endurance (running/cycling/tri)</option>
+                <option value="strength">Strength/Hypertrophy (WL/BB)</option>
+              </select>
+            </label>
+
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Season phase</div>
+              <select id="seasonPhase" class="w-full border rounded-lg px-3 py-2">
+                <option value="off">Off-season</option>
+                <option value="pre" selected>Pre-season</option>
+                <option value="in">In-season</option>
+              </select>
+            </label>
+
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Training day intensity</div>
+              <select id="dayIntensity" class="w-full border rounded-lg px-3 py-2">
+                <option value="easy">Easy / skill-only day</option>
+                <option value="normal" selected>Normal training day</option>
+                <option value="hard">Hard / long / double sessions</option>
+                <option value="comp">Competition day</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <!-- Equation & activity -->
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="font-bold mb-3">Equation & Activity</div>
+          <div class="space-y-3">
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">BMR equation</div>
+              <select id="equation" class="w-full border rounded-lg px-3 py-2">
+                <option value="mifflin">Mifflin-St Jeor</option>
+                <option value="katch">Katch-McArdle (needs BF%)</option>
+              </select>
+            </label>
+
+            <label id="bfWrap" class="text-sm block hidden">
+              <div class="text-gray-600 mb-1">Estimated body fat %</div>
+              <input id="bfPercent" type="number" min="5" max="45" value="18" class="w-full border rounded-lg px-3 py-2" />
+            </label>
+
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Activity level (TDEE)</div>
+              <select id="activity" class="w-full border rounded-lg px-3 py-2">
+                <option value="1.2">Sedentary</option>
+                <option value="1.375">Light (1–3 days/wk)</option>
+                <option value="1.55">Moderate (3–5 days/wk)</option>
+                <option value="1.725" selected>Very active (6–7 days/wk)</option>
+                <option value="1.9">Athlete / heavy training</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <!-- Goal & fat pref -->
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="font-bold mb-3">Goal & Preferences</div>
+          <div class="space-y-3">
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Goal</div>
+              <select id="goal" class="w-full border rounded-lg px-3 py-2">
+                <option value="gain">Increase muscle mass</option>
+                <option value="maintain" selected>Maintain / performance</option>
+                <option value="lose">Lose body fat</option>
+              </select>
+            </label>
+
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Fat preference (% kcal) AMDR 20–35%</div>
+              <input id="fatPref" type="range" min="20" max="35" value="28" class="w-full" />
+              <div class="text-xs text-gray-600 mt-1">Selected: <span id="fatPrefLabel" class="font-semibold">28%</span></div>
+            </label>
+
+            <div class="text-xs text-gray-600 bg-white border rounded-lg p-3">
+              <div class="font-bold mb-1">How targets are set</div>
+              <div>• Carb target adapts by athlete type + season + day intensity</div>
+              <div>• Protein target adapts by goal (ISSN-style ranges)</div>
+              <div>• Fat stays within AMDR 20–35% kcal</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Minimal editor + log (kept small; you can merge with your full UI later) -->
-      <div class="card bg-white p-5">
-        <h2 class="text-xl font-extrabold">✏️ Editor (manual override)</h2>
-        <p class="text-sm text-gray-600 mt-1">If AI is wrong, edit here — this is what gets logged/exported.</p>
+      <!-- Results -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+        <div class="bg-white border rounded-xl p-3">
+          <div class="text-xs text-gray-500">BMR</div>
+          <div class="text-2xl font-extrabold mono"><span id="bmrOut">-</span> <span class="text-sm font-bold text-gray-500">kcal</span></div>
+        </div>
+        <div class="bg-white border rounded-xl p-3">
+          <div class="text-xs text-gray-500">TDEE</div>
+          <div class="text-2xl font-extrabold mono"><span id="tdeeOut">-</span> <span class="text-sm font-bold text-gray-500">kcal</span></div>
+        </div>
+        <div class="bg-white border rounded-xl p-3">
+          <div class="text-xs text-gray-500">Target kcal/day</div>
+          <div class="text-2xl font-extrabold mono"><span id="kcalTargetOut">-</span></div>
+        </div>
+        <div class="bg-white border rounded-xl p-3">
+          <div class="text-xs text-gray-500">Targets (P/C/F)</div>
+          <div class="text-sm font-bold mono">
+            P <span id="pTargetOut">-</span>g • C <span id="cTargetOut">-</span>g • F <span id="fTargetOut">-</span>g
+          </div>
+          <div class="text-xs text-gray-500 mt-1">
+            P range <span id="pRangeOut">-</span> • C range <span id="cRangeOut">-</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        <div class="mt-4 grid grid-cols-2 gap-3">
-          <label class="text-sm block">
-            <div class="text-gray-600 mb-1">Type</div>
-            <select id="itemType" class="w-full border rounded-lg px-3 py-2">
-              <option value="food" selected>Food</option>
-              <option value="drink">Drink</option>
-            </select>
-          </label>
+    <!-- CAPTURE + LOG -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          <label class="text-sm block">
-            <div class="text-gray-600 mb-1">Meal timing</div>
-            <select id="mealSlot" class="w-full border rounded-lg px-3 py-2">
-              <option>Breakfast</option>
-              <option>Snack (AM)</option>
-              <option selected>Lunch</option>
-              <option>Snack (PM)</option>
-              <option>Dinner</option>
-              <option>Pre-workout</option>
-              <option>Post-workout</option>
-            </select>
-          </label>
+      <!-- Capture -->
+      <div class="bg-white card p-5">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-extrabold">📸 FoodSG-233 Live Detection → Macro Estimate → Log</h2>
+            <p class="text-sm text-gray-600">
+              Live overlay shows predicted dish + confidence. Snap multiple items per meal (food + drink separately).
+              Then finalize meal and export PDF.
+            </p>
+          </div>
         </div>
 
-        <label class="text-sm block mt-3">
-          <div class="text-gray-600 mb-1">Name</div>
-          <input id="itemLabel" class="w-full border rounded-lg px-3 py-2" placeholder="e.g., Chicken rice, Kopi C, Protein shake" />
-        </label>
-
-        <div class="grid grid-cols-4 gap-2 mt-3">
-          <label class="text-sm block">
-            <div class="text-gray-600 mb-1">kcal</div>
-            <input id="itemKcal" type="number" value="0" class="w-full border rounded-lg px-3 py-2 mono" />
-          </label>
-          <label class="text-sm block">
-            <div class="text-gray-600 mb-1">P (g)</div>
-            <input id="itemP" type="number" value="0" class="w-full border rounded-lg px-3 py-2 mono" />
-          </label>
-          <label class="text-sm block">
-            <div class="text-gray-600 mb-1">C (g)</div>
-            <input id="itemC" type="number" value="0" class="w-full border rounded-lg px-3 py-2 mono" />
-          </label>
-          <label class="text-sm block">
-            <div class="text-gray-600 mb-1">F (g)</div>
-            <input id="itemF" type="number" value="0" class="w-full border rounded-lg px-3 py-2 mono" />
-          </label>
+        <div class="mt-4 hint rounded-xl p-3">
+          <div class="font-bold text-sm">Model paths (GitHub Pages)</div>
+          <div class="small text-gray-700 mt-1">
+            Put your TFJS model files at <span class="mono">models/foodsg233/</span> in the same repo as this HTML.
+            This page loads: <span class="mono">models/foodsg233/model.json</span> and <span class="mono">models/foodsg233/labels.json</span>.
+          </div>
         </div>
 
-        <button id="addBtn" type="button" class="w-full mt-4 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
-          ➕ Add to log
-        </button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="space-y-3">
+            <div class="flex gap-2">
+              <button id="startCamBtn" class="flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
+                <i class="fa fa-camera mr-2"></i>Start Camera
+              </button>
+              <button id="stopCamBtn" class="flex-1 bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200">
+                Stop
+              </button>
+            </div>
+
+            <div class="overlayWrap">
+              <video id="video" autoplay playsinline class="w-full h-64"></video>
+              <canvas id="overlayCanvas"></canvas>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <button id="snapBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
+                📸 Snap
+              </button>
+              <label class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-center">
+                <input id="uploadInput" type="file" accept="image/*" class="hidden" />
+                ⬆️ Upload
+              </label>
+            </div>
+
+            <canvas id="captureCanvas" class="hidden"></canvas>
+
+            <div class="bg-gray-50 rounded-xl p-3">
+              <div class="font-bold text-sm mb-1">Live detection</div>
+              <div class="text-sm">
+                <span class="badge bg-gray-100 text-gray-900" id="liveLabelBadge">—</span>
+                <span class="mono text-gray-700 ml-2" id="liveConf">—</span>
+              </div>
+              <div class="text-xs text-gray-500 mt-2">
+                Tip: closer shot + less background clutter = higher confidence.
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="font-bold">Current capture</div>
+            <div class="bg-gray-50 rounded-xl p-3">
+              <img id="previewImg" class="w-full rounded-lg hidden" alt="preview" />
+              <div id="noPreview" class="text-sm text-gray-500">No photo yet. Snap/upload to preview.</div>
+            </div>
+
+            <div id="statusBox" class="hidden rounded-xl p-3 small"></div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <label class="text-sm block">
+                <div class="text-gray-600 mb-1">Item type</div>
+                <select id="itemType" class="w-full border rounded-lg px-3 py-2">
+                  <option value="food" selected>Food</option>
+                  <option value="drink">Drink</option>
+                </select>
+              </label>
+              <label class="text-sm block">
+                <div class="text-gray-600 mb-1">Meal timing</div>
+                <select id="mealSlot" class="w-full border rounded-lg px-3 py-2">
+                  <option>Breakfast</option>
+                  <option>Snack (AM)</option>
+                  <option selected>Lunch</option>
+                  <option>Snack (PM)</option>
+                  <option>Dinner</option>
+                  <option>Pre-workout</option>
+                  <option>Post-workout</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Portion multiplier</div>
+              <input id="portion" type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full" />
+              <div class="text-xs text-gray-600 mt-1">x<span id="portionLabel" class="font-semibold">1.0</span></div>
+            </label>
+
+            <div class="bg-white border rounded-xl p-3">
+              <div class="font-bold">Item editor (always editable)</div>
+
+              <div class="mt-3 space-y-2">
+                <label class="text-sm block">
+                  <div class="text-gray-600 mb-1">Detected / selected name</div>
+                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2"
+                         placeholder="e.g., Chicken rice, Char kway teow, Kopi C, Isotonic drink" />
+                </label>
+
+                <div class="grid grid-cols-4 gap-2">
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <div class="text-xs text-gray-500">kcal</div>
+                    <input id="itemKcal" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <div class="text-xs text-gray-500">Protein (g)</div>
+                    <input id="itemP" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <div class="text-xs text-gray-500">Carbs (g)</div>
+                    <input id="itemC" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <div class="text-xs text-gray-500">Fat (g)</div>
+                    <input id="itemF" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                  </div>
+                </div>
+
+                <div class="text-xs text-gray-500" id="metaLine">No detection yet.</div>
+
+                <button id="addItemBtn" class="w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
+                  ➕ Add this item to current meal
+                </button>
+              </div>
+            </div>
+
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Meal notes (optional)</div>
+              <textarea id="mealNotes" class="w-full border rounded-lg px-3 py-2" rows="2"
+                        placeholder="e.g., extra oil, gravy heavy, added egg, shared with friend"></textarea>
+            </label>
+
+            <button id="finalizeMealBtn" class="w-full bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-gray-800">
+              ✅ Finalize meal (sum items) → Add meal to log
+            </button>
+          </div>
+        </div>
+
+        <!-- Current meal items -->
+        <div class="mt-5 bg-gray-50 rounded-xl p-4">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div class="font-extrabold">Current meal items</div>
+              <div class="text-xs text-gray-600">Add multiple items (food + drink), then finalize meal.</div>
+            </div>
+            <button id="clearMealBtn" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+              Clear meal items
+            </button>
+          </div>
+
+          <div id="mealItemsList" class="mt-3 space-y-2"></div>
+
+          <div class="grid grid-cols-4 gap-2 mt-4">
+            <div class="bg-white rounded-lg border p-2">
+              <div class="text-xs text-gray-500">Meal kcal</div>
+              <div class="font-extrabold mono" id="mealSumKcal">0</div>
+            </div>
+            <div class="bg-white rounded-lg border p-2">
+              <div class="text-xs text-gray-500">Protein</div>
+              <div class="font-extrabold mono" id="mealSumP">0</div>
+            </div>
+            <div class="bg-white rounded-lg border p-2">
+              <div class="text-xs text-gray-500">Carbs</div>
+              <div class="font-extrabold mono" id="mealSumC">0</div>
+            </div>
+            <div class="bg-white rounded-lg border p-2">
+              <div class="text-xs text-gray-500">Fat</div>
+              <div class="font-extrabold mono" id="mealSumF">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="bg-white card p-5">
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h2 class="text-xl font-extrabold">📋 Daily fueling check (athlete)</h2>
+            <p class="text-sm text-gray-600">
+              Intake vs targets + macrodistribution. Export PDF for athlete reporting.
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button id="exportPdfBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">
+              📄 Export PDF
+            </button>
+            <button id="clearBtn" class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">
+              Clear day
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+          <div class="border rounded-xl p-3">
+            <div class="text-xs text-gray-500">kcal (today)</div>
+            <div class="text-2xl font-extrabold mono" id="totKcal">0</div>
+            <div class="text-xs text-gray-500">Δ <span class="mono font-bold" id="deltaKcal">0</span></div>
+          </div>
+          <div class="border rounded-xl p-3">
+            <div class="text-xs text-gray-500">Protein (g)</div>
+            <div class="text-2xl font-extrabold mono" id="totP">0</div>
+            <div class="text-xs" id="verP"></div>
+          </div>
+          <div class="border rounded-xl p-3">
+            <div class="text-xs text-gray-500">Carbs (g)</div>
+            <div class="text-2xl font-extrabold mono" id="totC">0</div>
+            <div class="text-xs" id="verC"></div>
+          </div>
+          <div class="border rounded-xl p-3">
+            <div class="text-xs text-gray-500">Fat (g)</div>
+            <div class="text-2xl font-extrabold mono" id="totF">0</div>
+            <div class="text-xs" id="verF"></div>
+          </div>
+        </div>
 
         <div class="mt-4">
-          <div class="font-bold text-sm mb-2">Log</div>
-          <div id="log" class="space-y-2 text-sm"></div>
+          <div class="font-bold mb-2">Macrodistribution by meal timing</div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm border rounded-xl overflow-hidden">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left p-3 border-b">Meal</th>
+                  <th class="text-center p-3 border-b">kcal</th>
+                  <th class="text-center p-3 border-b">Protein</th>
+                  <th class="text-center p-3 border-b">Carbs</th>
+                  <th class="text-center p-3 border-b">Fat</th>
+                  <th class="text-center p-3 border-b">P/C/F (%)</th>
+                </tr>
+              </thead>
+              <tbody id="mealTableBody" class="bg-white"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <div class="font-bold mb-2">Logged meals (with items)</div>
+          <div id="entriesList" class="space-y-3"></div>
+        </div>
+
+        <div class="mt-6 bg-gray-50 rounded-xl p-4">
+          <div class="font-bold mb-2">🧠 Micronutrients (athlete checklist)</div>
+          <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1">
+            <li><b>Iron</b> (oxygen transport): red meat, ikan bilis, leafy greens, legumes; pair with <b>Vitamin C</b>.</li>
+            <li><b>Calcium + Vitamin D</b> (bone & muscle): dairy/tofu/small fish with bones; sunlight/fortified foods.</li>
+            <li><b>B Vitamins</b> (energy metabolism): whole grains, meats, eggs, leafy greens.</li>
+            <li><b>Magnesium + Zinc</b> (repair/immunity): nuts/seeds, seafood, meat, legumes.</li>
+            <li><b>Antioxidants</b> (Vitamins C & E): fruits/veg; nuts/seeds.</li>
+          </ul>
+        </div>
+
+        <div class="text-xs text-gray-500 mt-4">
+          Disclaimer: Food detection is AI; macros are estimates. Always sanity-check.
         </div>
       </div>
     </section>
@@ -240,384 +554,945 @@
     </div>
   </footer>
 
-<script>
-/*************************************************************
- * 1) MODEL PATH AUTO-DETECTOR (fixes labels.json 404)
- *************************************************************/
-const $ = (id) => document.getElementById(id);
-$("yearNow").textContent = new Date().getFullYear();
-$("dbgPageUrl").textContent = window.location.href;
+  <script>
+    /*************************************************************
+     * 1) MODEL LOADING (FoodSG-233 TFJS)
+     * Place your TFJS export at: models/foodsg233/
+     *   - model.json
+     *   - group1-shard*.bin
+     *   - labels.json (array of class names; same index order as model)
+     *************************************************************/
+    const MODEL_URL  = new URL("models/foodsg233/model.json",  window.location.href).toString();
+    const LABELS_URL = new URL("models/foodsg233/labels.json", window.location.href).toString();
 
-let MODEL_BASE = null;
-let MODEL_URL = null;
-let LABELS_URL = null;
+    let foodModel = null;
+    let foodLabels = null;
+    let modelInputSize = 224; // default; if your metadata differs, update here
 
-async function fetchNoStore(url) {
-  const r = await fetch(url, { cache: "no-store" });
-  return r;
-}
+    async function loadFoodSG233Model() {
+      if (foodModel && foodLabels) return;
 
-function pathFirstSegment() {
-  // /Macrovision/some/page.html -> "Macrovision"
-  const parts = window.location.pathname.split("/").filter(Boolean);
-  // For username.github.io/REPO, first segment is REPO
-  return parts.length ? parts[0] : "";
-}
+      setStatus("warn", "Loading FoodSG-233 model (first time may take a bit)...");
 
-function buildCandidates() {
-  const origin = window.location.origin;
+      const labResp = await fetch(LABELS_URL, { cache: "no-store" });
+      if (!labResp.ok) throw new Error("labels.json not found at " + LABELS_URL);
+      foodLabels = await labResp.json();
 
-  // Repo name inference for GitHub Pages: /<repo>/
-  const repo = pathFirstSegment();
-  const repoBase = repo ? `${origin}/${repo}/` : `${origin}/`;
+      foodModel = await tf.loadLayersModel(MODEL_URL);
 
-  // document.baseURI respects <base href="./"> and current folder
-  const baseURI = document.baseURI.endsWith("/") ? document.baseURI : (document.baseURI + "/");
+      tf.tidy(() => {
+        const x = tf.zeros([1, modelInputSize, modelInputSize, 3]);
+        foodModel.predict(x);
+      });
 
-  // Candidates to try (most likely first)
-  const candidates = [
-    repoBase,                 // https://.../Macrovision/
-    baseURI,                  // whatever current page folder is
-    `${origin}/`,             // user-site root / custom domain
-  ];
-
-  // de-dup
-  return [...new Set(candidates)];
-}
-
-async function detectModelBase() {
-  const candidates = buildCandidates();
-  let log = `Trying model base candidates:\n\n`;
-
-  for (const base of candidates) {
-    const labels = new URL("models/foodsg233/labels.json", base).toString();
-    const model = new URL("models/foodsg233/model.json", base).toString();
-
-    log += `BASE: ${base}\n`;
-    log += `  labels: ${labels}\n`;
-    log += `  model : ${model}\n`;
-
-    try {
-      const r1 = await fetchNoStore(labels);
-      const r2 = await fetchNoStore(model);
-
-      log += `  -> labels status: ${r1.status}\n`;
-      log += `  -> model  status: ${r2.status}\n`;
-
-      if (r1.ok && r2.ok) {
-        MODEL_BASE = base;
-        LABELS_URL = labels;
-        MODEL_URL = model;
-        log += `  ✅ SELECTED THIS BASE\n\n`;
-        $("attemptLog").textContent = log;
-        $("dbgChosenBase").textContent = MODEL_BASE;
-        return true;
-      } else {
-        log += `  ❌ Not usable\n\n`;
-      }
-    } catch (e) {
-      log += `  ❌ Fetch error: ${e.message}\n\n`;
+      setStatus("ok", `Model loaded ✅ (${foodLabels.length} classes). Start camera.`);
     }
-  }
 
-  $("attemptLog").textContent = log;
-  $("dbgChosenBase").textContent = "— (none worked)";
-  return false;
-}
+    function topKFromProbs(probArray, k = 3) {
+      const pairs = probArray.map((p, i) => ({ i, p }));
+      pairs.sort((a, b) => b.p - a.p);
+      return pairs.slice(0, k).map(x => ({
+        label: foodLabels?.[x.i] ?? `Class ${x.i}`,
+        prob: x.p
+      }));
+    }
 
-function setModelStatus(kind, text) {
-  const el = $("modelStatus");
-  el.className = `mt-4 rounded-xl p-3 small ${kind}`;
-  el.textContent = text;
-}
+    async function classifyElement(el) {
+      await loadFoodSG233Model();
 
-/*************************************************************
- * 2) MODEL LOAD (TFJS)
- *************************************************************/
-let foodModel = null;
-let foodLabels = null;
-const modelInputSize = 224;
+      const logits = tf.tidy(() => {
+        let img = tf.browser.fromPixels(el);
+        img = tf.image.resizeBilinear(img, [modelInputSize, modelInputSize]);
+        img = img.toFloat().div(255.0);
+        img = img.expandDims(0);
+        const out = foodModel.predict(img);
+        return out.squeeze();
+      });
 
-async function loadModel() {
-  setModelStatus("warn", "Detecting model base…");
-  const ok = await detectModelBase();
+      const probs = await logits.data();
+      logits.dispose();
 
-  if (!ok) {
-    setModelStatus(
-      "danger",
-      "Model files NOT found at any tested path.\n" +
-      "This is a repo structure / GitHub Pages source issue.\n" +
-      "Most common fix: if Pages serves from /docs, put files under docs/models/foodsg233/ (case-sensitive)."
-    );
-    return false;
-  }
+      return topKFromProbs(Array.from(probs), 3);
+    }
 
-  setModelStatus("warn", "Model files found ✅ Loading TFJS model…");
+    /*************************************************************
+     * 2) MACRO DATABASE (SG foods + drinks) + matching helpers
+     *************************************************************/
+    const FOOD_DB = [
+      { name: "Chicken Rice", keys: ["chicken rice","hainanese chicken rice"], kcal: 650, p: 35, c: 75, f: 20 },
+      { name: "Char Kway Teow", keys: ["char kway teow","fried kway teow"], kcal: 750, p: 20, c: 90, f: 30 },
+      { name: "Laksa", keys: ["laksa"], kcal: 700, p: 25, c: 70, f: 35 },
+      { name: "Ban Mian", keys: ["ban mian","ban mian soup"], kcal: 600, p: 25, c: 75, f: 18 },
+      { name: "Bak Chor Mee", keys: ["bak chor mee","minced meat noodles"], kcal: 680, p: 28, c: 85, f: 22 },
+      { name: "Nasi Lemak", keys: ["nasi lemak"], kcal: 720, p: 25, c: 80, f: 32 },
+      { name: "Wanton Mee", keys: ["wanton mee","wonton mee"], kcal: 620, p: 24, c: 80, f: 18 },
+      { name: "Fish Soup", keys: ["fish soup"], kcal: 420, p: 35, c: 35, f: 10 },
+      { name: "Yong Tau Foo", keys: ["yong tau foo"], kcal: 500, p: 28, c: 50, f: 15 },
+      { name: "Satay (10 sticks)", keys: ["satay"], kcal: 550, p: 35, c: 20, f: 35 },
 
-  try {
-    const labelsResp = await fetchNoStore(LABELS_URL);
-    foodLabels = await labelsResp.json();
-    foodModel = await tf.loadLayersModel(MODEL_URL);
+      { name: "Burger", keys: ["burger","cheeseburger","hamburger"], kcal: 550, p: 28, c: 45, f: 28 },
+      { name: "Pizza (2 slices)", keys: ["pizza"], kcal: 600, p: 25, c: 70, f: 22 },
+      { name: "Salad (with protein)", keys: ["salad"], kcal: 450, p: 35, c: 25, f: 20 },
+      { name: "Sushi (8 pcs)", keys: ["sushi"], kcal: 520, p: 22, c: 80, f: 12 },
+    ];
 
-    // Warm up
-    tf.tidy(() => {
-      const x = tf.zeros([1, modelInputSize, modelInputSize, 3]);
-      foodModel.predict(x);
-    });
+    const DRINK_DB = [
+      { name: "Kopi (with sugar+milk)", keys: ["kopi","coffee with milk","coffee"], kcal: 140, p: 3, c: 22, f: 4 },
+      { name: "Kopi C", keys: ["kopi c"], kcal: 100, p: 2, c: 16, f: 3 },
+      { name: "Teh Tarik", keys: ["teh tarik","teh","milk tea"], kcal: 180, p: 4, c: 28, f: 5 },
+      { name: "Bubble Tea", keys: ["bubble tea","boba"], kcal: 380, p: 4, c: 75, f: 8 },
+      { name: "Isotonic Drink (500ml)", keys: ["sports drink","isotonic"], kcal: 120, p: 0, c: 30, f: 0 },
+      { name: "Plain Water", keys: ["water"], kcal: 0, p: 0, c: 0, f: 0 },
+    ];
 
-    setModelStatus("ok", `Model loaded ✅ (${foodLabels.length} classes).`);
-    return true;
-  } catch (e) {
-    setModelStatus("danger", "Model load failed: " + e.message);
-    foodModel = null;
-    foodLabels = null;
-    return false;
-  }
-}
+    const normalize = (s) => (s || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g," ")
+      .replace(/\s+/g," ")
+      .trim();
 
-function top1FromProbs(probArray) {
-  let bestI = 0, bestP = -1;
-  for (let i = 0; i < probArray.length; i++) {
-    const p = probArray[i];
-    if (p > bestP) { bestP = p; bestI = i; }
-  }
-  return { label: foodLabels?.[bestI] ?? `Class ${bestI}`, prob: bestP };
-}
+    function similarity(a, b) {
+      a = normalize(a); b = normalize(b);
+      if (!a || !b) return 0;
+      if (a === b) return 1;
+      const bigrams = (str) => {
+        const arr = [];
+        for (let i=0;i<str.length-1;i++) arr.push(str.slice(i,i+2));
+        return arr;
+      };
+      const A = bigrams(a), B = bigrams(b);
+      const map = new Map();
+      A.forEach(x => map.set(x, (map.get(x)||0)+1));
+      let inter = 0;
+      B.forEach(x => {
+        const c = map.get(x)||0;
+        if (c>0) { inter++; map.set(x,c-1); }
+      });
+      return (2*inter)/(A.length+B.length);
+    }
 
-async function classifyElement(el) {
-  if (!foodModel || !foodLabels) return null;
-  const logits = tf.tidy(() => {
-    let img = tf.browser.fromPixels(el);
-    img = tf.image.resizeBilinear(img, [modelInputSize, modelInputSize]);
-    img = img.toFloat().div(255).expandDims(0);
-    const out = foodModel.predict(img);
-    return out.squeeze();
-  });
-  const probs = await logits.data();
-  logits.dispose();
-  return top1FromProbs(probs);
-}
+    function bestDbMatch(label, type) {
+      const db = (type === "drink") ? DRINK_DB : FOOD_DB;
+      const q = normalize(label);
+      let best = null, bestScore = 0;
 
-/*************************************************************
- * 3) CAMERA
- *************************************************************/
-let stream = null;
-let liveLoopRunning = false;
-
-function setCamStatus(kind, text) {
-  const el = $("camStatus");
-  el.className = `mt-3 rounded-xl p-3 small ${kind}`;
-  el.textContent = text;
-}
-
-function resizeOverlay() {
-  const v = $("video");
-  const c = $("overlayCanvas");
-  if (!v.videoWidth) return;
-  c.width = v.videoWidth;
-  c.height = v.videoHeight;
-  c.style.width = v.clientWidth + "px";
-  c.style.height = v.clientHeight + "px";
-}
-
-function drawOverlay(text) {
-  const c = $("overlayCanvas");
-  const ctx = c.getContext("2d");
-  ctx.clearRect(0,0,c.width,c.height);
-  ctx.save();
-  ctx.globalAlpha = 0.92;
-  ctx.fillStyle = "#111827";
-  ctx.fillRect(0,0,c.width,52);
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 18px system-ui, -apple-system, Segoe UI, Roboto";
-  ctx.fillText(text, 16, 32);
-  ctx.restore();
-}
-
-async function startCamera() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
-      audio: false
-    });
-    $("video").srcObject = stream;
-
-    $("video").onloadedmetadata = () => {
-      resizeOverlay();
-      if (!liveLoopRunning) {
-        liveLoopRunning = true;
-        liveLoop();
+      for (const row of db) {
+        for (const k of row.keys) {
+          const key = normalize(k);
+          const score = similarity(q, key);
+          if (score > bestScore) { bestScore = score; best = row; }
+        }
       }
+      return { best, bestScore };
+    }
+
+    function heuristicMacros(label, type) {
+      const s = normalize(label);
+      if (type === "drink") {
+        let kcal = 80, p=0, c=18, f=1;
+        if (s.includes("water")) return { kcal:0, p:0, c:0, f:0 };
+        if (s.includes("kopi") || s.includes("coffee")) return { kcal:120, p:2, c:20, f:3 };
+        if (s.includes("tea") || s.includes("teh")) return { kcal:150, p:3, c:24, f:4 };
+        if (s.includes("bubble") || s.includes("boba")) return { kcal:350, p:4, c:70, f:8 };
+        return { kcal, p, c, f };
+      }
+
+      let kcal = 520, p=20, c=60, f=15;
+      if (s.includes("rice")) { kcal=650; p=25; c=85; f=18; }
+      if (s.includes("noodle") || s.includes("noodles") || s.includes("mee")) { kcal=620; p=22; c=80; f=18; }
+      if (s.includes("fried")) { kcal += 120; f += 8; }
+      if (s.includes("soup")) { kcal -= 120; f = Math.max(0, f-6); }
+      if (s.includes("salad")) { kcal=400; p=30; c=25; f=18; }
+      if (s.includes("burger")) { kcal=550; p=28; c=45; f=28; }
+      if (s.includes("pizza")) { kcal=600; p=25; c=70; f=22; }
+      return { kcal, p, c, f };
+    }
+
+    /*************************************************************
+     * 3) ATHLETE TARGET LOGIC
+     *************************************************************/
+    const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
+    const ATHLETE_CARB_BASE = {
+      skill:    [3.0, 5.0],
+      strength: [3.0, 6.0],
+      mixed:    [4.0, 7.0],
+      endurance:[6.0, 10.0],
+    };
+    const SEASON_NUDGE = {
+      off: { carbShift: -0.5, kcalShift: 0 },
+      pre: { carbShift: +0.5, kcalShift: +100 },
+      in:  { carbShift: +0.3, kcalShift: +150 },
+    };
+    const DAY_NUDGE = {
+      easy: { carbShift: -0.5, kcalShift: 0 },
+      normal:{ carbShift: 0.0, kcalShift: 0 },
+      hard: { carbShift: +1.0, kcalShift: +250 },
+      comp: { carbShift: +1.5, kcalShift: +350 },
+    };
+    const GOALS = {
+      gain:     {kcalAdjust: +250, proteinGkg: [1.6, 2.2]},
+      maintain: {kcalAdjust: 0,    proteinGkg: [1.4, 2.0]},
+      lose:     {kcalAdjust: -500, proteinGkg: [2.3, 3.1]},
+    };
+    const AMDR_FAT = [0.20, 0.35];
+
+    /*************************************************************
+     * 4) STATE + DOM UTILS
+     *************************************************************/
+    let entries = [];
+    let mealItems = [];
+    let currentImageDataUrl = null;
+    let stream = null;
+
+    let liveLoopRunning = false;
+    let lastLive = { label: "", prob: 0, top3: [] };
+
+    const $ = (id) => document.getElementById(id);
+    const round1 = (x) => Math.round(x * 10) / 10;
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const safeNum = (x) => {
+      const n = Number(x);
+      return Number.isFinite(n) ? n : 0;
     };
 
-    setCamStatus("ok", "Camera started ✅");
-
-  } catch (e) {
-    setCamStatus(
-      "danger",
-      "Camera error: " + e.message +
-      " | Tips: must be HTTPS; allow permission; iOS Safari requires a direct button click."
-    );
-  }
-}
-
-function stopCamera() {
-  liveLoopRunning = false;
-  if (stream) stream.getTracks().forEach(t => t.stop());
-  stream = null;
-  $("video").srcObject = null;
-  $("liveLabel").textContent = "—";
-  $("liveConf").textContent = "—";
-  drawOverlay("");
-  setCamStatus("warn", "Stopped.");
-}
-
-async function liveLoop() {
-  if (!liveLoopRunning) return;
-
-  const v = $("video");
-  if (v && v.videoWidth) {
-    resizeOverlay();
-
-    if (foodModel && foodLabels) {
-      try {
-        const top = await classifyElement(v);
-        if (top) {
-          const conf = Math.round(top.prob * 100);
-          $("liveLabel").textContent = top.label;
-          $("liveConf").textContent = `Confidence: ${conf}%`;
-          drawOverlay(`${top.label} (${conf}%)`);
-        }
-      } catch {
-        // ignore transient classify errors
-      }
-    } else {
-      drawOverlay("AI disabled (model not loaded)");
+    function escapeHtml(s) {
+      return (s || "").replace(/[&<>"']/g, (c) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[c]));
     }
-  }
 
-  setTimeout(() => requestAnimationFrame(liveLoop), 700);
-}
+    function macroPercentages(p, c, f) {
+      const pK = p * 4, cK = c * 4, fK = f * 9;
+      const total = Math.max(1, pK + cK + fK);
+      return { p: round1(100*pK/total), c: round1(100*cK/total), f: round1(100*fK/total) };
+    }
 
-/*************************************************************
- * 4) SNAP / UPLOAD → populate editor
- *************************************************************/
-function snapPhoto() {
-  const v = $("video");
-  if (!v || !v.videoWidth) {
-    setCamStatus("warn", "Camera not ready. Start camera first, or upload an image.");
-    return;
-  }
-  const canvas = $("captureCanvas");
-  canvas.width = v.videoWidth;
-  canvas.height = v.videoHeight;
-  canvas.getContext("2d").drawImage(v, 0, 0);
+    function setStatus(kind, text) {
+      const el = $("statusBox");
+      el.classList.remove("hidden","warn","ok","danger");
+      if (kind === "ok") el.classList.add("ok");
+      else if (kind === "danger") el.classList.add("danger");
+      else el.classList.add("warn");
+      el.textContent = text;
+    }
 
-  // If model is loaded, try a still-frame classification and fill name
-  if (foodModel && foodLabels) {
-    classifyElement(canvas).then(top => {
-      if (top) {
-        const conf = Math.round(top.prob * 100);
-        $("itemLabel").value = top.label;
-        setCamStatus(conf < 45 ? "danger" : conf < 65 ? "warn" : "ok",
-          `Snap detected: ${top.label} (${conf}%). Edit if needed.`
-        );
+    /*************************************************************
+     * 5) BMR/TDEE + TARGETS
+     *************************************************************/
+    function bmrMifflin(weightKg, heightCm, age, sex) {
+      const s = (sex === "Male") ? 5 : -161;
+      return 10 * weightKg + 6.25 * heightCm - 5 * age + s;
+    }
+    function bmrKatch(weightKg, bfPercent) {
+      const lbm = weightKg * (1 - bfPercent / 100);
+      return 370 + 21.6 * lbm;
+    }
+    function athleteCarbRangeGkg(athleteType, seasonPhase, dayIntensity) {
+      const base = ATHLETE_CARB_BASE[athleteType] || [4.0, 7.0];
+      const season = SEASON_NUDGE[seasonPhase] || { carbShift: 0, kcalShift: 0 };
+      const day = DAY_NUDGE[dayIntensity] || { carbShift: 0, kcalShift: 0 };
+      const shift = season.carbShift + day.carbShift;
+      let lo = clamp(base[0] + shift, 2.0, 12.0);
+      let hi = clamp(base[1] + shift, Math.max(lo + 0.5, 3.0), 12.0);
+      return [round1(lo), round1(hi)];
+    }
+
+    function computeTargets() {
+      const sex = $("sex").value;
+      const age = parseFloat($("age").value || "0");
+      const heightCm = parseFloat($("heightCm").value || "0");
+      const weightKg = parseFloat($("weightKg").value || "0");
+
+      const athleteType = $("athleteType").value;
+      const seasonPhase = $("seasonPhase").value;
+      const dayIntensity = $("dayIntensity").value;
+
+      const eq = $("equation").value;
+      const bf = parseFloat($("bfPercent").value || "18");
+      const activity = parseFloat($("activity").value || "1.725");
+
+      const goalKey = $("goal").value;
+      const fatPref = parseFloat($("fatPref").value || "28") / 100;
+
+      let bmr = (eq === "mifflin") ? bmrMifflin(weightKg, heightCm, age, sex) : bmrKatch(weightKg, bf);
+      let tdee = bmr * activity;
+
+      const goalCfg = GOALS[goalKey];
+      const season = SEASON_NUDGE[seasonPhase] || { carbShift: 0, kcalShift: 0 };
+      const day = DAY_NUDGE[dayIntensity] || { carbShift: 0, kcalShift: 0 };
+
+      const kcalTarget = tdee + goalCfg.kcalAdjust + season.kcalShift + day.kcalShift;
+
+      const pLo = goalCfg.proteinGkg[0] * weightKg;
+      const pHi = goalCfg.proteinGkg[1] * weightKg;
+      const pTarget = (pLo + pHi) / 2;
+
+      const carbGkgRange = athleteCarbRangeGkg(athleteType, seasonPhase, dayIntensity);
+      const cLo = carbGkgRange[0] * weightKg;
+      const cHi = carbGkgRange[1] * weightKg;
+      let cTarget = (cLo + cHi) / 2;
+
+      let fatRatio = clamp(fatPref, AMDR_FAT[0], AMDR_FAT[1]);
+      let fTarget = (kcalTarget * fatRatio) / 9;
+
+      const kcalFrom = (p, c, f) => p*4 + c*4 + f*9;
+      let total = kcalFrom(pTarget, cTarget, fTarget);
+      if (total > kcalTarget) {
+        const excess = total - kcalTarget;
+        cTarget = Math.max(cLo, cTarget - (excess / 4));
       }
-    });
-  } else {
-    setCamStatus("warn", "Snapped. AI not loaded, so please enter food/drink name manually.");
-  }
-}
 
-function handleUpload(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async () => {
-    try {
-      if (!foodModel || !foodLabels) {
-        setCamStatus("warn", "Uploaded. AI not loaded — please enter the food/drink name manually.");
+      $("bmrOut").textContent = round1(bmr);
+      $("tdeeOut").textContent = round1(tdee);
+      $("kcalTargetOut").textContent = round1(kcalTarget);
+      $("pTargetOut").textContent = round1(pTarget);
+      $("cTargetOut").textContent = round1(cTarget);
+      $("fTargetOut").textContent = round1(fTarget);
+      $("pRangeOut").textContent = `${round1(pLo)}–${round1(pHi)} g`;
+      $("cRangeOut").textContent = `${round1(cLo)}–${round1(cHi)} g`;
+
+      return {
+        sex, age, heightCm, weightKg,
+        athleteType, seasonPhase, dayIntensity,
+        kcalTarget: round1(kcalTarget),
+        pRange: [round1(pLo), round1(pHi)],
+        cRange: [round1(cLo), round1(cHi)],
+        fTarget: round1(fTarget),
+        fatRatioPct: round1(fatRatio * 100),
+      };
+    }
+
+    /*************************************************************
+     * 6) CAMERA + LIVE LOOP (FoodSG-233)
+     *************************************************************/
+    async function startCamera() {
+      try {
+        await loadFoodSG233Model();
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false
+        });
+
+        $("video").srcObject = stream;
+
+        $("video").onloadedmetadata = () => {
+          resizeOverlay();
+          if (!liveLoopRunning) {
+            liveLoopRunning = true;
+            liveLoop();
+          }
+        };
+      } catch (e) {
+        setStatus("danger", "Camera/model error: " + e.message + " (Tip: check model files path + HTTPS + permissions.)");
+      }
+    }
+
+    function stopCamera() {
+      liveLoopRunning = false;
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+      $("video").srcObject = null;
+      clearOverlay();
+      $("liveLabelBadge").textContent = "—";
+      $("liveConf").textContent = "—";
+    }
+
+    function resizeOverlay() {
+      const v = $("video");
+      const c = $("overlayCanvas");
+      if (!v.videoWidth) return;
+      c.width = v.videoWidth;
+      c.height = v.videoHeight;
+      c.style.width = v.clientWidth + "px";
+      c.style.height = v.clientHeight + "px";
+    }
+
+    function clearOverlay() {
+      const c = $("overlayCanvas");
+      const ctx = c.getContext("2d");
+      ctx.clearRect(0, 0, c.width, c.height);
+    }
+
+    function drawOverlay(label, prob, mappedName, source, itemType) {
+      const c = $("overlayCanvas");
+      const ctx = c.getContext("2d");
+      ctx.clearRect(0,0,c.width,c.height);
+
+      const w = c.width;
+      const pad = 18;
+
+      const confPct = Math.round(prob * 100);
+      const line1 = `${label} (${confPct}%)`;
+      const line2 = mappedName ? `→ ${mappedName} [${source}]` : "";
+      const line3 = `Mode: ${itemType.toUpperCase()} • Edit if wrong`;
+
+      ctx.save();
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = "#111827";
+      ctx.fillRect(0, 0, w, 84);
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 22px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillText(line1, pad, 30);
+
+      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillStyle = "#e5e7eb";
+      ctx.fillText(line2, pad, 54);
+
+      ctx.fillStyle = "#d1d5db";
+      ctx.fillText(line3, pad, 74);
+
+      ctx.restore();
+    }
+
+    async function liveLoop() {
+      if (!liveLoopRunning) return;
+      const v = $("video");
+      if (!v || !v.videoWidth || !foodModel) {
+        requestAnimationFrame(liveLoop);
         return;
       }
-      const img = new Image();
-      img.src = reader.result;
-      await new Promise(res => img.onload = res);
-      const top = await classifyElement(img);
-      if (top) {
-        const conf = Math.round(top.prob * 100);
-        $("itemLabel").value = top.label;
-        setCamStatus(conf < 45 ? "danger" : conf < 65 ? "warn" : "ok",
-          `Upload detected: ${top.label} (${conf}%). Edit if needed.`
-        );
-      }
-    } catch (e) {
-      setCamStatus("danger", "Upload classify error: " + e.message);
+
+      try {
+        const top3 = await classifyElement(v);
+        const top = top3[0];
+        lastLive = { label: top.label, prob: top.prob, top3 };
+
+        const itemType = $("itemType").value;
+        const m = bestDbMatch(top.label, itemType);
+        let mappedName = "";
+        let source = "";
+
+        if (m.best && m.bestScore >= 0.35) {
+          mappedName = m.best.name;
+          source = "SG Macro DB";
+        } else {
+          mappedName = "Generic estimate";
+          source = "Heuristic";
+        }
+
+        $("liveLabelBadge").textContent = top.label;
+        $("liveConf").textContent = `Confidence: ${Math.round(top.prob*100)}%`;
+
+        drawOverlay(top.label, top.prob, mappedName, source, itemType);
+      } catch (e) {}
+
+      setTimeout(() => requestAnimationFrame(liveLoop), 650);
     }
-  };
-  reader.readAsDataURL(file);
-}
 
-/*************************************************************
- * 5) SIMPLE LOG (for demo + validation)
- *************************************************************/
-const entries = [];
-function esc(s){ return (s||"").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c])); }
+    /*************************************************************
+     * 7) SNAP / UPLOAD → ESTIMATE
+     *************************************************************/
+    function setPreview(dataUrl) {
+      currentImageDataUrl = dataUrl;
+      $("previewImg").src = dataUrl;
+      $("previewImg").classList.remove("hidden");
+      $("noPreview").classList.add("hidden");
+      $("statusBox").classList.add("hidden");
+      $("metaLine").textContent = "Ready. Edit if needed, then add to meal.";
+    }
 
-function addToLog() {
-  const meal = $("mealSlot").value;
-  const type = $("itemType").value;
-  const name = ($("itemLabel").value || "").trim();
-  const kcal = Number($("itemKcal").value || 0);
-  const p = Number($("itemP").value || 0);
-  const c = Number($("itemC").value || 0);
-  const f = Number($("itemF").value || 0);
+    async function snapPhoto() {
+      const v = $("video");
+      if (!v || !v.videoWidth) {
+        setStatus("warn", "Camera not ready. Start camera first, or upload an image.");
+        return;
+      }
+      const canvas = $("captureCanvas");
+      canvas.width = v.videoWidth;
+      canvas.height = v.videoHeight;
+      canvas.getContext("2d").drawImage(v, 0, 0);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      setPreview(dataUrl);
+      await estimateFromCapturedCanvas(canvas);
+    }
 
-  if (!name) { alert("Please enter a name."); return; }
+    function handleUpload(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        setPreview(reader.result);
+        await estimateFromImageDataUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
 
-  entries.push({ meal, type, name, kcal, p, c, f });
-  renderLog();
-}
+    async function estimateFromCapturedCanvas(canvasEl) {
+      try {
+        const top3 = await classifyElement(canvasEl);
+        const top = top3[0];
+        lastLive = { label: top.label, prob: top.prob, top3 };
+        await estimateFromLabel(top.label, top.prob);
+      } catch (e) {
+        setStatus("danger", "Detection failed. You can type the food name and macros manually.");
+      }
+    }
 
-function renderLog() {
-  const log = $("log");
-  log.innerHTML = "";
-  entries.forEach((e) => {
-    const row = document.createElement("div");
-    row.className = "bg-gray-50 border rounded-xl p-3";
-    row.innerHTML = `
-      <div class="font-bold">${esc(e.meal)} • ${esc(e.name)} <span class="text-xs text-gray-500">(${esc(e.type)})</span></div>
-      <div class="mono text-xs font-bold mt-1">${e.kcal} kcal | P ${e.p} C ${e.c} F ${e.f}</div>
-    `;
-    log.appendChild(row);
-  });
-}
+    async function estimateFromImageDataUrl(dataUrl) {
+      try {
+        await loadFoodSG233Model();
+        const img = new Image();
+        img.src = dataUrl;
+        await new Promise(res => img.onload = res);
 
-/*************************************************************
- * 6) UI BINDINGS + AUTO TEST ON LOAD
- *************************************************************/
-$("testModelBtn").addEventListener("click", loadModel);
+        const top3 = await classifyElement(img);
+        const top = top3[0];
+        lastLive = { label: top.label, prob: top.prob, top3 };
+        await estimateFromLabel(top.label, top.prob);
+      } catch (e) {
+        setStatus("danger", "Upload detection failed. You can type the food name and macros manually.");
+      }
+    }
 
-$("openChosenLabelsBtn").addEventListener("click", () => {
-  if (!LABELS_URL) return alert("No chosen labels.json yet. Click 'Test model paths now' first.");
-  window.open(LABELS_URL, "_blank");
-});
-$("openChosenModelBtn").addEventListener("click", () => {
-  if (!MODEL_URL) return alert("No chosen model.json yet. Click 'Test model paths now' first.");
-  window.open(MODEL_URL, "_blank");
-});
+    async function estimateFromLabel(label, prob) {
+      const itemType = $("itemType").value;
+      const portion = parseFloat($("portion").value || "1.0");
 
-$("startCamBtn").addEventListener("click", startCamera);
-$("stopCamBtn").addEventListener("click", stopCamera);
-$("snapBtn").addEventListener("click", snapPhoto);
-$("uploadInput").addEventListener("change", (e) => handleUpload(e.target.files[0]));
-$("addBtn").addEventListener("click", addToLog);
+      const m = bestDbMatch(label, itemType);
+      let finalName = label;
+      let macros = null;
+      let source = "";
 
-window.addEventListener("resize", resizeOverlay);
-window.addEventListener("beforeunload", stopCamera);
+      if (m.best && m.bestScore >= 0.35) {
+        finalName = m.best.name;
+        macros = { kcal: m.best.kcal, p: m.best.p, c: m.best.c, f: m.best.f };
+        source = `SG Macro DB match (${Math.round(m.bestScore*100)}%)`;
+      } else {
+        macros = heuristicMacros(label, itemType);
+        source = "Heuristic estimate (no strong DB match)";
+      }
 
-// Auto-run model detection once so you immediately see what fails
-loadModel();
-</script>
+      macros = {
+        kcal: Math.round(macros.kcal * portion),
+        p: round1(macros.p * portion),
+        c: round1(macros.c * portion),
+        f: round1(macros.f * portion),
+      };
 
+      $("itemLabel").value = finalName;
+      $("itemKcal").value = macros.kcal;
+      $("itemP").value = macros.p;
+      $("itemC").value = macros.c;
+      $("itemF").value = macros.f;
+
+      const confPct = Math.round((prob || 0) * 100);
+      $("metaLine").textContent = `Detected: "${label}" (${confPct}%). ${source}. You can edit name/macros.`;
+
+      if ((prob || 0) < 0.45) {
+        setStatus("danger", `Low confidence (${confPct}%). Please confirm/edit. ${source}`);
+      } else if ((prob || 0) < 0.65) {
+        setStatus("warn", `Medium confidence (${confPct}%). Quick check recommended. ${source}`);
+      } else {
+        setStatus("ok", `High confidence (${confPct}%). ${source}`);
+      }
+    }
+
+    /*************************************************************
+     * 8) MEAL BUILDER
+     *************************************************************/
+    function sumMealItems() {
+      return mealItems.reduce((acc, it) => {
+        acc.kcal += it.kcal;
+        acc.p += it.p;
+        acc.c += it.c;
+        acc.f += it.f;
+        return acc;
+      }, {kcal:0, p:0, c:0, f:0});
+    }
+
+    function renderMealItems() {
+      const list = $("mealItemsList");
+      list.innerHTML = "";
+
+      if (!mealItems.length) {
+        list.innerHTML = `<div class="text-sm text-gray-500">No items yet. Snap/upload or type manually, then “Add item”.</div>`;
+      } else {
+        mealItems.forEach((it, idx) => {
+          const row = document.createElement("div");
+          row.className = "bg-white border rounded-xl p-3 flex items-start gap-3";
+          row.innerHTML = `
+            <div class="flex-1">
+              <div class="font-extrabold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
+              <div class="text-xs text-gray-500">From: ${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
+              <div class="text-sm mono font-bold mt-1">
+                ${it.kcal} kcal | P ${it.p}g | C ${it.c}g | F ${it.f}g
+              </div>
+            </div>
+            <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
+          `;
+          list.appendChild(row);
+        });
+
+        list.querySelectorAll("button[data-del-item]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const i = parseInt(btn.getAttribute("data-del-item"), 10);
+            mealItems.splice(i, 1);
+            updateMealSums();
+          });
+        });
+      }
+      updateMealSums();
+    }
+
+    function updateMealSums() {
+      const t = sumMealItems();
+      $("mealSumKcal").textContent = round1(t.kcal);
+      $("mealSumP").textContent = round1(t.p);
+      $("mealSumC").textContent = round1(t.c);
+      $("mealSumF").textContent = round1(t.f);
+      render();
+    }
+
+    function addItem() {
+      const itemType = $("itemType").value;
+      const label = ($("itemLabel").value || "").trim();
+      if (!label) { alert("Please enter a name (food or drink)."); return; }
+
+      const portion = parseFloat($("portion").value || "1.0");
+      const kcal = clamp(safeNum($("itemKcal").value), 0, 5000);
+      const p = clamp(safeNum($("itemP").value), 0, 400);
+      const c = clamp(safeNum($("itemC").value), 0, 700);
+      const f = clamp(safeNum($("itemF").value), 0, 300);
+
+      const confPct = Math.round((lastLive.prob || 0) * 100);
+
+      const m = bestDbMatch(label, itemType);
+      const source = (m.best && m.bestScore >= 0.35) ? "SG Macro DB" : "Manual/Heuristic";
+
+      mealItems.push({ itemType, label, kcal, p, c, f, portion, confPct, source });
+
+      $("itemLabel").value = "";
+      $("itemKcal").value = 0;
+      $("itemP").value = 0;
+      $("itemC").value = 0;
+      $("itemF").value = 0;
+      $("metaLine").textContent = "Item added. Snap/upload next item.";
+
+      renderMealItems();
+    }
+
+    function clearMeal() {
+      if (!confirm("Clear current meal items?")) return;
+      mealItems = [];
+      renderMealItems();
+    }
+
+    function finalizeMealToLog() {
+      if (!mealItems.length) { alert("No items yet. Add items first."); return; }
+
+      const mealSlot = $("mealSlot").value;
+      const notes = ($("mealNotes").value || "").trim();
+      const sum = sumMealItems();
+
+      const label = mealItems.length === 1
+        ? mealItems[0].label
+        : `Meal (${mealItems.length} items): ` + mealItems.map(i => i.label).slice(0,4).join(" + ") + (mealItems.length > 4 ? " + ..." : "");
+
+      entries.push({
+        ts: new Date().toISOString(),
+        mealSlot,
+        label,
+        notes,
+        imgDataUrl: currentImageDataUrl,
+        items: mealItems.map(i => ({...i})),
+        macros: { kcal: round1(sum.kcal), p: round1(sum.p), c: round1(sum.c), f: round1(sum.f) }
+      });
+
+      mealItems = [];
+      $("mealNotes").value = "";
+      renderMealItems();
+
+      render();
+      alert("Meal logged ✅");
+    }
+
+    /*************************************************************
+     * 9) DAILY TOTALS + ADEQUACY
+     *************************************************************/
+    function calcTotals() {
+      return entries.reduce((acc, e) => {
+        acc.kcal += e.macros.kcal;
+        acc.p += e.macros.p;
+        acc.c += e.macros.c;
+        acc.f += e.macros.f;
+        return acc;
+      }, {kcal:0, p:0, c:0, f:0});
+    }
+
+    function adequacyLabel(value, lo, hi) {
+      if (value < lo) return "Insufficient";
+      if (value > hi) return "Excess (maybe ok depending on training)";
+      return "Sufficient";
+    }
+
+    function render() {
+      const targets = computeTargets();
+      const totals = calcTotals();
+
+      $("totKcal").textContent = round1(totals.kcal);
+      $("totP").textContent = round1(totals.p);
+      $("totC").textContent = round1(totals.c);
+      $("totF").textContent = round1(totals.f);
+
+      const deltaK = round1(totals.kcal - targets.kcalTarget);
+      $("deltaKcal").textContent = (deltaK >= 0 ? "+" : "") + deltaK;
+
+      const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
+      const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
+
+      const fatTarget = targets.fTarget;
+      const fatTol = Math.max(10, 0.15 * fatTarget);
+      let fVer = "On target-ish";
+      if (Math.abs(totals.f - fatTarget) > fatTol) fVer = (totals.f > fatTarget) ? "High" : "Low";
+
+      $("verP").textContent = `${pVer} (target ${targets.pRange[0]}–${targets.pRange[1]} g)`;
+      $("verC").textContent = `${cVer} (target ${targets.cRange[0]}–${targets.cRange[1]} g)`;
+      $("verF").textContent = `${fVer} (target ~${targets.fTarget} g; fat AMDR ${targets.fatRatioPct}% kcal)`;
+
+      const bySlot = {};
+      MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
+      entries.forEach(e => {
+        bySlot[e.mealSlot].kcal += e.macros.kcal;
+        bySlot[e.mealSlot].p += e.macros.p;
+        bySlot[e.mealSlot].c += e.macros.c;
+        bySlot[e.mealSlot].f += e.macros.f;
+      });
+
+      const tbody = $("mealTableBody");
+      tbody.innerHTML = "";
+      MEAL_SLOTS.forEach(slot => {
+        const t = bySlot[slot];
+        const pct = macroPercentages(t.p, t.c, t.f);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="p-3 border-b font-semibold">${slot}</td>
+          <td class="p-3 border-b text-center mono">${round1(t.kcal)}</td>
+          <td class="p-3 border-b text-center mono">${round1(t.p)}</td>
+          <td class="p-3 border-b text-center mono">${round1(t.c)}</td>
+          <td class="p-3 border-b text-center mono">${round1(t.f)}</td>
+          <td class="p-3 border-b text-center mono">${pct.p}/${pct.c}/${pct.f}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const list = $("entriesList");
+      list.innerHTML = "";
+      entries.forEach((e, idx) => {
+        const itemsHtml = (e.items || []).map((it) => `
+          <div class="border rounded-lg p-2 bg-gray-50">
+            <div class="text-sm font-bold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
+            <div class="text-xs text-gray-500">${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
+            <div class="text-xs mono font-bold mt-1">${it.kcal} kcal | P ${it.p} C ${it.c} F ${it.f}</div>
+          </div>
+        `).join("");
+
+        const card = document.createElement("div");
+        card.className = "border rounded-xl p-3 flex gap-3 items-start";
+        card.innerHTML = `
+          <div class="thumb w-24 h-24 bg-gray-100 flex-shrink-0">
+            ${e.imgDataUrl ? `<img src="${e.imgDataUrl}" class="w-full h-full object-cover" alt="thumb">` : ""}
+          </div>
+          <div class="flex-1">
+            <div class="font-extrabold">${e.mealSlot} — ${escapeHtml(e.label)}</div>
+            <div class="text-sm mt-1 mono font-bold">
+              ${e.macros.kcal} kcal | P ${e.macros.p}g | C ${e.macros.c}g | F ${e.macros.f}g
+            </div>
+            ${e.notes ? `<div class="text-xs text-gray-600 mt-1">Notes: ${escapeHtml(e.notes)}</div>` : ""}
+            <div class="mt-2 space-y-2">${itemsHtml || ""}</div>
+          </div>
+          <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del="${idx}">
+            🗑️
+          </button>
+        `;
+        list.appendChild(card);
+      });
+
+      list.querySelectorAll("button[data-del]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const i = parseInt(btn.getAttribute("data-del"), 10);
+          entries.splice(i, 1);
+          render();
+        });
+      });
+    }
+
+    /*************************************************************
+     * 10) PDF EXPORT
+     *************************************************************/
+    async function exportPdf() {
+      const targets = computeTargets();
+      const totals = calcTotals();
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 40;
+      let y = margin;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("MacroVision — Athlete Daily Fueling Report (SG)", margin, y);
+      y += 18;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, margin, y);
+      y += 18;
+      doc.setTextColor(0);
+
+      const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
+      const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
+      const fatTol = Math.max(10, 0.15 * targets.fTarget);
+      const fVer = (Math.abs(totals.f - targets.fTarget) <= fatTol) ? "On target-ish" : (totals.f > targets.fTarget ? "High" : "Low");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Daily Intake vs Targets", margin, y); y += 8;
+
+      doc.autoTable({
+        startY: y + 10,
+        head: [["Metric", "Intake", "Target / Range", "Verdict"]],
+        body: [
+          ["Calories (kcal)", round1(totals.kcal).toString(), targets.kcalTarget.toString(), ""],
+          ["Protein (g)", round1(totals.p).toString(), `${targets.pRange[0]}–${targets.pRange[1]}`, pVer],
+          ["Carbs (g)", round1(totals.c).toString(), `${targets.cRange[0]}–${targets.cRange[1]}`, cVer],
+          ["Fat (g)", round1(totals.f).toString(), `${targets.fTarget} (fat AMDR ${targets.fatRatioPct}% kcal)`, fVer],
+        ],
+        margin: { left: margin, right: margin },
+        styles: { font: "helvetica", fontSize: 9 },
+        headStyles: { fillColor: [245, 245, 245], textColor: 20 },
+      });
+
+      y = doc.lastAutoTable.finalY + 18;
+
+      const bySlot = {};
+      MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
+      entries.forEach(e => {
+        bySlot[e.mealSlot].kcal += e.macros.kcal;
+        bySlot[e.mealSlot].p += e.macros.p;
+        bySlot[e.mealSlot].c += e.macros.c;
+        bySlot[e.mealSlot].f += e.macros.f;
+      });
+
+      if (y > pageH - 220) { doc.addPage(); y = margin; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Macrodistribution by Meal Timing", margin, y);
+      y += 8;
+
+      const mealRows = MEAL_SLOTS.map(slot => {
+        const t = bySlot[slot];
+        const pct = macroPercentages(t.p, t.c, t.f);
+        return [slot, round1(t.kcal), round1(t.p), round1(t.c), round1(t.f), `${pct.p}/${pct.c}/${pct.f}`];
+      });
+
+      doc.autoTable({
+        startY: y + 10,
+        head: [["Meal", "kcal", "Protein (g)", "Carbs (g)", "Fat (g)", "P/C/F (%)"]],
+        body: mealRows,
+        margin: { left: margin, right: margin },
+        styles: { font: "helvetica", fontSize: 9 },
+        headStyles: { fillColor: [255, 247, 237], textColor: 20 },
+      });
+
+      const detailRows = [];
+      entries.forEach(e => {
+        (e.items || []).forEach(it => {
+          detailRows.push([
+            e.mealSlot,
+            it.itemType,
+            it.label,
+            it.kcal,
+            it.p,
+            it.c,
+            it.f,
+            `${it.confPct}%`,
+            it.source
+          ]);
+        });
+      });
+
+      if (detailRows.length) {
+        doc.addPage();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Item-level Details", margin, margin);
+
+        doc.autoTable({
+          startY: margin + 12,
+          head: [["Meal", "Type", "Item", "kcal", "P", "C", "F", "Conf", "Source"]],
+          body: detailRows,
+          margin: { left: margin, right: margin },
+          styles: { font: "helvetica", fontSize: 8 },
+          headStyles: { fillColor: [245, 245, 245], textColor: 20 },
+        });
+      }
+
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text(`© ${new Date().getFullYear()} Ng Jun Wei & Ng Hong Wei. Developed by Jun Wei and tested by Hong Wei. Created by Ng Brothers.`, margin, pageH - 24);
+      doc.setTextColor(0);
+
+      doc.save(`MacroVision_Athlete_Report_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"")}.pdf`);
+    }
+
+    /*************************************************************
+     * 11) EVENTS / INIT
+     *************************************************************/
+    function bindEvents() {
+      $("equation").addEventListener("change", () => {
+        $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
+        render();
+      });
+
+      ["sex","age","heightCm","weightKg","bfPercent","activity","goal","athleteType","seasonPhase","dayIntensity","fatPref"]
+        .forEach(id => {
+          $(id).addEventListener("input", () => {
+            if (id === "fatPref") $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
+            render();
+          });
+          $(id).addEventListener("change", render);
+        });
+
+      $("startCamBtn").addEventListener("click", startCamera);
+      $("stopCamBtn").addEventListener("click", stopCamera);
+      $("snapBtn").addEventListener("click", snapPhoto);
+      $("uploadInput").addEventListener("change", (e) => handleUpload(e.target.files[0]));
+
+      $("portion").addEventListener("input", () => {
+        $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+      });
+
+      $("itemType").addEventListener("change", () => {
+        setStatus("warn", `Switched to ${$("itemType").value.toUpperCase()} mode. Snap again for best matching.`);
+      });
+
+      window.addEventListener("resize", resizeOverlay);
+
+      $("addItemBtn").addEventListener("click", addItem);
+      $("clearMealBtn").addEventListener("click", clearMeal);
+      $("finalizeMealBtn").addEventListener("click", finalizeMealToLog);
+      $("exportPdfBtn").addEventListener("click", exportPdf);
+
+      $("clearBtn").addEventListener("click", () => {
+        if (!confirm("Clear all logged meals for today?")) return;
+        entries = [];
+        render();
+      });
+    }
+
+    $("yearNow").textContent = new Date().getFullYear();
+    $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
+    $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
+    $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+
+    bindEvents();
+    renderMealItems();
+    render();
+
+    window.addEventListener("beforeunload", stopCamera);
+  </script>
 </body>
 </html>
