@@ -30,35 +30,60 @@
     .overlayWrap { position: relative; }
     #overlayCanvas { position:absolute; inset:0; pointer-events:none; border-radius:12px; }
     .stickyBar { position: sticky; top: 0; z-index: 20; }
+    button { cursor: pointer; }
+    .logoWrap { display:flex; align-items:center; gap:12px; }
+    .logoText { font-weight: 900; letter-spacing: -0.02em; }
   </style>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
-  <!-- NAV -->
+  <!-- NAV (no links, just logo) -->
   <nav class="bg-white shadow-sm stickyBar">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <a href="/" class="text-xl font-extrabold text-orange-600">Ng Jun Wei</a>
-      <a href="/" class="text-gray-600 hover:text-orange-600 transition">
-        <i class="fas fa-arrow-left mr-2"></i> Back to Portfolio
-      </a>
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="logoWrap">
+        <!-- Simple food logo (SVG bowl + steam) -->
+        <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#fb923c"></stop>
+              <stop offset="1" stop-color="#ea580c"></stop>
+            </linearGradient>
+          </defs>
+          <path d="M20 16c0 4-6 6-6 10s6 6 6 10" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
+          <path d="M32 12c0 5-7 7-7 12s7 7 7 12" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
+          <path d="M44 16c0 4-6 6-6 10s6 6 6 10" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
+          <path d="M14 34h36c0 12-8 22-18 22S14 46 14 34z" fill="url(#g)"/>
+          <path d="M10 34h44" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
+          <path d="M18 58h28" stroke="#6b7280" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="logoText text-lg text-gray-900">MacroVision</div>
+          <div class="text-xs text-gray-500 -mt-0.5">FoodSG-233 • Athlete fuel tracker</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill font-bold">Live</span>
+        <span class="bg-gray-100 text-gray-900 text-xs px-3 py-1.5 pill font-bold">No Proxy</span>
+      </div>
     </div>
   </nav>
 
   <!-- HEADER -->
   <header class="bg-gray-900 text-white">
-    <div class="max-w-7xl mx-auto px-4 py-10">
+    <div class="max-w-7xl mx-auto px-4 py-8">
       <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
         <div>
           <div class="flex items-center gap-3 mb-3">
             <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
               Athlete App
             </span>
-            <span class="text-gray-300 text-sm">Singapore-optimised • FoodSG-233 • Live overlay • PDF export</span>
+            <span class="text-gray-300 text-sm">Singapore-optimised • Live overlay • PDF export</span>
           </div>
-          <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
+          <h1 class="text-3xl md:text-4xl font-extrabold mb-2">📷 MacroVision</h1>
           <p class="text-gray-300 max-w-2xl">
-            Runs a custom <b>FoodSG-233</b> classifier fully in-browser (no proxy, no server) to identify foods,
-            then estimates macros using a Singapore-aware macro database + editable overrides.
+            Runs a custom <b>FoodSG-233</b> classifier fully in-browser (no proxy, no server). Detect food/drink,
+            estimate macros, edit if needed, log by meal timing, and export an athlete report to PDF.
           </p>
           <div class="mt-4 text-sm text-gray-200">
             Developed by Jun Wei and tested by Hong Wei. <span class="font-semibold">Created by Ng Brothers.</span>
@@ -81,11 +106,11 @@
       <div class="warn rounded-xl p-3">
         <div class="font-extrabold">Important</div>
         <div class="text-sm text-gray-700 mt-1">
-          Food recognition is done by <b>FoodSG-233</b> in your browser. Macros are <b>estimates</b>
-          (portion size, oil, sugar, sauces are hard). You can always edit food name + macros before logging.
+          Food recognition is done by <b>FoodSG-233</b> in your browser. Macros are <b>estimates</b>.
+          Always edit food name + macros if the AI is off.
         </div>
         <div class="text-xs text-gray-600 mt-2">
-          ✅ No proxy needed. Your model files must exist at <span class="mono">/models/foodsg233/</span> in your GitHub Pages repo:
+          Put your TFJS model files at <span class="mono">/models/foodsg233/</span> in the same GitHub Pages repo:
           <span class="mono">model.json</span>, shards, and <span class="mono">labels.json</span>.
         </div>
       </div>
@@ -258,20 +283,14 @@
 
       <!-- Capture -->
       <div class="bg-white card p-5">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-extrabold">📸 FoodSG-233 Live Detection → Macro Estimate → Log</h2>
-            <p class="text-sm text-gray-600">
-              Live overlay shows predicted dish + confidence. Snap multiple items per meal (food + drink separately).
-              Then finalize meal and export PDF.
-            </p>
-          </div>
-        </div>
+        <h2 class="text-xl font-extrabold">📸 Live Detection → Edit → Add Items → Finalize Meal</h2>
+        <p class="text-sm text-gray-600 mt-1">
+          Snap multiple items per meal (food + drink). Macros shown in “Current meal items” and “Finalize meal” will match exactly.
+        </p>
 
         <div class="mt-4 hint rounded-xl p-3">
           <div class="font-bold text-sm">Model paths (GitHub Pages)</div>
           <div class="small text-gray-700 mt-1">
-            Put your TFJS model files at <span class="mono">models/foodsg233/</span> in the same repo as this HTML.
             This page loads: <span class="mono">models/foodsg233/model.json</span> and <span class="mono">models/foodsg233/labels.json</span>.
           </div>
         </div>
@@ -279,10 +298,10 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div class="space-y-3">
             <div class="flex gap-2">
-              <button id="startCamBtn" class="flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
+              <button id="startCamBtn" type="button" class="flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
                 <i class="fa fa-camera mr-2"></i>Start Camera
               </button>
-              <button id="stopCamBtn" class="flex-1 bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200">
+              <button id="stopCamBtn" type="button" class="flex-1 bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200">
                 Stop
               </button>
             </div>
@@ -293,7 +312,7 @@
             </div>
 
             <div class="grid grid-cols-2 gap-2">
-              <button id="snapBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
+              <button id="snapBtn" type="button" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
                 📸 Snap
               </button>
               <label class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-center">
@@ -384,7 +403,7 @@
 
                 <div class="text-xs text-gray-500" id="metaLine">No detection yet.</div>
 
-                <button id="addItemBtn" class="w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
+                <button id="addItemBtn" type="button" class="w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
                   ➕ Add this item to current meal
                 </button>
               </div>
@@ -396,7 +415,7 @@
                         placeholder="e.g., extra oil, gravy heavy, added egg, shared with friend"></textarea>
             </label>
 
-            <button id="finalizeMealBtn" class="w-full bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-gray-800">
+            <button id="finalizeMealBtn" type="button" class="w-full bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-gray-800">
               ✅ Finalize meal (sum items) → Add meal to log
             </button>
           </div>
@@ -407,9 +426,9 @@
           <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div class="font-extrabold">Current meal items</div>
-              <div class="text-xs text-gray-600">Add multiple items (food + drink), then finalize meal.</div>
+              <div class="text-xs text-gray-600">These values are exactly what will be used when you finalize the meal.</div>
             </div>
-            <button id="clearMealBtn" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+            <button id="clearMealBtn" type="button" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
               Clear meal items
             </button>
           </div>
@@ -441,16 +460,16 @@
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h2 class="text-xl font-extrabold">📋 Daily fueling check (athlete)</h2>
+            <h2 class="text-xl font-extrabold">📋 Daily fueling check</h2>
             <p class="text-sm text-gray-600">
               Intake vs targets + macrodistribution. Export PDF for athlete reporting.
             </p>
           </div>
           <div class="flex gap-2">
-            <button id="exportPdfBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">
+            <button id="exportPdfBtn" type="button" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">
               📄 Export PDF
             </button>
-            <button id="clearBtn" class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">
+            <button id="clearBtn" type="button" class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">
               Clear day
             </button>
           </div>
@@ -530,38 +549,31 @@
   <script>
     /*************************************************************
      * 1) MODEL LOADING (FoodSG-233 TFJS)
-     * Place your TFJS export at: models/foodsg233/
-     *   - model.json
-     *   - group1-shard*.bin
-     *   - labels.json (array of class names; same index order as model)
      *************************************************************/
     const MODEL_URL  = new URL("models/foodsg233/model.json",  window.location.href).toString();
     const LABELS_URL = new URL("models/foodsg233/labels.json", window.location.href).toString();
 
     let foodModel = null;
     let foodLabels = null;
-    let modelInputSize = 224; // default; if your metadata differs, update here
+    let modelInputSize = 224;
 
     async function loadFoodSG233Model() {
       if (foodModel && foodLabels) return;
 
-      setStatus("warn", "Loading FoodSG-233 model (first time may take a bit)...");
+      setStatus("warn", "Loading FoodSG-233 model (first load may take a bit)...");
 
-      // Load labels first (helpful even if model fails)
       const labResp = await fetch(LABELS_URL, { cache: "no-store" });
       if (!labResp.ok) throw new Error("labels.json not found at " + LABELS_URL);
       foodLabels = await labResp.json();
 
-      // Load model
       foodModel = await tf.loadLayersModel(MODEL_URL);
 
-      // Warm-up
       tf.tidy(() => {
         const x = tf.zeros([1, modelInputSize, modelInputSize, 3]);
         foodModel.predict(x);
       });
 
-      setStatus("ok", `Model loaded ✅ (${foodLabels.length} classes). Start camera.`);
+      setStatus("ok", `Model loaded ✅ (${foodLabels.length} classes).`);
     }
 
     function topKFromProbs(probArray, k = 3) {
@@ -574,16 +586,15 @@
     }
 
     async function classifyElement(el) {
-      // Returns top3 [{label, prob}, ...]
       await loadFoodSG233Model();
 
       const logits = tf.tidy(() => {
         let img = tf.browser.fromPixels(el);
         img = tf.image.resizeBilinear(img, [modelInputSize, modelInputSize]);
         img = img.toFloat().div(255.0);
-        img = img.expandDims(0); // [1,H,W,3]
-        const out = foodModel.predict(img); // [1,num_classes]
-        return out.squeeze(); // [num_classes]
+        img = img.expandDims(0);
+        const out = foodModel.predict(img);
+        return out.squeeze();
       });
 
       const probs = await logits.data();
@@ -593,7 +604,7 @@
     }
 
     /*************************************************************
-     * 2) MACRO DATABASE (SG foods + drinks) + matching helpers
+     * 2) MACRO DATABASE (SG foods + drinks)
      *************************************************************/
     const FOOD_DB = [
       { name: "Chicken Rice", keys: ["chicken rice","hainanese chicken rice"], kcal: 650, p: 35, c: 75, f: 20 },
@@ -607,7 +618,6 @@
       { name: "Yong Tau Foo", keys: ["yong tau foo"], kcal: 500, p: 28, c: 50, f: 15 },
       { name: "Satay (10 sticks)", keys: ["satay"], kcal: 550, p: 35, c: 20, f: 35 },
 
-      // Generic (still useful if FoodSG label is broader)
       { name: "Burger", keys: ["burger","cheeseburger","hamburger"], kcal: 550, p: 28, c: 45, f: 28 },
       { name: "Pizza (2 slices)", keys: ["pizza"], kcal: 600, p: 25, c: 70, f: 22 },
       { name: "Salad (with protein)", keys: ["salad"], kcal: 450, p: 35, c: 25, f: 20 },
@@ -667,15 +677,13 @@
     function heuristicMacros(label, type) {
       const s = normalize(label);
       if (type === "drink") {
-        let kcal = 80, p=0, c=18, f=1;
         if (s.includes("water")) return { kcal:0, p:0, c:0, f:0 };
         if (s.includes("kopi") || s.includes("coffee")) return { kcal:120, p:2, c:20, f:3 };
         if (s.includes("tea") || s.includes("teh")) return { kcal:150, p:3, c:24, f:4 };
         if (s.includes("bubble") || s.includes("boba")) return { kcal:350, p:4, c:70, f:8 };
-        return { kcal, p, c, f };
+        return { kcal:80, p:0, c:18, f:1 };
       }
 
-      // food fallback
       let kcal = 520, p=20, c=60, f=15;
       if (s.includes("rice")) { kcal=650; p=25; c=85; f=18; }
       if (s.includes("noodle") || s.includes("noodles") || s.includes("mee")) { kcal=620; p=22; c=80; f=18; }
@@ -842,12 +850,11 @@
     }
 
     /*************************************************************
-     * 6) CAMERA + LIVE LOOP (FoodSG-233)
+     * 6) CAMERA + LIVE LOOP
      *************************************************************/
     async function startCamera() {
       try {
         await loadFoodSG233Model();
-
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
           audio: false
@@ -863,7 +870,7 @@
           }
         };
       } catch (e) {
-        setStatus("danger", "Camera/model error: " + e.message + " (Tip: check model files path + HTTPS + permissions.)");
+        setStatus("danger", "Camera/model error: " + e.message + " (Check model path + HTTPS + permissions.)");
       }
     }
 
@@ -955,11 +962,8 @@
         $("liveConf").textContent = `Confidence: ${Math.round(top.prob*100)}%`;
 
         drawOverlay(top.label, top.prob, mappedName, source, itemType);
-      } catch (e) {
-        // ignore transient
-      }
+      } catch (e) { /* ignore transient */ }
 
-      // run at a manageable cadence
       setTimeout(() => requestAnimationFrame(liveLoop), 650);
     }
 
@@ -987,8 +991,6 @@
       canvas.getContext("2d").drawImage(v, 0, 0);
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       setPreview(dataUrl);
-
-      // Re-classify from the captured frame (more consistent than "last live" sometimes)
       await estimateFromCapturedCanvas(canvas);
     }
 
@@ -1047,6 +1049,7 @@
         source = "Heuristic estimate (no strong DB match)";
       }
 
+      // Apply portion BEFORE pushing into editor
       macros = {
         kcal: Math.round(macros.kcal * portion),
         p: round1(macros.p * portion),
@@ -1063,20 +1066,17 @@
       const confPct = Math.round((prob || 0) * 100);
       $("metaLine").textContent = `Detected: "${label}" (${confPct}%). ${source}. You can edit name/macros.`;
 
-      // confidence-based warning
-      if ((prob || 0) < 0.45) {
-        setStatus("danger", `Low confidence (${confPct}%). Please confirm/edit. ${source}`);
-      } else if ((prob || 0) < 0.65) {
-        setStatus("warn", `Medium confidence (${confPct}%). Quick check recommended. ${source}`);
-      } else {
-        setStatus("ok", `High confidence (${confPct}%). ${source}`);
-      }
+      if ((prob || 0) < 0.45) setStatus("danger", `Low confidence (${confPct}%). Please confirm/edit.`);
+      else if ((prob || 0) < 0.65) setStatus("warn", `Medium confidence (${confPct}%). Quick check recommended.`);
+      else setStatus("ok", `High confidence (${confPct}%).`);
     }
 
     /*************************************************************
-     * 8) MEAL BUILDER
+     * 8) MEAL BUILDER (FIX: finalized meal uses EXACT same values
+     * shown in Current meal items; sums are computed from the same
+     * stored mealItems objects).
      *************************************************************/
-    function sumMealItems() {
+    function sumMealItemsRaw() {
       return mealItems.reduce((acc, it) => {
         acc.kcal += it.kcal;
         acc.p += it.p;
@@ -1084,6 +1084,11 @@
         acc.f += it.f;
         return acc;
       }, {kcal:0, p:0, c:0, f:0});
+    }
+
+    function sumMealItemsRounded() {
+      const t = sumMealItemsRaw();
+      return { kcal: round1(t.kcal), p: round1(t.p), c: round1(t.c), f: round1(t.f) };
     }
 
     function renderMealItems() {
@@ -1104,7 +1109,7 @@
                 ${it.kcal} kcal | P ${it.p}g | C ${it.c}g | F ${it.f}g
               </div>
             </div>
-            <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
+            <button type="button" class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
           `;
           list.appendChild(row);
         });
@@ -1121,11 +1126,11 @@
     }
 
     function updateMealSums() {
-      const t = sumMealItems();
-      $("mealSumKcal").textContent = round1(t.kcal);
-      $("mealSumP").textContent = round1(t.p);
-      $("mealSumC").textContent = round1(t.c);
-      $("mealSumF").textContent = round1(t.f);
+      const t = sumMealItemsRounded();
+      $("mealSumKcal").textContent = t.kcal;
+      $("mealSumP").textContent = t.p;
+      $("mealSumC").textContent = t.c;
+      $("mealSumF").textContent = t.f;
       render();
     }
 
@@ -1134,27 +1139,20 @@
       const label = ($("itemLabel").value || "").trim();
       if (!label) { alert("Please enter a name (food or drink)."); return; }
 
-      const portion = parseFloat($("portion").value || "1.0");
-      const kcal = clamp(safeNum($("itemKcal").value), 0, 5000);
-      const p = clamp(safeNum($("itemP").value), 0, 400);
-      const c = clamp(safeNum($("itemC").value), 0, 700);
-      const f = clamp(safeNum($("itemF").value), 0, 300);
+      // These exact values will be used everywhere (meal list + finalize + PDF)
+      const kcal = round1(clamp(safeNum($("itemKcal").value), 0, 5000));
+      const p = round1(clamp(safeNum($("itemP").value), 0, 400));
+      const c = round1(clamp(safeNum($("itemC").value), 0, 700));
+      const f = round1(clamp(safeNum($("itemF").value), 0, 300));
 
+      const portion = parseFloat($("portion").value || "1.0");
       const confPct = Math.round((lastLive.prob || 0) * 100);
 
-      // determine source line for auditability
       const m = bestDbMatch(label, itemType);
       const source = (m.best && m.bestScore >= 0.35) ? "SG Macro DB" : "Manual/Heuristic";
 
-      mealItems.push({
-        itemType,
-        label, kcal, p, c, f,
-        portion,
-        confPct,
-        source
-      });
+      mealItems.push({ itemType, label, kcal, p, c, f, portion, confPct, source });
 
-      // reset editor for next capture
       $("itemLabel").value = "";
       $("itemKcal").value = 0;
       $("itemP").value = 0;
@@ -1176,7 +1174,9 @@
 
       const mealSlot = $("mealSlot").value;
       const notes = ($("mealNotes").value || "").trim();
-      const sum = sumMealItems();
+
+      // IMPORTANT: finalized meal macros are the EXACT sum of mealItems values shown in the list
+      const sum = sumMealItemsRounded();
 
       const label = mealItems.length === 1
         ? mealItems[0].label
@@ -1189,14 +1189,14 @@
         notes,
         imgDataUrl: currentImageDataUrl,
         items: mealItems.map(i => ({...i})),
-        macros: { kcal: round1(sum.kcal), p: round1(sum.p), c: round1(sum.c), f: round1(sum.f) }
+        macros: { kcal: sum.kcal, p: sum.p, c: sum.c, f: sum.f }
       });
 
       mealItems = [];
       $("mealNotes").value = "";
       renderMealItems();
-
       render();
+
       alert("Meal logged ✅");
     }
 
@@ -1234,10 +1234,8 @@
       const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
       const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
 
-      const fatTarget = targets.fTarget;
-      const fatTol = Math.max(10, 0.15 * fatTarget);
-      let fVer = "On target-ish";
-      if (Math.abs(totals.f - fatTarget) > fatTol) fVer = (totals.f > fatTarget) ? "High" : "Low";
+      const fatTol = Math.max(10, 0.15 * targets.fTarget);
+      const fVer = (Math.abs(totals.f - targets.fTarget) <= fatTol) ? "On target-ish" : (totals.f > targets.fTarget ? "High" : "Low");
 
       $("verP").textContent = `${pVer} (target ${targets.pRange[0]}–${targets.pRange[1]} g)`;
       $("verC").textContent = `${cVer} (target ${targets.cRange[0]}–${targets.cRange[1]} g)`;
@@ -1294,7 +1292,7 @@
             ${e.notes ? `<div class="text-xs text-gray-600 mt-1">Notes: ${escapeHtml(e.notes)}</div>` : ""}
             <div class="mt-2 space-y-2">${itemsHtml || ""}</div>
           </div>
-          <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del="${idx}">
+          <button type="button" class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del="${idx}">
             🗑️
           </button>
         `;
@@ -1311,125 +1309,123 @@
     }
 
     /*************************************************************
-     * 10) PDF EXPORT
+     * 10) PDF EXPORT (FIX: guard + clear error)
      *************************************************************/
     async function exportPdf() {
-      const targets = computeTargets();
-      const totals = calcTotals();
+      try {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          alert("PDF library failed to load. Check your network / CDN access.");
+          return;
+        }
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: "pt", format: "a4" });
-      const pageH = doc.internal.pageSize.getHeight();
-      const margin = 40;
-      let y = margin;
+        const targets = computeTargets();
+        const totals = calcTotals();
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.text("MacroVision — Athlete Daily Fueling Report (SG)", margin, y);
-      y += 18;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: "pt", format: "a4" });
+        const pageH = doc.internal.pageSize.getHeight();
+        const margin = 40;
+        let y = margin;
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(120);
-      doc.text(`Generated: ${new Date().toLocaleString()}`, margin, y);
-      y += 18;
-      doc.setTextColor(0);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.text("MacroVision — Athlete Daily Fueling Report (SG)", margin, y);
+        y += 18;
 
-      const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
-      const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
-      const fatTol = Math.max(10, 0.15 * targets.fTarget);
-      const fVer = (Math.abs(totals.f - targets.fTarget) <= fatTol) ? "On target-ish" : (totals.f > targets.fTarget ? "High" : "Low");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(120);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, margin, y);
+        y += 18;
+        doc.setTextColor(0);
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("Daily Intake vs Targets", margin, y); y += 8;
+        const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
+        const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
+        const fatTol = Math.max(10, 0.15 * targets.fTarget);
+        const fVer = (Math.abs(totals.f - targets.fTarget) <= fatTol) ? "On target-ish" : (totals.f > targets.fTarget ? "High" : "Low");
 
-      doc.autoTable({
-        startY: y + 10,
-        head: [["Metric", "Intake", "Target / Range", "Verdict"]],
-        body: [
-          ["Calories (kcal)", round1(totals.kcal).toString(), targets.kcalTarget.toString(), ""],
-          ["Protein (g)", round1(totals.p).toString(), `${targets.pRange[0]}–${targets.pRange[1]}`, pVer],
-          ["Carbs (g)", round1(totals.c).toString(), `${targets.cRange[0]}–${targets.cRange[1]}`, cVer],
-          ["Fat (g)", round1(totals.f).toString(), `${targets.fTarget} (fat AMDR ${targets.fatRatioPct}% kcal)`, fVer],
-        ],
-        margin: { left: margin, right: margin },
-        styles: { font: "helvetica", fontSize: 9 },
-        headStyles: { fillColor: [245, 245, 245], textColor: 20 },
-      });
-
-      y = doc.lastAutoTable.finalY + 18;
-
-      const bySlot = {};
-      MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
-      entries.forEach(e => {
-        bySlot[e.mealSlot].kcal += e.macros.kcal;
-        bySlot[e.mealSlot].p += e.macros.p;
-        bySlot[e.mealSlot].c += e.macros.c;
-        bySlot[e.mealSlot].f += e.macros.f;
-      });
-
-      if (y > pageH - 220) { doc.addPage(); y = margin; }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("Macrodistribution by Meal Timing", margin, y);
-      y += 8;
-
-      const mealRows = MEAL_SLOTS.map(slot => {
-        const t = bySlot[slot];
-        const pct = macroPercentages(t.p, t.c, t.f);
-        return [slot, round1(t.kcal), round1(t.p), round1(t.c), round1(t.f), `${pct.p}/${pct.c}/${pct.f}`];
-      });
-
-      doc.autoTable({
-        startY: y + 10,
-        head: [["Meal", "kcal", "Protein (g)", "Carbs (g)", "Fat (g)", "P/C/F (%)"]],
-        body: mealRows,
-        margin: { left: margin, right: margin },
-        styles: { font: "helvetica", fontSize: 9 },
-        headStyles: { fillColor: [255, 247, 237], textColor: 20 },
-      });
-
-      // Meals detail table (optional but useful)
-      const detailRows = [];
-      entries.forEach(e => {
-        (e.items || []).forEach(it => {
-          detailRows.push([
-            e.mealSlot,
-            it.itemType,
-            it.label,
-            it.kcal,
-            it.p,
-            it.c,
-            it.f,
-            `${it.confPct}%`,
-            it.source
-          ]);
-        });
-      });
-
-      if (detailRows.length) {
-        doc.addPage();
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
-        doc.text("Item-level Details", margin, margin);
+        doc.text("Daily Intake vs Targets", margin, y); y += 8;
 
         doc.autoTable({
-          startY: margin + 12,
-          head: [["Meal", "Type", "Item", "kcal", "P", "C", "F", "Conf", "Source"]],
-          body: detailRows,
+          startY: y + 10,
+          head: [["Metric", "Intake", "Target / Range", "Verdict"]],
+          body: [
+            ["Calories (kcal)", round1(totals.kcal).toString(), targets.kcalTarget.toString(), ""],
+            ["Protein (g)", round1(totals.p).toString(), `${targets.pRange[0]}–${targets.pRange[1]}`, pVer],
+            ["Carbs (g)", round1(totals.c).toString(), `${targets.cRange[0]}–${targets.cRange[1]}`, cVer],
+            ["Fat (g)", round1(totals.f).toString(), `${targets.fTarget} (fat AMDR ${targets.fatRatioPct}% kcal)`, fVer],
+          ],
           margin: { left: margin, right: margin },
-          styles: { font: "helvetica", fontSize: 8 },
+          styles: { font: "helvetica", fontSize: 9 },
           headStyles: { fillColor: [245, 245, 245], textColor: 20 },
         });
+
+        y = doc.lastAutoTable.finalY + 18;
+
+        const bySlot = {};
+        MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
+        entries.forEach(e => {
+          bySlot[e.mealSlot].kcal += e.macros.kcal;
+          bySlot[e.mealSlot].p += e.macros.p;
+          bySlot[e.mealSlot].c += e.macros.c;
+          bySlot[e.mealSlot].f += e.macros.f;
+        });
+
+        if (y > pageH - 220) { doc.addPage(); y = margin; }
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Macrodistribution by Meal Timing", margin, y);
+        y += 8;
+
+        const mealRows = MEAL_SLOTS.map(slot => {
+          const t = bySlot[slot];
+          const pct = macroPercentages(t.p, t.c, t.f);
+          return [slot, round1(t.kcal), round1(t.p), round1(t.c), round1(t.f), `${pct.p}/${pct.c}/${pct.f}`];
+        });
+
+        doc.autoTable({
+          startY: y + 10,
+          head: [["Meal", "kcal", "Protein (g)", "Carbs (g)", "Fat (g)", "P/C/F (%)"]],
+          body: mealRows,
+          margin: { left: margin, right: margin },
+          styles: { font: "helvetica", fontSize: 9 },
+          headStyles: { fillColor: [255, 247, 237], textColor: 20 },
+        });
+
+        const detailRows = [];
+        entries.forEach(e => {
+          (e.items || []).forEach(it => {
+            detailRows.push([ e.mealSlot, it.itemType, it.label, it.kcal, it.p, it.c, it.f, `${it.confPct}%`, it.source ]);
+          });
+        });
+
+        if (detailRows.length) {
+          doc.addPage();
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(12);
+          doc.text("Item-level Details", margin, margin);
+
+          doc.autoTable({
+            startY: margin + 12,
+            head: [["Meal", "Type", "Item", "kcal", "P", "C", "F", "Conf", "Source"]],
+            body: detailRows,
+            margin: { left: margin, right: margin },
+            styles: { font: "helvetica", fontSize: 8 },
+            headStyles: { fillColor: [245, 245, 245], textColor: 20 },
+          });
+        }
+
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text(`© ${new Date().getFullYear()} Ng Jun Wei & Ng Hong Wei. Developed by Jun Wei and tested by Hong Wei. Created by Ng Brothers.`, margin, pageH - 24);
+        doc.setTextColor(0);
+
+        doc.save(`MacroVision_Athlete_Report_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"")}.pdf`);
+      } catch (e) {
+        alert("PDF export failed: " + (e?.message || e));
       }
-
-      doc.setFontSize(9);
-      doc.setTextColor(120);
-      doc.text(`© ${new Date().getFullYear()} Ng Jun Wei & Ng Hong Wei. Developed by Jun Wei and tested by Hong Wei. Created by Ng Brothers.`, margin, pageH - 24);
-      doc.setTextColor(0);
-
-      doc.save(`MacroVision_Athlete_Report_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"")}.pdf`);
     }
 
     /*************************************************************
@@ -1460,7 +1456,6 @@
       });
 
       $("itemType").addEventListener("change", () => {
-        // update overlay immediately based on type (next loop tick) + help user
         setStatus("warn", `Switched to ${$("itemType").value.toUpperCase()} mode. Snap again for best matching.`);
       });
 
@@ -1469,6 +1464,8 @@
       $("addItemBtn").addEventListener("click", addItem);
       $("clearMealBtn").addEventListener("click", clearMeal);
       $("finalizeMealBtn").addEventListener("click", finalizeMealToLog);
+
+      // Ensure export button is clickable and bound
       $("exportPdfBtn").addEventListener("click", exportPdf);
 
       $("clearBtn").addEventListener("click", () => {
@@ -1478,7 +1475,6 @@
       });
     }
 
-    // Init UI defaults
     $("yearNow").textContent = new Date().getFullYear();
     $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
     $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
