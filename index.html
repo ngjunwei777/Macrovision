@@ -21,6 +21,8 @@
     .small { font-size: 12px; }
     .warn { background: #fff7ed; border: 1px solid #fed7aa; }
     .ok { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .danger { background:#fef2f2; border:1px solid #fecaca; }
+    .badge { display:inline-flex; align-items:center; gap:.35rem; padding:.2rem .55rem; border-radius:999px; font-size:12px; font-weight:700; }
   </style>
 </head>
 
@@ -44,12 +46,13 @@
             <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
               Athlete App
             </span>
-            <span class="text-gray-300 text-sm">Singapore • IOC-style fueling • Gemini macros</span>
+            <span class="text-gray-300 text-sm">Singapore • IOC-style fueling • Gemini macros • drinks</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
           <p class="text-gray-300 max-w-2xl">
-            Snap multiple meals, let Gemini estimate macros (kcal/P/C/F), then correct if needed.
-            Export a PDF with macrodistribution across breakfast/snacks/lunch/dinner/pre/post-workout.
+            Snap meals + drinks, let Gemini estimate macros (kcal/P/C/F), then correct items when AI blur blur.
+            Add multiple items (cai fan style), track drinks separately, and export a PDF with macrodistribution across
+            breakfast/snacks/lunch/dinner/pre/post-workout.
           </p>
           <div class="mt-4 text-sm text-gray-200">
             MacroVision runs on expensive AI brains (GPUs). I’m keeping it free for the community.
@@ -60,7 +63,7 @@
 
         <div class="flex flex-wrap gap-2">
           <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">Gemini Vision</span>
-          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">Season-aware</span>
+          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">Add Items</span>
           <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Export</span>
         </div>
       </div>
@@ -240,8 +243,11 @@
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-extrabold">📸 Snap meal → Gemini estimates macros</h2>
-            <p class="text-sm text-gray-600">Gemini returns dish + kcal/P/C/F. You can edit label + adjust portion before logging.</p>
+            <h2 class="text-xl font-extrabold">📸 Snap meal → Detect food + drink → Add items</h2>
+            <p class="text-sm text-gray-600">
+              Use Gemini to detect <b>food</b> and <b>drink</b> separately. If confidence low, you’ll get a warning.
+              Add multiple items (cai fan) and the app will sum macros.
+            </p>
           </div>
         </div>
 
@@ -250,7 +256,7 @@
           <div class="warn rounded-xl p-3">
             <div class="font-bold text-sm">✅ GitHub Pages note</div>
             <div class="small text-gray-700 mt-1">
-              GitHub Pages is static-only, so you must call Gemini via a proxy (Cloudflare Worker / Vercel / Netlify).
+              GitHub Pages is static-only, so Gemini must be called via a proxy (Cloudflare Worker / Vercel / Netlify).
               Paste your proxy URL below.
             </div>
           </div>
@@ -263,6 +269,19 @@
             <div class="text-gray-600 mb-1">Gemini model</div>
             <input id="geminiModel" class="w-full border rounded-lg px-3 py-2" value="gemini-2.0-flash" />
           </label>
+
+          <div class="bg-gray-50 rounded-xl p-3">
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+              <div class="text-sm font-bold">Confidence warning threshold</div>
+              <div class="text-sm mono">
+                <input id="confThresh" type="range" min="0.3" max="0.9" step="0.05" value="0.6" class="align-middle" />
+                <span id="confThreshLabel" class="font-extrabold">0.60</span>
+              </div>
+            </div>
+            <div class="text-xs text-gray-600 mt-1">
+              If Gemini confidence is below this, you’ll see a “please confirm” warning.
+            </div>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -298,12 +317,15 @@
               <div id="noPreview" class="text-sm text-gray-500">No photo yet. Snap/upload to preview.</div>
             </div>
 
-            <div class="flex gap-2">
-              <button id="detectBtn" class="flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
-                ✨ Detect + estimate macros (Gemini)
+            <div class="grid grid-cols-1 gap-2">
+              <button id="detectFoodBtn" class="bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
+                🍽️ Detect FOOD + macros (Gemini)
               </button>
-              <button id="useSuggestionBtn" class="flex-1 bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200" disabled>
-                Apply Gemini result
+              <button id="detectDrinkBtn" class="bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
+                🥤 Detect DRINK + macros (Gemini)
+              </button>
+              <button id="applyGeminiBtn" class="bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200" disabled>
+                Apply last Gemini result → Add as item
               </button>
             </div>
 
@@ -323,57 +345,93 @@
             </label>
 
             <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Food label (editable)</div>
-              <input id="customFood" class="w-full border rounded-lg px-3 py-2"
-                     placeholder="Gemini will fill this. You can override, e.g., Cai Fan: steamed egg + tofu + veg" />
-            </label>
-
-            <label class="text-sm block">
               <div class="text-gray-600 mb-1">Portion multiplier (applies to Gemini macros too)</div>
               <input id="portion" type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full" />
               <div class="text-xs text-gray-600 mt-1">x<span id="portionLabel" class="font-semibold">1.0</span></div>
             </label>
 
             <div class="bg-white border rounded-xl p-3">
-              <div class="flex items-center justify-between">
-                <div class="font-bold">Macro source</div>
-                <select id="macroSource" class="border rounded-lg px-3 py-2 text-sm">
-                  <option value="gemini" selected>Gemini estimate</option>
-                  <option value="manual">Manual entry</option>
-                </select>
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div class="font-bold">Item editor (manual override allowed)</div>
+                <span id="lastTypeBadge" class="badge bg-gray-100 text-gray-900">—</span>
               </div>
 
-              <div class="grid grid-cols-4 gap-2 mt-3">
-                <div class="bg-gray-50 rounded-lg p-2">
-                  <div class="text-xs text-gray-500">kcal</div>
-                  <input id="mKcalIn" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
-                </div>
-                <div class="bg-gray-50 rounded-lg p-2">
-                  <div class="text-xs text-gray-500">Protein (g)</div>
-                  <input id="mPIn" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
-                </div>
-                <div class="bg-gray-50 rounded-lg p-2">
-                  <div class="text-xs text-gray-500">Carbs (g)</div>
-                  <input id="mCIn" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
-                </div>
-                <div class="bg-gray-50 rounded-lg p-2">
-                  <div class="text-xs text-gray-500">Fat (g)</div>
-                  <input id="mFIn" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
-                </div>
-              </div>
+              <div class="mt-3 space-y-2">
+                <label class="text-sm block">
+                  <div class="text-gray-600 mb-1">Item label (editable)</div>
+                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2"
+                         placeholder="e.g., Cai Fan: steamed egg / tofu / veg OR Kopi C Kosong" />
+                </label>
 
-              <div class="text-xs text-gray-500 mt-2" id="geminiMeta">No Gemini estimate yet.</div>
+                <div class="grid grid-cols-4 gap-2">
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <div class="text-xs text-gray-500">kcal</div>
+                    <input id="itemKcal" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <div class="text-xs text-gray-500">Protein (g)</div>
+                    <input id="itemP" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <div class="text-xs text-gray-500">Carbs (g)</div>
+                    <input id="itemC" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <div class="text-xs text-gray-500">Fat (g)</div>
+                    <input id="itemF" class="w-full border rounded-lg px-2 py-1 mono" type="number" value="0" />
+                  </div>
+                </div>
+
+                <div class="text-xs text-gray-500" id="lastGeminiMeta">No Gemini result yet.</div>
+
+                <button id="addItemBtn" class="w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
+                  ➕ Add this item to meal (food/drink)
+                </button>
+              </div>
             </div>
 
             <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Notes</div>
-              <textarea id="notes" class="w-full border rounded-lg px-3 py-2" rows="2"
-                        placeholder="e.g., extra oil, added egg, gravy heavy"></textarea>
+              <div class="text-gray-600 mb-1">Meal notes (optional)</div>
+              <textarea id="mealNotes" class="w-full border rounded-lg px-3 py-2" rows="2"
+                        placeholder="e.g., extra oil, gravy heavy, added egg, shared with friend"></textarea>
             </label>
 
-            <button id="addEntryBtn" class="w-full bg-orange-600 text-white px-4 py-3 rounded-xl hover:bg-orange-700">
-              ➕ Add meal to log
+            <button id="finalizeMealBtn" class="w-full bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-gray-800">
+              ✅ Finalize meal (sum items) → Add meal to log
             </button>
+          </div>
+        </div>
+
+        <!-- Current meal items -->
+        <div class="mt-5 bg-gray-50 rounded-xl p-4">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div class="font-extrabold">Current meal items</div>
+              <div class="text-xs text-gray-600">Add multiple food items + drinks, then finalize meal.</div>
+            </div>
+            <button id="clearMealBtn" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+              Clear meal items
+            </button>
+          </div>
+          <div id="mealItemsList" class="mt-3 space-y-2"></div>
+
+          <div class="grid grid-cols-4 gap-2 mt-4">
+            <div class="bg-white rounded-lg border p-2">
+              <div class="text-xs text-gray-500">Meal kcal</div>
+              <div class="font-extrabold mono" id="mealSumKcal">0</div>
+            </div>
+            <div class="bg-white rounded-lg border p-2">
+              <div class="text-xs text-gray-500">Protein</div>
+              <div class="font-extrabold mono" id="mealSumP">0</div>
+            </div>
+            <div class="bg-white rounded-lg border p-2">
+              <div class="text-xs text-gray-500">Carbs</div>
+              <div class="font-extrabold mono" id="mealSumC">0</div>
+            </div>
+            <div class="bg-white rounded-lg border p-2">
+              <div class="text-xs text-gray-500">Fat</div>
+              <div class="font-extrabold mono" id="mealSumF">0</div>
+            </div>
           </div>
         </div>
       </div>
@@ -384,7 +442,7 @@
           <div>
             <h2 class="text-xl font-extrabold">📋 Daily fueling check (athlete)</h2>
             <p class="text-sm text-gray-600">
-              Intake vs targets + meal-by-meal macrodistribution. Export to PDF for athlete reporting.
+              Intake vs targets + macrodistribution. Export PDF for athlete reporting.
             </p>
           </div>
           <div class="flex gap-2">
@@ -392,7 +450,7 @@
               📄 Export PDF
             </button>
             <button id="clearBtn" class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">
-              Clear
+              Clear day
             </button>
           </div>
         </div>
@@ -440,7 +498,7 @@
         </div>
 
         <div class="mt-6">
-          <div class="font-bold mb-2">Captures</div>
+          <div class="font-bold mb-2">Logged meals (with items)</div>
           <div id="entriesList" class="space-y-3"></div>
         </div>
 
@@ -462,10 +520,16 @@
     </section>
   </main>
 
+  <footer class="py-8">
+    <div class="max-w-7xl mx-auto px-4 text-xs text-gray-500">
+      © <span id="yearNow"></span> Ng Jun Wei &amp; Ng Hong Wei. All rights reserved.
+    </div>
+  </footer>
+
   <script>
-    // -----------------------------
+    // ==============================
     // Athlete target logic
-    // -----------------------------
+    // ==============================
     const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
 
     const ATHLETE_CARB_BASE = {
@@ -496,22 +560,28 @@
 
     const AMDR_FAT = [0.20, 0.35];
 
-    // -----------------------------
+    // ==============================
     // State
-    // -----------------------------
-    let entries = [];
+    // ==============================
+    let entries = [];       // daily logged meals
+    let mealItems = [];     // current "meal builder" items (food + drink)
     let currentImageDataUrl = null;
     let stream = null;
 
-    // Gemini result cache
-    let lastGemini = null; // {dish, confidence, macros:{kcal,protein_g,carbs_g,fat_g}, ...}
+    // last Gemini result cache
+    // { kind: "food"|"drink", dish, confidence, macros:{kcal,protein_g,carbs_g,fat_g}, portion_assumption, notes, components[] }
+    let lastGemini = null;
 
-    // -----------------------------
+    // ==============================
     // Helpers
-    // -----------------------------
+    // ==============================
     const $ = (id) => document.getElementById(id);
     const round1 = (x) => Math.round(x * 10) / 10;
     const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const safeNum = (x) => {
+      const n = Number(x);
+      return Number.isFinite(n) ? n : 0;
+    };
 
     function escapeHtml(s) {
       return (s || "").replace(/[&<>"']/g, (c) => ({
@@ -527,9 +597,10 @@
 
     function setStatus(kind, text) {
       const el = $("detectStatus");
-      el.classList.remove("hidden");
-      el.classList.remove("warn","ok");
-      el.classList.add(kind === "ok" ? "ok" : "warn");
+      el.classList.remove("hidden","warn","ok","danger");
+      if (kind === "ok") el.classList.add("ok");
+      else if (kind === "danger") el.classList.add("danger");
+      else el.classList.add("warn");
       el.textContent = text;
     }
 
@@ -539,9 +610,18 @@
       return parts[1];
     }
 
-    // -----------------------------
+    function applyPortionMultiplier(m, portion) {
+      return {
+        kcal: round1(safeNum(m.kcal) * portion),
+        protein_g: round1(safeNum(m.protein_g) * portion),
+        carbs_g: round1(safeNum(m.carbs_g) * portion),
+        fat_g: round1(safeNum(m.fat_g) * portion),
+      };
+    }
+
+    // ==============================
     // BMR/TDEE
-    // -----------------------------
+    // ==============================
     function bmrMifflin(weightKg, heightCm, age, sex) {
       const s = (sex === "Male") ? 5 : -161;
       return 10 * weightKg + 6.25 * heightCm - 5 * age + s;
@@ -632,9 +712,9 @@
       };
     }
 
-    // -----------------------------
+    // ==============================
     // Camera
-    // -----------------------------
+    // ==============================
     async function startCamera() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
@@ -655,12 +735,12 @@
       $("previewImg").classList.remove("hidden");
       $("noPreview").classList.add("hidden");
 
-      // reset gemini cache
       lastGemini = null;
-      $("useSuggestionBtn").disabled = true;
+      $("applyGeminiBtn").disabled = true;
       $("detectStatus").classList.add("hidden");
-      $("geminiMeta").textContent = "No Gemini estimate yet.";
-      // keep manual fields as-is; user may want to use manual
+      $("lastGeminiMeta").textContent = "No Gemini result yet.";
+      $("lastTypeBadge").textContent = "—";
+      $("lastTypeBadge").className = "badge bg-gray-100 text-gray-900";
     }
 
     function snapPhoto() {
@@ -683,73 +763,55 @@
       reader.readAsDataURL(file);
     }
 
-    // -----------------------------
-    // Gemini prompt (Option B: macros too)
-    // -----------------------------
-    function buildGeminiPrompt() {
+    // ==============================
+    // Gemini prompt: food vs drink
+    // ==============================
+    function buildGeminiPrompt(kind) {
+      const isDrink = kind === "drink";
       return `
 You are an expert Singapore sports nutrition assistant for athletes.
-Look at the food photo and estimate (1) dish name in Singapore context, (2) calories and macronutrients.
+Look at the image and estimate the ${isDrink ? "DRINK" : "FOOD"} in Singapore context.
 
-Return STRICT JSON ONLY with this schema (no markdown, no commentary):
+Return STRICT JSON ONLY (no markdown, no extra text):
 {
+  "kind": "${isDrink ? "drink" : "food"}",
   "dish": string,
   "confidence": number,              // 0..1
   "candidates": string[],            // up to 5
   "notes": string,                   // short: visible cues + SG terms
-  "portion_assumption": string,      // e.g., "1 hawker serving", "2 prata", "1 bowl"
-  "components": string[],            // up to 8, e.g., ["noodles","egg","minced pork","sambal"]
+  "portion_assumption": string,      // e.g., "1 hawker serving", "1 cup", "500ml bottle"
+  "components": string[],            // up to 8 (for cai fan: list visible items)
   "macros": {
     "kcal": number,
     "protein_g": number,
     "carbs_g": number,
     "fat_g": number
-  },
-  "micronutrient_flags": {           // optional hints; not lab-accurate
-    "iron": "low|ok|high|unknown",
-    "calcium_vitD": "low|ok|high|unknown",
-    "b_vitamins": "low|ok|high|unknown",
-    "magnesium_zinc": "low|ok|high|unknown",
-    "antioxidants_CE": "low|ok|high|unknown"
   }
 }
 
 Rules:
-- Use Singapore dish names: chicken rice, cai fan, prata, ban mian, laksa, char kway teow, bak chor mee, nasi lemak, briyani, etc.
-- If it looks like cai fan / mixed items, set dish like "Cai Fan: <items>" and estimate macros for the whole plate.
-- If uncertain, keep confidence low and include candidates.
-- Macros should be plausible for a hawker serving and internally consistent.
+- Use Singapore names.
+- For drinks: be specific: Kopi, Kopi C, Teh Tarik, Milo, bubble tea, isotonic drink, soy milk, etc.
+- If unclear, keep confidence low and give candidates.
+- Macros must be plausible and internally consistent.
       `.trim();
     }
 
-    function safeNum(x) {
-      const n = Number(x);
-      return Number.isFinite(n) ? n : 0;
-    }
-
-    function applyPortionMultiplier(m, portion) {
-      return {
-        kcal: round1(safeNum(m.kcal) * portion),
-        protein_g: round1(safeNum(m.protein_g) * portion),
-        carbs_g: round1(safeNum(m.carbs_g) * portion),
-        fat_g: round1(safeNum(m.fat_g) * portion),
-      };
-    }
-
-    async function geminiDetect() {
+    async function geminiDetect(kind) {
       if (!currentImageDataUrl) { alert("No photo yet. Snap or upload first."); return; }
 
       const proxyUrl = ($("proxyUrl").value || "").trim();
       if (!proxyUrl) { setStatus("warn", "Please paste your Proxy URL first."); return; }
 
-      $("useSuggestionBtn").disabled = true;
-      lastGemini = null;
-      setStatus("warn", "Calling Gemini…");
-
       const model = ($("geminiModel").value || "gemini-2.0-flash").trim();
       const imageBase64 = dataUrlToBase64(currentImageDataUrl);
       const mimeType = "image/jpeg";
-      const prompt = buildGeminiPrompt();
+      const prompt = buildGeminiPrompt(kind);
+
+      $("applyGeminiBtn").disabled = true;
+      lastGemini = null;
+
+      setStatus("warn", `Calling Gemini for ${kind.toUpperCase()}…`);
 
       try {
         const r = await fetch(proxyUrl, {
@@ -760,20 +822,20 @@ Rules:
         if (!r.ok) throw new Error(`Proxy error ${r.status}`);
 
         const obj = await r.json();
-
         if (obj?.error) {
-          setStatus("warn", `Gemini/proxy returned error: ${obj.error}`);
+          setStatus("warn", `Gemini/proxy error: ${obj.error}`);
           return;
         }
 
         const dish = (obj?.dish || "").toString().trim();
         if (!dish) {
-          setStatus("warn", "No dish returned. Try a clearer photo.");
+          setStatus("warn", "No dish returned. Try clearer image / angle.");
           return;
         }
 
-        // Normalize
+        // normalize
         lastGemini = {
+          kind: kind,
           dish,
           confidence: safeNum(obj?.confidence),
           candidates: Array.isArray(obj?.candidates) ? obj.candidates.slice(0,5).map(String) : [],
@@ -785,65 +847,196 @@ Rules:
             protein_g: safeNum(obj?.macros?.protein_g),
             carbs_g: safeNum(obj?.macros?.carbs_g),
             fat_g: safeNum(obj?.macros?.fat_g),
-          },
-          micronutrient_flags: obj?.micronutrient_flags || {}
+          }
         };
 
-        const confPct = Math.round(lastGemini.confidence * 100);
-        const meta =
-          `Gemini: "${lastGemini.dish}" (${confPct}%). Portion: ${lastGemini.portion_assumption || "assumed 1 serving"}.` +
-          (lastGemini.notes ? ` Notes: ${lastGemini.notes}` : "");
+        const conf = lastGemini.confidence;
+        const thresh = parseFloat($("confThresh").value || "0.6");
+        const confPct = Math.round(conf * 100);
 
-        setStatus("ok", meta);
-        $("useSuggestionBtn").disabled = false;
+        // badge
+        $("lastTypeBadge").textContent = kind === "drink" ? "🥤 Drink" : "🍽️ Food";
+        $("lastTypeBadge").className = kind === "drink"
+          ? "badge bg-blue-100 text-blue-800"
+          : "badge bg-orange-100 text-orange-800";
+
+        const baseMsg =
+          `Gemini (${kind}) suggests: "${lastGemini.dish}" (${confPct}%). Portion: ${lastGemini.portion_assumption || "assumed"}.` +
+          (lastGemini.notes ? ` Notes: ${lastGemini.notes}` : "") +
+          (lastGemini.candidates?.length ? ` Candidates: ${lastGemini.candidates.join(", ")}.` : "");
+
+        if (conf < thresh) {
+          setStatus("danger", `⚠️ Low confidence (below ${thresh.toFixed(2)}). Please confirm/edit. ${baseMsg}`);
+        } else {
+          setStatus("ok", baseMsg);
+        }
+
+        // Put the macro estimate into the item editor (scaled by portion)
+        const portion = parseFloat($("portion").value || "1.0");
+        const scaled = applyPortionMultiplier(lastGemini.macros, portion);
+        $("itemLabel").value = lastGemini.dish;
+        $("itemKcal").value = Math.max(0, Math.round(scaled.kcal));
+        $("itemP").value = Math.max(0, round1(scaled.protein_g));
+        $("itemC").value = Math.max(0, round1(scaled.carbs_g));
+        $("itemF").value = Math.max(0, round1(scaled.fat_g));
+
+        $("lastGeminiMeta").textContent =
+          `Last Gemini (${kind}) • ${confPct}% • ${lastGemini.portion_assumption || "1 serving"} • components: ${lastGemini.components?.length ? lastGemini.components.join(", ") : "—"}`;
+
+        $("applyGeminiBtn").disabled = false;
 
       } catch (e) {
         setStatus("warn", "Detection failed: " + e.message);
       }
     }
 
-    function applyGemini() {
+    function applyGeminiToItem() {
       if (!lastGemini) return;
-
-      // Set label
-      $("customFood").value = lastGemini.dish;
-
-      // Apply macros into inputs, respecting current portion slider
-      const portion = parseFloat($("portion").value || "1.0");
-      const scaled = applyPortionMultiplier(lastGemini.macros, portion);
-
-      $("mKcalIn").value = Math.max(0, Math.round(scaled.kcal));
-      $("mPIn").value = Math.max(0, round1(scaled.protein_g));
-      $("mCIn").value = Math.max(0, round1(scaled.carbs_g));
-      $("mFIn").value = Math.max(0, round1(scaled.fat_g));
-
-      $("macroSource").value = "gemini";
-
-      const confPct = Math.round(lastGemini.confidence * 100);
-      $("geminiMeta").textContent =
-        `Using Gemini estimate (${confPct}%) • ${lastGemini.portion_assumption || "1 serving"} • components: ${lastGemini.components?.length ? lastGemini.components.join(", ") : "—"}`;
-
-      $("useSuggestionBtn").disabled = true;
+      // Already filled label/macros; this button just “confirms” and then adds item quickly.
+      addItem();
     }
 
-    function onPortionChange() {
-      $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+    // ==============================
+    // Meal builder (items)
+    // ==============================
+    function sumMealItems() {
+      return mealItems.reduce((acc, it) => {
+        acc.kcal += it.macros.kcal;
+        acc.protein += it.macros.protein;
+        acc.carbs += it.macros.carbs;
+        acc.fat += it.macros.fat;
+        return acc;
+      }, {kcal:0, protein:0, carbs:0, fat:0});
+    }
 
-      // If macro source is gemini + we have lastGemini, rescale live
-      const source = $("macroSource").value;
-      if (source === "gemini" && lastGemini?.macros) {
-        const portion = parseFloat($("portion").value || "1.0");
-        const scaled = applyPortionMultiplier(lastGemini.macros, portion);
-        $("mKcalIn").value = Math.max(0, Math.round(scaled.kcal));
-        $("mPIn").value = Math.max(0, round1(scaled.protein_g));
-        $("mCIn").value = Math.max(0, round1(scaled.carbs_g));
-        $("mFIn").value = Math.max(0, round1(scaled.fat_g));
+    function renderMealItems() {
+      const list = $("mealItemsList");
+      list.innerHTML = "";
+
+      if (!mealItems.length) {
+        list.innerHTML = `<div class="text-sm text-gray-500">No items yet. Detect food/drink or enter manually, then “Add item”.</div>`;
+      } else {
+        mealItems.forEach((it, idx) => {
+          const badge = it.kind === "drink"
+            ? `<span class="badge bg-blue-100 text-blue-800">🥤 Drink</span>`
+            : `<span class="badge bg-orange-100 text-orange-800">🍽️ Food</span>`;
+
+          const conf = (it.gemini?.confidence != null) ? Math.round(it.gemini.confidence * 100) : null;
+
+          const row = document.createElement("div");
+          row.className = "bg-white border rounded-xl p-3 flex items-start gap-3";
+          row.innerHTML = `
+            <div class="flex-1">
+              <div class="font-extrabold">${badge} ${escapeHtml(it.label)}</div>
+              <div class="text-xs text-gray-500">
+                Portion x${it.portion.toFixed(1)}
+                ${conf != null ? ` • Gemini ${conf}%` : ` • Manual`}
+              </div>
+              <div class="text-sm mono font-bold mt-1">
+                ${it.macros.kcal} kcal | P ${it.macros.protein}g | C ${it.macros.carbs}g | F ${it.macros.fat}g
+              </div>
+            </div>
+            <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
+          `;
+          list.appendChild(row);
+        });
+
+        list.querySelectorAll("button[data-del-item]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const i = parseInt(btn.getAttribute("data-del-item"), 10);
+            mealItems.splice(i, 1);
+            updateMealSums();
+          });
+        });
       }
+
+      updateMealSums();
     }
 
-    // -----------------------------
-    // Logging + totals
-    // -----------------------------
+    function updateMealSums() {
+      const t = sumMealItems();
+      $("mealSumKcal").textContent = round1(t.kcal);
+      $("mealSumP").textContent = round1(t.protein);
+      $("mealSumC").textContent = round1(t.carbs);
+      $("mealSumF").textContent = round1(t.fat);
+      render(); // re-check daily after meal builder changes (optional but nice)
+    }
+
+    function addItem() {
+      const label = ($("itemLabel").value || "").trim();
+      if (!label) { alert("Please enter an item label (food/drink)."); return; }
+
+      const portion = parseFloat($("portion").value || "1.0");
+      let kcal = clamp(safeNum($("itemKcal").value), 0, 5000);
+      let p = clamp(safeNum($("itemP").value), 0, 400);
+      let c = clamp(safeNum($("itemC").value), 0, 700);
+      let f = clamp(safeNum($("itemF").value), 0, 300);
+
+      const kind = lastGemini?.kind || "food"; // default
+      const gem = lastGemini ? { dish: lastGemini.dish, confidence: lastGemini.confidence } : null;
+
+      mealItems.push({
+        kind,
+        label,
+        portion,
+        macros: { kcal: round1(kcal), protein: round1(p), carbs: round1(c), fat: round1(f) },
+        gemini: gem
+      });
+
+      // clear item editor
+      $("itemLabel").value = "";
+      $("itemKcal").value = 0;
+      $("itemP").value = 0;
+      $("itemC").value = 0;
+      $("itemF").value = 0;
+
+      // keep lastGemini (so user can still refer), but disable apply button to avoid accidental double-add
+      $("applyGeminiBtn").disabled = true;
+
+      renderMealItems();
+    }
+
+    function clearMeal() {
+      if (!confirm("Clear current meal items?")) return;
+      mealItems = [];
+      renderMealItems();
+    }
+
+    function finalizeMealToLog() {
+      if (!mealItems.length) { alert("No meal items yet. Add food/drink items first."); return; }
+
+      const mealSlot = $("mealSlot").value;
+      const notes = ($("mealNotes").value || "").trim();
+
+      const sum = sumMealItems();
+
+      // Build a readable label
+      const label = mealItems.length === 1
+        ? mealItems[0].label
+        : `Meal (${mealItems.length} items): ` + mealItems.map(i => i.label).slice(0,4).join(" + ") + (mealItems.length > 4 ? " + ..." : "");
+
+      entries.push({
+        ts: new Date().toISOString(),
+        mealSlot,
+        label,
+        notes,
+        imgDataUrl: currentImageDataUrl,
+        items: mealItems.map(i => ({...i})),
+        macros: { kcal: round1(sum.kcal), protein: round1(sum.protein), carbs: round1(sum.carbs), fat: round1(sum.fat) }
+      });
+
+      // reset meal builder
+      mealItems = [];
+      $("mealNotes").value = "";
+      renderMealItems();
+
+      render();
+      alert("Meal logged ✅");
+    }
+
+    // ==============================
+    // Daily totals + adequacy
+    // ==============================
     function calcTotals() {
       return entries.reduce((acc, e) => {
         acc.kcal += e.macros.kcal;
@@ -858,49 +1051,6 @@ Rules:
       if (value < lo) return "Insufficient";
       if (value > hi) return "Excess (maybe ok depending on training)";
       return "Sufficient";
-    }
-
-    function addEntry() {
-      if (!currentImageDataUrl) { alert("No photo yet. Snap or upload first."); return; }
-
-      const mealSlot = $("mealSlot").value;
-      const label = ($("customFood").value || "").trim() || "Meal";
-
-      const portion = parseFloat($("portion").value || "1.0");
-      const notes = ($("notes").value || "").trim();
-      const source = $("macroSource").value;
-
-      let kcal = safeNum($("mKcalIn").value);
-      let p = safeNum($("mPIn").value);
-      let c = safeNum($("mCIn").value);
-      let f = safeNum($("mFIn").value);
-
-      // Basic sanity clamp
-      kcal = clamp(kcal, 0, 5000);
-      p = clamp(p, 0, 400);
-      c = clamp(c, 0, 700);
-      f = clamp(f, 0, 300);
-
-      entries.push({
-        ts: new Date().toISOString(),
-        mealSlot,
-        label,
-        portion,
-        notes,
-        macroSource: source,
-        macros: { kcal: round1(kcal), protein: round1(p), carbs: round1(c), fat: round1(f) },
-        imgDataUrl: currentImageDataUrl,
-        gemini: lastGemini ? {
-          dish: lastGemini.dish,
-          confidence: lastGemini.confidence,
-          portion_assumption: lastGemini.portion_assumption,
-          notes: lastGemini.notes
-        } : null
-      });
-
-      // Reset note (keep photo so user can add another quickly if they want)
-      $("notes").value = "";
-      render();
     }
 
     function render() {
@@ -954,24 +1104,38 @@ Rules:
         tbody.appendChild(tr);
       });
 
-      // entries list
+      // logged entries list with nested items
       const list = $("entriesList");
       list.innerHTML = "";
       entries.forEach((e, idx) => {
         const card = document.createElement("div");
         card.className = "border rounded-xl p-3 flex gap-3 items-start";
+
+        const itemsHtml = (e.items || []).map((it) => {
+          const badge = it.kind === "drink"
+            ? `<span class="badge bg-blue-100 text-blue-800">🥤 Drink</span>`
+            : `<span class="badge bg-orange-100 text-orange-800">🍽️ Food</span>`;
+          const conf = (it.gemini?.confidence != null) ? Math.round(it.gemini.confidence * 100) : null;
+          return `
+            <div class="border rounded-lg p-2 bg-gray-50">
+              <div class="text-sm font-bold">${badge} ${escapeHtml(it.label)}</div>
+              <div class="text-xs text-gray-500">${conf != null ? `Gemini ${conf}%` : "Manual"} • portion x${it.portion.toFixed(1)}</div>
+              <div class="text-xs mono font-bold mt-1">${it.macros.kcal} kcal | P ${it.macros.protein} C ${it.macros.carbs} F ${it.macros.fat}</div>
+            </div>
+          `;
+        }).join("");
+
         card.innerHTML = `
           <div class="thumb w-24 h-24 bg-gray-100 flex-shrink-0">
             ${e.imgDataUrl ? `<img src="${e.imgDataUrl}" class="w-full h-full object-cover" alt="thumb">` : ""}
           </div>
           <div class="flex-1">
             <div class="font-extrabold">${e.mealSlot} — ${escapeHtml(e.label)}</div>
-            <div class="text-xs text-gray-500">Source: ${escapeHtml(e.macroSource)} • Portion x${e.portion.toFixed(1)}</div>
             <div class="text-sm mt-1 mono font-bold">
               ${e.macros.kcal} kcal | P ${e.macros.protein}g | C ${e.macros.carbs}g | F ${e.macros.fat}g
             </div>
             ${e.notes ? `<div class="text-xs text-gray-600 mt-1">Notes: ${escapeHtml(e.notes)}</div>` : ""}
-            ${e.gemini?.dish ? `<div class="text-xs text-gray-600 mt-1">Gemini: ${escapeHtml(e.gemini.dish)} (${Math.round((e.gemini.confidence||0)*100)}%)</div>` : ""}
+            <div class="mt-2 space-y-2">${itemsHtml || ""}</div>
           </div>
           <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del="${idx}">
             🗑️
@@ -989,9 +1153,9 @@ Rules:
       });
     }
 
-    // -----------------------------
+    // ==============================
     // PDF Export
-    // -----------------------------
+    // ==============================
     async function exportPdf() {
       const targets = computeTargets();
       const totals = calcTotals();
@@ -1056,7 +1220,7 @@ Rules:
           ["Calories (kcal)", round1(totals.kcal).toString(), targets.kcalTarget.toString(), ""],
           ["Protein (g)", round1(totals.protein).toString(), `${targets.pRange[0]}–${targets.pRange[1]}`, pVer],
           ["Carbs (g)", round1(totals.carbs).toString(), `${targets.cRange[0]}–${targets.cRange[1]}`, cVer],
-          ["Fat (g)", round1(totals.fat).toString(), `${targets.fTarget} (AMDR fat ${targets.fatRatioPct}% kcal)`, fVer],
+          ["Fat (g)", round1(totals.fat).toString(), `${targets.fTarget} (fat AMDR ${targets.fatRatioPct}% kcal)`, fVer],
         ],
         margin: { left: margin, right: margin },
         styles: { font: "helvetica", fontSize: 9 },
@@ -1065,6 +1229,7 @@ Rules:
 
       y = doc.lastAutoTable.finalY + 18;
 
+      // Macrodistribution
       const bySlot = {};
       MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, protein:0, carbs:0, fat:0});
       entries.forEach(e => {
@@ -1097,48 +1262,48 @@ Rules:
 
       y = doc.lastAutoTable.finalY + 18;
 
+      // Logged meals with items (table)
       if (entries.length) {
-        if (y > pageH - 200) { doc.addPage(); y = margin; }
+        if (y > pageH - 240) { doc.addPage(); y = margin; }
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
-        doc.text("Captured Meals (thumbnails)", margin, y);
-        y += 10;
+        doc.text("Logged Meals (Items)", margin, y);
+        y += 8;
 
-        const thumbW = 90, thumbH = 68, gap = 14;
-        let x = margin;
-        y += 10;
+        const rows = [];
+        entries.forEach((e) => {
+          const itemText = (e.items || []).map(it => {
+            const conf = (it.gemini?.confidence != null) ? `${Math.round(it.gemini.confidence*100)}%` : "manual";
+            const kind = it.kind === "drink" ? "Drink" : "Food";
+            return `${kind}: ${it.label} (${conf}) — ${it.macros.kcal}kcal P${it.macros.protein} C${it.macros.carbs} F${it.macros.fat}`;
+          }).join(" | ");
+          rows.push([e.mealSlot, e.macros.kcal, e.macros.protein, e.macros.carbs, e.macros.fat, itemText.slice(0, 160)]);
+        });
 
-        for (let i = 0; i < entries.length; i++) {
-          const e = entries[i];
+        doc.autoTable({
+          startY: y + 10,
+          head: [["Meal", "kcal", "P", "C", "F", "Items (summary)"]],
+          body: rows,
+          margin: { left: margin, right: margin },
+          styles: { font: "helvetica", fontSize: 8 },
+          headStyles: { fillColor: [235, 245, 255], textColor: 20 },
+          columnStyles: { 5: { cellWidth: 260 } }
+        });
 
-          if (x + thumbW > pageW - margin) { x = margin; y += thumbH + 62; }
-          if (y + thumbH + 55 > pageH - margin) { doc.addPage(); x = margin; y = margin; }
-
-          try { doc.addImage(e.imgDataUrl, "JPEG", x, y, thumbW, thumbH); } catch (_) {}
-
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "bold");
-          doc.text(`${i+1}. ${e.mealSlot}`, x, y + thumbH + 12);
-          doc.setFont("helvetica", "normal");
-          doc.text((e.label || "").slice(0, 34), x, y + thumbH + 24);
-          doc.text(`${e.macros.kcal} kcal | P ${e.macros.protein} C ${e.macros.carbs} F ${e.macros.fat}`, x, y + thumbH + 36);
-          if (e.gemini?.dish) doc.text(`Gemini: ${(e.gemini.dish||"").slice(0,34)}`, x, y + thumbH + 48);
-
-          x += thumbW + gap;
-        }
+        y = doc.lastAutoTable.finalY + 18;
       }
 
       doc.setFontSize(9);
       doc.setTextColor(120);
-      doc.text("MacroVision — Built with ❤️ by Jun Wei • Singapore hawker edition", margin, pageH - 24);
+      doc.text("© " + new Date().getFullYear() + " Ng Jun Wei & Ng Hong Wei. All rights reserved.", margin, pageH - 24);
       doc.setTextColor(0);
 
       doc.save(`MacroVision_Athlete_Report_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"")}.pdf`);
     }
 
-    // -----------------------------
-    // Events
-    // -----------------------------
+    // ==============================
+    // Events / Init
+    // ==============================
     function bindEvents() {
       $("equation").addEventListener("change", () => {
         $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
@@ -1159,33 +1324,40 @@ Rules:
       $("snapBtn").addEventListener("click", snapPhoto);
       $("uploadInput").addEventListener("change", (e) => handleUpload(e.target.files[0]));
 
-      $("detectBtn").addEventListener("click", geminiDetect);
-      $("useSuggestionBtn").addEventListener("click", applyGemini);
+      $("detectFoodBtn").addEventListener("click", () => geminiDetect("food"));
+      $("detectDrinkBtn").addEventListener("click", () => geminiDetect("drink"));
+      $("applyGeminiBtn").addEventListener("click", applyGeminiToItem);
 
-      $("portion").addEventListener("input", onPortionChange);
-      $("macroSource").addEventListener("change", () => {
-        // If switching back to gemini and we have cache, rescale now
-        if ($("macroSource").value === "gemini" && lastGemini?.macros) onPortionChange();
+      $("portion").addEventListener("input", () => {
+        $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
       });
 
-      $("addEntryBtn").addEventListener("click", addEntry);
+      $("addItemBtn").addEventListener("click", addItem);
+      $("clearMealBtn").addEventListener("click", clearMeal);
+      $("finalizeMealBtn").addEventListener("click", finalizeMealToLog);
+
       $("exportPdfBtn").addEventListener("click", exportPdf);
 
       $("clearBtn").addEventListener("click", () => {
-        if (!confirm("Clear all entries for today?")) return;
+        if (!confirm("Clear all logged meals for today?")) return;
         entries = [];
         render();
       });
+
+      $("confThresh").addEventListener("input", () => {
+        $("confThreshLabel").textContent = parseFloat($("confThresh").value).toFixed(2);
+      });
     }
 
-    // -----------------------------
     // Init
-    // -----------------------------
+    $("yearNow").textContent = new Date().getFullYear();
     $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
     $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
     $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+    $("confThreshLabel").textContent = parseFloat($("confThresh").value || "0.6").toFixed(2);
 
     bindEvents();
+    renderMealItems();
     render();
 
     window.addEventListener("beforeunload", stopCamera);
