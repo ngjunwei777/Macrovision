@@ -8,9 +8,8 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
-  <!-- TensorFlow.js + MobileNet (client-side AI, no proxy) -->
+  <!-- TFJS only (FoodSG-233 custom model is served as static files from GitHub Pages) -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
 
   <!-- jsPDF + AutoTable -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -30,12 +29,13 @@
     video { background:#111827; border-radius:12px; }
     .overlayWrap { position: relative; }
     #overlayCanvas { position:absolute; inset:0; pointer-events:none; border-radius:12px; }
+    .stickyBar { position: sticky; top: 0; z-index: 20; }
   </style>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
   <!-- NAV -->
-  <nav class="bg-white shadow-sm">
+  <nav class="bg-white shadow-sm stickyBar">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
       <a href="/" class="text-xl font-extrabold text-orange-600">Ng Jun Wei</a>
       <a href="/" class="text-gray-600 hover:text-orange-600 transition">
@@ -53,12 +53,12 @@
             <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
               Athlete App
             </span>
-            <span class="text-gray-300 text-sm">Singapore-optimised • On-device AI • Live detection overlay • PDF export</span>
+            <span class="text-gray-300 text-sm">Singapore-optimised • FoodSG-233 • Live overlay • PDF export</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
           <p class="text-gray-300 max-w-2xl">
-            Camera runs on-device AI (no proxy) to guess what you’re eating, then estimates macros using a Singapore-aware
-            dish matcher + macro database + heuristics. You can always edit name/macros because food is messy.
+            Runs a custom <b>FoodSG-233</b> classifier fully in-browser (no proxy, no server) to identify foods,
+            then estimates macros using a Singapore-aware macro database + editable overrides.
           </p>
           <div class="mt-4 text-sm text-gray-200">
             Developed by Jun Wei and tested by Hong Wei. <span class="font-semibold">Created by Ng Brothers.</span>
@@ -66,9 +66,9 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">On-device AI</span>
-          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">SG Dish Matcher</span>
-          <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Export</span>
+          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">FoodSG-233 TFJS</span>
+          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">SG Macro DB</span>
+          <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Athlete Report</span>
         </div>
       </div>
     </div>
@@ -76,14 +76,17 @@
 
   <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
-    <!-- QUICK NOTE -->
+    <!-- NOTE -->
     <section class="card p-5 bg-white">
       <div class="warn rounded-xl p-3">
-        <div class="font-extrabold">Important (real talk)</div>
+        <div class="font-extrabold">Important</div>
         <div class="text-sm text-gray-700 mt-1">
-          This app runs AI locally (no server). It can <b>recognise food-ish labels</b>, but macros are still estimates because
-          portion size, oil, sugar, sauces, and hidden ingredients can’t be “seen” perfectly.
-          Always sanity-check or edit macros.
+          Food recognition is done by <b>FoodSG-233</b> in your browser. Macros are <b>estimates</b>
+          (portion size, oil, sugar, sauces are hard). You can always edit food name + macros before logging.
+        </div>
+        <div class="text-xs text-gray-600 mt-2">
+          ✅ No proxy needed. Your model files must exist at <span class="mono">/models/foodsg233/</span> in your GitHub Pages repo:
+          <span class="mono">model.json</span>, shards, and <span class="mono">labels.json</span>.
         </div>
       </div>
     </section>
@@ -257,19 +260,19 @@
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-extrabold">📸 Live AI detection (no proxy) → macro estimate → add items</h2>
+            <h2 class="text-xl font-extrabold">📸 FoodSG-233 Live Detection → Macro Estimate → Log</h2>
             <p class="text-sm text-gray-600">
-              Camera shows live predicted label + confidence. When you snap, it will estimate macros using SG dish matcher + macro DB.
-              Works beyond hawker too (e.g., “burger”, “salad”, “pizza”) but SG dishes get better matching.
+              Live overlay shows predicted dish + confidence. Snap multiple items per meal (food + drink separately).
+              Then finalize meal and export PDF.
             </p>
           </div>
         </div>
 
         <div class="mt-4 hint rounded-xl p-3">
-          <div class="font-bold text-sm">How it estimates macros</div>
+          <div class="font-bold text-sm">Model paths (GitHub Pages)</div>
           <div class="small text-gray-700 mt-1">
-            On-device AI guesses a label → matcher maps it to a food entry → macro DB gives typical serving macros.
-            If unknown, heuristics give a conservative estimate and you can edit.
+            Put your TFJS model files at <span class="mono">models/foodsg233/</span> in the same repo as this HTML.
+            This page loads: <span class="mono">models/foodsg233/model.json</span> and <span class="mono">models/foodsg233/labels.json</span>.
           </div>
         </div>
 
@@ -308,7 +311,7 @@
                 <span class="mono text-gray-700 ml-2" id="liveConf">—</span>
               </div>
               <div class="text-xs text-gray-500 mt-2">
-                Tip: move closer + reduce clutter for better guesses.
+                Tip: closer shot + less background clutter = higher confidence.
               </div>
             </div>
           </div>
@@ -322,18 +325,27 @@
 
             <div id="statusBox" class="hidden rounded-xl p-3 small"></div>
 
-            <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Meal timing</div>
-              <select id="mealSlot" class="w-full border rounded-lg px-3 py-2">
-                <option>Breakfast</option>
-                <option>Snack (AM)</option>
-                <option selected>Lunch</option>
-                <option>Snack (PM)</option>
-                <option>Dinner</option>
-                <option>Pre-workout</option>
-                <option>Post-workout</option>
-              </select>
-            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="text-sm block">
+                <div class="text-gray-600 mb-1">Item type</div>
+                <select id="itemType" class="w-full border rounded-lg px-3 py-2">
+                  <option value="food" selected>Food</option>
+                  <option value="drink">Drink</option>
+                </select>
+              </label>
+              <label class="text-sm block">
+                <div class="text-gray-600 mb-1">Meal timing</div>
+                <select id="mealSlot" class="w-full border rounded-lg px-3 py-2">
+                  <option>Breakfast</option>
+                  <option>Snack (AM)</option>
+                  <option selected>Lunch</option>
+                  <option>Snack (PM)</option>
+                  <option>Dinner</option>
+                  <option>Pre-workout</option>
+                  <option>Post-workout</option>
+                </select>
+              </label>
+            </div>
 
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Portion multiplier</div>
@@ -346,9 +358,9 @@
 
               <div class="mt-3 space-y-2">
                 <label class="text-sm block">
-                  <div class="text-gray-600 mb-1">Detected / selected food name</div>
+                  <div class="text-gray-600 mb-1">Detected / selected name</div>
                   <input id="itemLabel" class="w-full border rounded-lg px-3 py-2"
-                         placeholder="e.g., Chicken rice, Char kway teow, Burger, Salad, Kopi C" />
+                         placeholder="e.g., Chicken rice, Char kway teow, Kopi C, Isotonic drink" />
                 </label>
 
                 <div class="grid grid-cols-4 gap-2">
@@ -373,7 +385,7 @@
                 <div class="text-xs text-gray-500" id="metaLine">No detection yet.</div>
 
                 <button id="addItemBtn" class="w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
-                  ➕ Add this item to meal
+                  ➕ Add this item to current meal
                 </button>
               </div>
             </div>
@@ -395,7 +407,7 @@
           <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div class="font-extrabold">Current meal items</div>
-              <div class="text-xs text-gray-600">Add multiple items, then finalize meal.</div>
+              <div class="text-xs text-gray-600">Add multiple items (food + drink), then finalize meal.</div>
             </div>
             <button id="clearMealBtn" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
               Clear meal items
@@ -503,7 +515,7 @@
         </div>
 
         <div class="text-xs text-gray-500 mt-4">
-          Disclaimer: On-device AI + macro DB = estimates. Always sanity-check.
+          Disclaimer: Food detection is AI; macros are estimates. Always sanity-check.
         </div>
       </div>
     </section>
@@ -516,15 +528,78 @@
   </footer>
 
   <script>
-    // ==============================
-    // Macro DB (typical servings) — you can expand this
-    // kcal, P, C, F
-    // ==============================
-    const MACRO_DB = [
+    /*************************************************************
+     * 1) MODEL LOADING (FoodSG-233 TFJS)
+     * Place your TFJS export at: models/foodsg233/
+     *   - model.json
+     *   - group1-shard*.bin
+     *   - labels.json (array of class names; same index order as model)
+     *************************************************************/
+    const MODEL_URL  = new URL("models/foodsg233/model.json",  window.location.href).toString();
+    const LABELS_URL = new URL("models/foodsg233/labels.json", window.location.href).toString();
+
+    let foodModel = null;
+    let foodLabels = null;
+    let modelInputSize = 224; // default; if your metadata differs, update here
+
+    async function loadFoodSG233Model() {
+      if (foodModel && foodLabels) return;
+
+      setStatus("warn", "Loading FoodSG-233 model (first time may take a bit)...");
+
+      // Load labels first (helpful even if model fails)
+      const labResp = await fetch(LABELS_URL, { cache: "no-store" });
+      if (!labResp.ok) throw new Error("labels.json not found at " + LABELS_URL);
+      foodLabels = await labResp.json();
+
+      // Load model
+      foodModel = await tf.loadLayersModel(MODEL_URL);
+
+      // Warm-up
+      tf.tidy(() => {
+        const x = tf.zeros([1, modelInputSize, modelInputSize, 3]);
+        foodModel.predict(x);
+      });
+
+      setStatus("ok", `Model loaded ✅ (${foodLabels.length} classes). Start camera.`);
+    }
+
+    function topKFromProbs(probArray, k = 3) {
+      const pairs = probArray.map((p, i) => ({ i, p }));
+      pairs.sort((a, b) => b.p - a.p);
+      return pairs.slice(0, k).map(x => ({
+        label: foodLabels?.[x.i] ?? `Class ${x.i}`,
+        prob: x.p
+      }));
+    }
+
+    async function classifyElement(el) {
+      // Returns top3 [{label, prob}, ...]
+      await loadFoodSG233Model();
+
+      const logits = tf.tidy(() => {
+        let img = tf.browser.fromPixels(el);
+        img = tf.image.resizeBilinear(img, [modelInputSize, modelInputSize]);
+        img = img.toFloat().div(255.0);
+        img = img.expandDims(0); // [1,H,W,3]
+        const out = foodModel.predict(img); // [1,num_classes]
+        return out.squeeze(); // [num_classes]
+      });
+
+      const probs = await logits.data();
+      logits.dispose();
+
+      return topKFromProbs(Array.from(probs), 3);
+    }
+
+    /*************************************************************
+     * 2) MACRO DATABASE (SG foods + drinks) + matching helpers
+     *************************************************************/
+    const FOOD_DB = [
       { name: "Chicken Rice", keys: ["chicken rice","hainanese chicken rice"], kcal: 650, p: 35, c: 75, f: 20 },
       { name: "Char Kway Teow", keys: ["char kway teow","fried kway teow"], kcal: 750, p: 20, c: 90, f: 30 },
       { name: "Laksa", keys: ["laksa"], kcal: 700, p: 25, c: 70, f: 35 },
-      { name: "Ban Mian", keys: ["ban mian","noodle soup","noodles soup"], kcal: 600, p: 25, c: 75, f: 18 },
+      { name: "Ban Mian", keys: ["ban mian","ban mian soup"], kcal: 600, p: 25, c: 75, f: 18 },
       { name: "Bak Chor Mee", keys: ["bak chor mee","minced meat noodles"], kcal: 680, p: 28, c: 85, f: 22 },
       { name: "Nasi Lemak", keys: ["nasi lemak"], kcal: 720, p: 25, c: 80, f: 32 },
       { name: "Wanton Mee", keys: ["wanton mee","wonton mee"], kcal: 620, p: 24, c: 80, f: 18 },
@@ -532,44 +607,28 @@
       { name: "Yong Tau Foo", keys: ["yong tau foo"], kcal: 500, p: 28, c: 50, f: 15 },
       { name: "Satay (10 sticks)", keys: ["satay"], kcal: 550, p: 35, c: 20, f: 35 },
 
-      // Generic non-hawker
+      // Generic (still useful if FoodSG label is broader)
       { name: "Burger", keys: ["burger","cheeseburger","hamburger"], kcal: 550, p: 28, c: 45, f: 28 },
       { name: "Pizza (2 slices)", keys: ["pizza"], kcal: 600, p: 25, c: 70, f: 22 },
       { name: "Salad (with protein)", keys: ["salad"], kcal: 450, p: 35, c: 25, f: 20 },
       { name: "Sushi (8 pcs)", keys: ["sushi"], kcal: 520, p: 22, c: 80, f: 12 },
-
-      // Drinks
-      { name: "Kopi (with sugar+milk)", keys: ["coffee","kopi"], kcal: 140, p: 3, c: 22, f: 4 },
-      { name: "Kopi C (less milk)", keys: ["kopi c"], kcal: 100, p: 2, c: 16, f: 3 },
-      { name: "Teh Tarik", keys: ["tea","teh","teh tarik"], kcal: 180, p: 4, c: 28, f: 5 },
-      { name: "Bubble Tea", keys: ["bubble tea","boba"], kcal: 380, p: 4, c: 75, f: 8 },
-      { name: "Isotonic Drink (500ml)", keys: ["sports drink","isotonic"], kcal: 120, p: 0, c: 30, f: 0 }
     ];
 
-    // ==============================
-    // SG matcher helpers
-    // ==============================
+    const DRINK_DB = [
+      { name: "Kopi (with sugar+milk)", keys: ["kopi","coffee with milk","coffee"], kcal: 140, p: 3, c: 22, f: 4 },
+      { name: "Kopi C", keys: ["kopi c"], kcal: 100, p: 2, c: 16, f: 3 },
+      { name: "Teh Tarik", keys: ["teh tarik","teh","milk tea"], kcal: 180, p: 4, c: 28, f: 5 },
+      { name: "Bubble Tea", keys: ["bubble tea","boba"], kcal: 380, p: 4, c: 75, f: 8 },
+      { name: "Isotonic Drink (500ml)", keys: ["sports drink","isotonic"], kcal: 120, p: 0, c: 30, f: 0 },
+      { name: "Plain Water", keys: ["water"], kcal: 0, p: 0, c: 0, f: 0 },
+    ];
+
     const normalize = (s) => (s || "")
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g," ")
       .replace(/\s+/g," ")
       .trim();
 
-    function bestDbMatch(label) {
-      const q = normalize(label);
-      let best = null, bestScore = 0;
-
-      for (const row of MACRO_DB) {
-        for (const k of row.keys) {
-          const key = normalize(k);
-          const score = similarity(q, key);
-          if (score > bestScore) { bestScore = score; best = row; }
-        }
-      }
-      return { best, bestScore };
-    }
-
-    // Dice coefficient on bigrams for quick matching
     function similarity(a, b) {
       a = normalize(a); b = normalize(b);
       if (!a || !b) return 0;
@@ -590,27 +649,47 @@
       return (2*inter)/(A.length+B.length);
     }
 
-    function heuristicMacros(label) {
-      // Conservative fallback if DB match is weak
-      const s = normalize(label);
-      // defaults
-      let kcal = 500, p=20, c=60, f=15;
+    function bestDbMatch(label, type) {
+      const db = (type === "drink") ? DRINK_DB : FOOD_DB;
+      const q = normalize(label);
+      let best = null, bestScore = 0;
 
+      for (const row of db) {
+        for (const k of row.keys) {
+          const key = normalize(k);
+          const score = similarity(q, key);
+          if (score > bestScore) { bestScore = score; best = row; }
+        }
+      }
+      return { best, bestScore };
+    }
+
+    function heuristicMacros(label, type) {
+      const s = normalize(label);
+      if (type === "drink") {
+        let kcal = 80, p=0, c=18, f=1;
+        if (s.includes("water")) return { kcal:0, p:0, c:0, f:0 };
+        if (s.includes("kopi") || s.includes("coffee")) return { kcal:120, p:2, c:20, f:3 };
+        if (s.includes("tea") || s.includes("teh")) return { kcal:150, p:3, c:24, f:4 };
+        if (s.includes("bubble") || s.includes("boba")) return { kcal:350, p:4, c:70, f:8 };
+        return { kcal, p, c, f };
+      }
+
+      // food fallback
+      let kcal = 520, p=20, c=60, f=15;
       if (s.includes("rice")) { kcal=650; p=25; c=85; f=18; }
-      if (s.includes("noodle") || s.includes("noodles")) { kcal=620; p=22; c=80; f=18; }
+      if (s.includes("noodle") || s.includes("noodles") || s.includes("mee")) { kcal=620; p=22; c=80; f=18; }
       if (s.includes("fried")) { kcal += 120; f += 8; }
-      if (s.includes("soup")) { kcal -= 120; f -= 6; }
+      if (s.includes("soup")) { kcal -= 120; f = Math.max(0, f-6); }
       if (s.includes("salad")) { kcal=400; p=30; c=25; f=18; }
       if (s.includes("burger")) { kcal=550; p=28; c=45; f=28; }
       if (s.includes("pizza")) { kcal=600; p=25; c=70; f=22; }
-      if (s.includes("coffee") || s.includes("kopi") || s.includes("tea") || s.includes("teh")) { kcal=120; p=2; c=20; f=3; }
-
       return { kcal, p, c, f };
     }
 
-    // ==============================
-    // Athlete target logic
-    // ==============================
+    /*************************************************************
+     * 3) ATHLETE TARGET LOGIC
+     *************************************************************/
     const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
     const ATHLETE_CARB_BASE = {
       skill:    [3.0, 5.0],
@@ -636,22 +715,17 @@
     };
     const AMDR_FAT = [0.20, 0.35];
 
-    // ==============================
-    // State
-    // ==============================
+    /*************************************************************
+     * 4) STATE + DOM UTILS
+     *************************************************************/
     let entries = [];
     let mealItems = [];
     let currentImageDataUrl = null;
     let stream = null;
 
-    // TF model + live loop
-    let mobileNetModel = null;
     let liveLoopRunning = false;
     let lastLive = { label: "", prob: 0, top3: [] };
 
-    // ==============================
-    // DOM helpers
-    // ==============================
     const $ = (id) => document.getElementById(id);
     const round1 = (x) => Math.round(x * 10) / 10;
     const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -659,11 +733,13 @@
       const n = Number(x);
       return Number.isFinite(n) ? n : 0;
     };
+
     function escapeHtml(s) {
       return (s || "").replace(/[&<>"']/g, (c) => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
       }[c]));
     }
+
     function macroPercentages(p, c, f) {
       const pK = p * 4, cK = c * 4, fK = f * 9;
       const total = Math.max(1, pK + cK + fK);
@@ -679,9 +755,9 @@
       el.textContent = text;
     }
 
-    // ==============================
-    // BMR/TDEE
-    // ==============================
+    /*************************************************************
+     * 5) BMR/TDEE + TARGETS
+     *************************************************************/
     function bmrMifflin(weightKg, heightCm, age, sex) {
       const s = (sex === "Male") ? 5 : -161;
       return 10 * weightKg + 6.25 * heightCm - 5 * age + s;
@@ -699,6 +775,7 @@
       let hi = clamp(base[1] + shift, Math.max(lo + 0.5, 3.0), 12.0);
       return [round1(lo), round1(hi)];
     }
+
     function computeTargets() {
       const sex = $("sex").value;
       const age = parseFloat($("age").value || "0");
@@ -764,23 +841,20 @@
       };
     }
 
-    // ==============================
-    // Camera + live AI
-    // ==============================
-    async function loadModelIfNeeded() {
-      if (mobileNetModel) return;
-      setStatus("warn", "Loading AI model (first time may take a bit)...");
-      mobileNetModel = await mobilenet.load({ version: 2, alpha: 1.0 });
-      setStatus("ok", "AI model loaded. Start camera.");
-    }
-
+    /*************************************************************
+     * 6) CAMERA + LIVE LOOP (FoodSG-233)
+     *************************************************************/
     async function startCamera() {
-      await loadModelIfNeeded();
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+        await loadFoodSG233Model();
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false
+        });
+
         $("video").srcObject = stream;
 
-        // resize overlay canvas once video metadata is ready
         $("video").onloadedmetadata = () => {
           resizeOverlay();
           if (!liveLoopRunning) {
@@ -789,7 +863,7 @@
           }
         };
       } catch (e) {
-        alert("Camera error: " + e.message + "\nTry HTTPS + permissions, or use Upload.");
+        setStatus("danger", "Camera/model error: " + e.message + " (Tip: check model files path + HTTPS + permissions.)");
       }
     }
 
@@ -818,22 +892,23 @@
       ctx.clearRect(0, 0, c.width, c.height);
     }
 
-    function drawOverlay(label, prob, mappedName, source) {
+    function drawOverlay(label, prob, mappedName, source, itemType) {
       const c = $("overlayCanvas");
       const ctx = c.getContext("2d");
       ctx.clearRect(0,0,c.width,c.height);
 
-      const w = c.width, h = c.height;
+      const w = c.width;
       const pad = 18;
 
       const confPct = Math.round(prob * 100);
       const line1 = `${label} (${confPct}%)`;
       const line2 = mappedName ? `→ ${mappedName} [${source}]` : "";
+      const line3 = `Mode: ${itemType.toUpperCase()} • Edit if wrong`;
 
       ctx.save();
       ctx.globalAlpha = 0.92;
       ctx.fillStyle = "#111827";
-      ctx.fillRect(0, 0, w, 70);
+      ctx.fillRect(0, 0, w, 84);
       ctx.globalAlpha = 1;
 
       ctx.fillStyle = "#fff";
@@ -842,7 +917,10 @@
 
       ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto";
       ctx.fillStyle = "#e5e7eb";
-      ctx.fillText(line2, pad, 55);
+      ctx.fillText(line2, pad, 54);
+
+      ctx.fillStyle = "#d1d5db";
+      ctx.fillText(line3, pad, 74);
 
       ctx.restore();
     }
@@ -850,61 +928,51 @@
     async function liveLoop() {
       if (!liveLoopRunning) return;
       const v = $("video");
-      if (!v || !v.videoWidth || !mobileNetModel) {
+      if (!v || !v.videoWidth || !foodModel) {
         requestAnimationFrame(liveLoop);
         return;
       }
 
       try {
-        // classify current frame
-        const preds = await mobileNetModel.classify(v, 3);
-        if (preds && preds.length) {
-          const top = preds[0];
-          lastLive = {
-            label: top.className,
-            prob: top.probability,
-            top3: preds.map(p => ({label:p.className, prob:p.probability}))
-          };
+        const top3 = await classifyElement(v);
+        const top = top3[0];
+        lastLive = { label: top.label, prob: top.prob, top3 };
 
-          const liveLabel = top.className;
-          const liveProb = top.probability;
+        const itemType = $("itemType").value;
+        const m = bestDbMatch(top.label, itemType);
+        let mappedName = "";
+        let source = "";
 
-          // Try match to SG DB for better on-screen suggestion
-          const match = bestDbMatch(liveLabel);
-          let mappedName = "";
-          let source = "";
-          if (match.best && match.bestScore >= 0.35) {
-            mappedName = match.best.name;
-            source = "SG DB";
-          } else {
-            // if no good db match, show heuristic category
-            const h = heuristicMacros(liveLabel);
-            mappedName = "Generic estimate";
-            source = "Heuristic";
-          }
-
-          $("liveLabelBadge").textContent = liveLabel;
-          $("liveConf").textContent = `Confidence: ${Math.round(liveProb*100)}%`;
-          drawOverlay(liveLabel, liveProb, mappedName, source);
+        if (m.best && m.bestScore >= 0.35) {
+          mappedName = m.best.name;
+          source = "SG Macro DB";
+        } else {
+          mappedName = "Generic estimate";
+          source = "Heuristic";
         }
+
+        $("liveLabelBadge").textContent = top.label;
+        $("liveConf").textContent = `Confidence: ${Math.round(top.prob*100)}%`;
+
+        drawOverlay(top.label, top.prob, mappedName, source, itemType);
       } catch (e) {
-        // ignore transient errors
+        // ignore transient
       }
 
       // run at a manageable cadence
       setTimeout(() => requestAnimationFrame(liveLoop), 650);
     }
 
-    // ==============================
-    // Capture snapshot / upload
-    // ==============================
+    /*************************************************************
+     * 7) SNAP / UPLOAD → ESTIMATE
+     *************************************************************/
     function setPreview(dataUrl) {
       currentImageDataUrl = dataUrl;
       $("previewImg").src = dataUrl;
       $("previewImg").classList.remove("hidden");
       $("noPreview").classList.add("hidden");
       $("statusBox").classList.add("hidden");
-      $("metaLine").textContent = "Ready. Click ‘Estimate macros from snapshot’ by snapping (auto) or edit manually.";
+      $("metaLine").textContent = "Ready. Edit if needed, then add to meal.";
     }
 
     async function snapPhoto() {
@@ -920,8 +988,8 @@
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       setPreview(dataUrl);
 
-      // On snap: use last live detection as label, estimate macros
-      await estimateFromLabel(lastLive.label, lastLive.prob);
+      // Re-classify from the captured frame (more consistent than "last live" sometimes)
+      await estimateFromCapturedCanvas(canvas);
     }
 
     function handleUpload(file) {
@@ -929,34 +997,43 @@
       const reader = new FileReader();
       reader.onload = async () => {
         setPreview(reader.result);
-        // For upload: try classify the uploaded image using the model on an <img>
-        await estimateFromUploadedImage();
+        await estimateFromImageDataUrl(reader.result);
       };
       reader.readAsDataURL(file);
     }
 
-    async function estimateFromUploadedImage() {
-      await loadModelIfNeeded();
-      const img = new Image();
-      img.src = currentImageDataUrl;
-      await new Promise(res => img.onload = res);
-
-      const preds = await mobileNetModel.classify(img, 3);
-      const top = preds?.[0];
-      if (!top) {
-        setStatus("warn", "Could not detect from uploaded image. Please type food name + macros manually.");
-        return;
+    async function estimateFromCapturedCanvas(canvasEl) {
+      try {
+        const top3 = await classifyElement(canvasEl);
+        const top = top3[0];
+        lastLive = { label: top.label, prob: top.prob, top3 };
+        await estimateFromLabel(top.label, top.prob);
+      } catch (e) {
+        setStatus("danger", "Detection failed. You can type the food name and macros manually.");
       }
-      lastLive = { label: top.className, prob: top.probability, top3: preds.map(p => ({label:p.className, prob:p.probability})) };
-      $("liveLabelBadge").textContent = top.className;
-      $("liveConf").textContent = `Confidence: ${Math.round(top.probability*100)}%`;
-      await estimateFromLabel(top.className, top.probability);
+    }
+
+    async function estimateFromImageDataUrl(dataUrl) {
+      try {
+        await loadFoodSG233Model();
+        const img = new Image();
+        img.src = dataUrl;
+        await new Promise(res => img.onload = res);
+
+        const top3 = await classifyElement(img);
+        const top = top3[0];
+        lastLive = { label: top.label, prob: top.prob, top3 };
+        await estimateFromLabel(top.label, top.prob);
+      } catch (e) {
+        setStatus("danger", "Upload detection failed. You can type the food name and macros manually.");
+      }
     }
 
     async function estimateFromLabel(label, prob) {
+      const itemType = $("itemType").value;
       const portion = parseFloat($("portion").value || "1.0");
 
-      const m = bestDbMatch(label);
+      const m = bestDbMatch(label, itemType);
       let finalName = label;
       let macros = null;
       let source = "";
@@ -964,13 +1041,12 @@
       if (m.best && m.bestScore >= 0.35) {
         finalName = m.best.name;
         macros = { kcal: m.best.kcal, p: m.best.p, c: m.best.c, f: m.best.f };
-        source = `SG DB match (${Math.round(m.bestScore*100)}%)`;
+        source = `SG Macro DB match (${Math.round(m.bestScore*100)}%)`;
       } else {
-        macros = heuristicMacros(label);
+        macros = heuristicMacros(label, itemType);
         source = "Heuristic estimate (no strong DB match)";
       }
 
-      // scale by portion
       macros = {
         kcal: Math.round(macros.kcal * portion),
         p: round1(macros.p * portion),
@@ -986,16 +1062,20 @@
 
       const confPct = Math.round((prob || 0) * 100);
       $("metaLine").textContent = `Detected: "${label}" (${confPct}%). ${source}. You can edit name/macros.`;
+
+      // confidence-based warning
       if ((prob || 0) < 0.45) {
         setStatus("danger", `Low confidence (${confPct}%). Please confirm/edit. ${source}`);
+      } else if ((prob || 0) < 0.65) {
+        setStatus("warn", `Medium confidence (${confPct}%). Quick check recommended. ${source}`);
       } else {
-        setStatus("ok", `Estimated from "${label}" (${confPct}%). ${source}`);
+        setStatus("ok", `High confidence (${confPct}%). ${source}`);
       }
     }
 
-    // ==============================
-    // Meal builder
-    // ==============================
+    /*************************************************************
+     * 8) MEAL BUILDER
+     *************************************************************/
     function sumMealItems() {
       return mealItems.reduce((acc, it) => {
         acc.kcal += it.kcal;
@@ -1018,7 +1098,7 @@
           row.className = "bg-white border rounded-xl p-3 flex items-start gap-3";
           row.innerHTML = `
             <div class="flex-1">
-              <div class="font-extrabold">${escapeHtml(it.label)}</div>
+              <div class="font-extrabold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
               <div class="text-xs text-gray-500">From: ${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
               <div class="text-sm mono font-bold mt-1">
                 ${it.kcal} kcal | P ${it.p}g | C ${it.c}g | F ${it.f}g
@@ -1050,8 +1130,9 @@
     }
 
     function addItem() {
+      const itemType = $("itemType").value;
       const label = ($("itemLabel").value || "").trim();
-      if (!label) { alert("Please enter a food name."); return; }
+      if (!label) { alert("Please enter a name (food or drink)."); return; }
 
       const portion = parseFloat($("portion").value || "1.0");
       const kcal = clamp(safeNum($("itemKcal").value), 0, 5000);
@@ -1060,21 +1141,26 @@
       const f = clamp(safeNum($("itemF").value), 0, 300);
 
       const confPct = Math.round((lastLive.prob || 0) * 100);
-      const source = (label && bestDbMatch(label).best) ? "SG DB/Heuristic" : "Manual";
+
+      // determine source line for auditability
+      const m = bestDbMatch(label, itemType);
+      const source = (m.best && m.bestScore >= 0.35) ? "SG Macro DB" : "Manual/Heuristic";
 
       mealItems.push({
+        itemType,
         label, kcal, p, c, f,
         portion,
         confPct,
-        source: source
+        source
       });
 
+      // reset editor for next capture
       $("itemLabel").value = "";
       $("itemKcal").value = 0;
       $("itemP").value = 0;
       $("itemC").value = 0;
       $("itemF").value = 0;
-      $("metaLine").textContent = "Item added. You can snap again for next item.";
+      $("metaLine").textContent = "Item added. Snap/upload next item.";
 
       renderMealItems();
     }
@@ -1086,7 +1172,7 @@
     }
 
     function finalizeMealToLog() {
-      if (!mealItems.length) { alert("No meal items yet. Add items first."); return; }
+      if (!mealItems.length) { alert("No items yet. Add items first."); return; }
 
       const mealSlot = $("mealSlot").value;
       const notes = ($("mealNotes").value || "").trim();
@@ -1114,9 +1200,9 @@
       alert("Meal logged ✅");
     }
 
-    // ==============================
-    // Daily totals + adequacy
-    // ==============================
+    /*************************************************************
+     * 9) DAILY TOTALS + ADEQUACY
+     *************************************************************/
     function calcTotals() {
       return entries.reduce((acc, e) => {
         acc.kcal += e.macros.kcal;
@@ -1188,7 +1274,7 @@
       entries.forEach((e, idx) => {
         const itemsHtml = (e.items || []).map((it) => `
           <div class="border rounded-lg p-2 bg-gray-50">
-            <div class="text-sm font-bold">${escapeHtml(it.label)}</div>
+            <div class="text-sm font-bold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
             <div class="text-xs text-gray-500">${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
             <div class="text-xs mono font-bold mt-1">${it.kcal} kcal | P ${it.p} C ${it.c} F ${it.f}</div>
           </div>
@@ -1224,9 +1310,9 @@
       });
     }
 
-    // ==============================
-    // PDF Export
-    // ==============================
+    /*************************************************************
+     * 10) PDF EXPORT
+     *************************************************************/
     async function exportPdf() {
       const targets = computeTargets();
       const totals = calcTotals();
@@ -1274,7 +1360,6 @@
 
       y = doc.lastAutoTable.finalY + 18;
 
-      // Macrodistribution
       const bySlot = {};
       MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
       entries.forEach(e => {
@@ -1305,6 +1390,40 @@
         headStyles: { fillColor: [255, 247, 237], textColor: 20 },
       });
 
+      // Meals detail table (optional but useful)
+      const detailRows = [];
+      entries.forEach(e => {
+        (e.items || []).forEach(it => {
+          detailRows.push([
+            e.mealSlot,
+            it.itemType,
+            it.label,
+            it.kcal,
+            it.p,
+            it.c,
+            it.f,
+            `${it.confPct}%`,
+            it.source
+          ]);
+        });
+      });
+
+      if (detailRows.length) {
+        doc.addPage();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Item-level Details", margin, margin);
+
+        doc.autoTable({
+          startY: margin + 12,
+          head: [["Meal", "Type", "Item", "kcal", "P", "C", "F", "Conf", "Source"]],
+          body: detailRows,
+          margin: { left: margin, right: margin },
+          styles: { font: "helvetica", fontSize: 8 },
+          headStyles: { fillColor: [245, 245, 245], textColor: 20 },
+        });
+      }
+
       doc.setFontSize(9);
       doc.setTextColor(120);
       doc.text(`© ${new Date().getFullYear()} Ng Jun Wei & Ng Hong Wei. Developed by Jun Wei and tested by Hong Wei. Created by Ng Brothers.`, margin, pageH - 24);
@@ -1313,9 +1432,9 @@
       doc.save(`MacroVision_Athlete_Report_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"")}.pdf`);
     }
 
-    // ==============================
-    // Events / Init
-    // ==============================
+    /*************************************************************
+     * 11) EVENTS / INIT
+     *************************************************************/
     function bindEvents() {
       $("equation").addEventListener("change", () => {
         $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
@@ -1340,6 +1459,11 @@
         $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
       });
 
+      $("itemType").addEventListener("change", () => {
+        // update overlay immediately based on type (next loop tick) + help user
+        setStatus("warn", `Switched to ${$("itemType").value.toUpperCase()} mode. Snap again for best matching.`);
+      });
+
       window.addEventListener("resize", resizeOverlay);
 
       $("addItemBtn").addEventListener("click", addItem);
@@ -1354,7 +1478,7 @@
       });
     }
 
-    // Init
+    // Init UI defaults
     $("yearNow").textContent = new Date().getFullYear();
     $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
     $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
