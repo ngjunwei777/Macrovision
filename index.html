@@ -27,11 +27,8 @@
     .danger { background:#fef2f2; border:1px solid #fecaca; }
     .hint { background:#eff6ff; border:1px solid #bfdbfe; }
     .stickyBar { position: sticky; top: 0; z-index: 20; }
-    video { background:#111827; border-radius:12px; }
-    .overlayWrap { position: relative; }
-    #overlayCanvas { position:absolute; inset:0; pointer-events:none; border-radius:12px; }
 
-    /* Make numeric inputs easy on phones */
+    /* Make numeric/text inputs easy on phones */
     .numInput{
       font-size:16px;           /* prevents iOS zoom */
       line-height:1.25;
@@ -39,8 +36,6 @@
       text-align:left;
       width:100%;
     }
-
-    /* If any number inputs remain, remove spinners */
     input[type="number"]{
       -moz-appearance:textfield;
     }
@@ -49,12 +44,17 @@
       -webkit-appearance:none;
       margin:0;
     }
-
-    details > summary {
-      cursor: pointer;
-      list-style: none;
-    }
+    details > summary { cursor: pointer; list-style: none; }
     details > summary::-webkit-details-marker { display:none; }
+
+    /* Cute logo badge */
+    .logoBadge{
+      width:46px;height:46px;border-radius:14px;
+      background: linear-gradient(135deg,#FFEDD5,#FFE4E6);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+      border:1px solid rgba(251,146,60,0.35);
+    }
   </style>
 </head>
 
@@ -63,51 +63,54 @@
   <!-- NAV -->
   <nav class="bg-white shadow-sm stickyBar">
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-      <!-- Cute logo + branding -->
+      <!-- Cute logo + branding (cleaner, more "app icon" style) -->
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12">
-          <!-- Cute orange cat eating meat -->
-          <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" aria-label="MacroVision logo">
+        <div class="logoBadge" aria-label="MacroVision logo">
+          <!-- Cute app icon: orange cat + plate -->
+          <svg viewBox="0 0 128 128" width="34" height="34" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="fur" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#FFB74D"/>
-                <stop offset="1" stop-color="#FB8C00"/>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#FDBA74"/>
+                <stop offset="1" stop-color="#FB923C"/>
               </linearGradient>
-              <linearGradient id="meat" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#8D3B2D"/>
-                <stop offset="1" stop-color="#5D241B"/>
+              <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#FFFFFF"/>
+                <stop offset="1" stop-color="#F3F4F6"/>
               </linearGradient>
             </defs>
 
-            <!-- ears -->
-            <path d="M22 46 L12 28 Q30 28 38 38 Q50 18 64 18 Q78 18 90 38 Q98 28 116 28 L106 46"
-                  fill="url(#fur)" stroke="#B45309" stroke-width="2" stroke-linejoin="round"/>
-            <!-- face -->
-            <path d="M22 46 Q22 98 64 104 Q106 98 106 46 Q106 30 88 28 Q78 24 64 24 Q50 24 40 28 Q22 30 22 46Z"
-                  fill="url(#fur)" stroke="#B45309" stroke-width="2"/>
-            <!-- eyes -->
-            <path d="M42 60 Q50 52 58 60" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/>
-            <path d="M70 60 Q78 52 86 60" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/>
-            <!-- nose -->
-            <path d="M64 66 L58 72 Q64 78 70 72 Z" fill="#FB7185" stroke="#111827" stroke-width="2" stroke-linejoin="round"/>
-            <!-- mouth -->
-            <path d="M64 78 Q56 86 46 84" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
-            <path d="M64 78 Q72 86 82 84" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
-            <!-- cheeks -->
-            <circle cx="40" cy="72" r="6" fill="#FCA5A5" opacity="0.65"/>
-            <circle cx="88" cy="72" r="6" fill="#FCA5A5" opacity="0.65"/>
+            <!-- plate -->
+            <ellipse cx="64" cy="92" rx="44" ry="18" fill="url(#g2)" stroke="#D1D5DB" stroke-width="3"/>
+            <ellipse cx="64" cy="92" rx="28" ry="10" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="2"/>
 
-            <!-- paws -->
-            <path d="M38 92 Q44 80 56 82 Q54 96 42 102 Q36 100 38 92Z" fill="#FDBA74" stroke="#B45309" stroke-width="2"/>
-            <path d="M90 92 Q84 80 72 82 Q74 96 86 102 Q92 100 90 92Z" fill="#FDBA74" stroke="#B45309" stroke-width="2"/>
-            <!-- meat -->
-            <path d="M52 88 Q64 80 76 88 Q82 100 64 106 Q46 100 52 88Z" fill="url(#meat)" stroke="#3F1A13" stroke-width="2"/>
-            <path d="M56 92 Q64 88 72 92" fill="none" stroke="#A85B4C" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+            <!-- cat head -->
+            <path d="M30 46 L22 28 Q38 28 46 38 Q54 22 64 22 Q74 22 82 38 Q90 28 106 28 L98 46"
+              fill="url(#g1)" stroke="#C2410C" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M30 46 Q30 82 64 86 Q98 82 98 46 Q98 32 82 32 Q74 28 64 28 Q54 28 46 32 Q30 32 30 46Z"
+              fill="url(#g1)" stroke="#C2410C" stroke-width="3"/>
+
+            <!-- eyes -->
+            <circle cx="50" cy="58" r="6" fill="#111827"/>
+            <circle cx="78" cy="58" r="6" fill="#111827"/>
+            <circle cx="52" cy="56" r="2" fill="#FFFFFF"/>
+            <circle cx="80" cy="56" r="2" fill="#FFFFFF"/>
+
+            <!-- nose + mouth -->
+            <path d="M64 64 L58 70 Q64 76 70 70 Z" fill="#FB7185" stroke="#111827" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M64 76 Q56 82 48 80" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
+            <path d="M64 76 Q72 82 80 80" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
+
+            <!-- tiny fork/spoon -->
+            <path d="M22 92 L22 70" stroke="#9CA3AF" stroke-width="4" stroke-linecap="round"/>
+            <path d="M16 70 L28 70" stroke="#9CA3AF" stroke-width="4" stroke-linecap="round"/>
+            <path d="M106 92 L106 72" stroke="#9CA3AF" stroke-width="4" stroke-linecap="round"/>
+            <path d="M100 72 Q106 64 112 72" fill="none" stroke="#9CA3AF" stroke-width="4" stroke-linecap="round"/>
           </svg>
         </div>
+
         <div>
           <div class="text-lg font-extrabold text-gray-900 leading-tight">MacroVision</div>
-          <div class="text-xs text-gray-500">Singapore food log • OCR nutrition label • Athlete targets</div>
+          <div class="text-xs text-gray-500">SG food log • OCR nutrition label • Athlete targets</div>
         </div>
       </div>
 
@@ -125,9 +128,7 @@
       <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
         <div>
           <div class="flex items-center gap-3 mb-3">
-            <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
-              Athlete App
-            </span>
+            <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">Athlete App</span>
             <span class="text-gray-300 text-sm">Singapore-optimised • Manual food picker • OCR label scan • PDF export</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-3">🍽️ MacroVision</h1>
@@ -135,9 +136,7 @@
             Log meals with SG hawker food + fruits + beverages. Optional OCR reads package labels / nutrition panel to prefill macros.
             Everything is editable (multi-digit) and autosaves per day to your device.
           </p>
-          <div class="mt-4 text-sm text-gray-200">
-            © <span id="yearNow"></span> Ng Jun Wei &amp; Ng Hong Wei
-          </div>
+          <div class="mt-4 text-sm text-gray-200">© <span id="yearNow"></span> Ng Jun Wei &amp; Ng Hong Wei</div>
         </div>
 
         <div class="bg-white/10 rounded-xl p-4 w-full md:w-auto">
@@ -161,16 +160,13 @@
       <div class="warn rounded-xl p-3">
         <div class="font-extrabold">Important</div>
         <div class="text-sm text-gray-700 mt-1">
-          Macros are estimates. Hawker portions vary (oil, gravy, sugar, toppings). OCR helps for packaged foods but may misread.
+          Macros are estimates. Hawker portions vary. OCR helps for packaged foods but may misread.
           Always sanity-check and edit before logging.
-        </div>
-        <div class="text-xs text-gray-600 mt-2">
-          ✅ GitHub Pages friendly: no server required. Autosave uses LocalStorage on your device.
         </div>
       </div>
     </section>
 
-    <!-- PROFILE / TDEE / ATHLETE MODE -->
+    <!-- PROFILE / TARGETS -->
     <section class="bg-white card p-5">
       <div class="flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -218,7 +214,7 @@
               <div class="text-gray-600 mb-1">Athlete type</div>
               <select id="athleteType" class="w-full border rounded-lg px-3 py-2">
                 <option value="skill">Skill/Power (sprint/jumps/combat)</option>
-                <option value="mixed" selected>Mixed / Team Sport (football/basketball/rugby)</option>
+                <option value="mixed" selected>Mixed / Team Sport</option>
                 <option value="endurance">Endurance (running/cycling/tri)</option>
                 <option value="strength">Strength/Hypertrophy (WL/BB)</option>
               </select>
@@ -234,10 +230,10 @@
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Training day intensity</div>
               <select id="dayIntensity" class="w-full border rounded-lg px-3 py-2">
-                <option value="easy">Easy / skill-only day</option>
-                <option value="normal" selected>Normal training day</option>
-                <option value="hard">Hard / long / double sessions</option>
-                <option value="comp">Competition day</option>
+                <option value="easy">Easy / skill-only</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard / long / double</option>
+                <option value="comp">Competition</option>
               </select>
             </label>
           </div>
@@ -262,9 +258,9 @@
               <div class="text-gray-600 mb-1">Activity level (TDEE)</div>
               <select id="activity" class="w-full border rounded-lg px-3 py-2">
                 <option value="1.2">Sedentary</option>
-                <option value="1.375">Light (1–3 days/wk)</option>
-                <option value="1.55">Moderate (3–5 days/wk)</option>
-                <option value="1.725" selected>Very active (6–7 days/wk)</option>
+                <option value="1.375">Light</option>
+                <option value="1.55">Moderate</option>
+                <option value="1.725" selected>Very active</option>
                 <option value="1.9">Athlete / heavy training</option>
               </select>
             </label>
@@ -292,9 +288,9 @@
 
             <div class="text-xs text-gray-600 bg-white border rounded-lg p-3">
               <div class="font-bold mb-1">How targets are set</div>
-              <div>• Carb target adapts by athlete type + season + day intensity</div>
-              <div>• Protein target adapts by goal (ISSN-style ranges)</div>
-              <div>• Fat stays within AMDR 20–35% kcal</div>
+              <div>• Carbs adapt by sport + season + intensity</div>
+              <div>• Protein adapts by goal</div>
+              <div>• Fat stays within AMDR 20–35%</div>
             </div>
           </div>
         </div>
@@ -329,28 +325,23 @@
     <!-- CAPTURE + LOG -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      <!-- Capture / Manual / OCR -->
+      <!-- Manual / OCR -->
       <div class="bg-white card p-5">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-extrabold">📸 Manual Pickers + Optional OCR</h2>
-            <p class="text-sm text-gray-600">
-              Choose from SG hawker foods, fruits, beverages. Or upload a package photo to OCR the nutrition label and prefill.
-            </p>
-          </div>
-        </div>
+        <h2 class="text-xl font-extrabold">🧾 Pickers + OCR</h2>
+        <p class="text-sm text-gray-600 mt-1">Manual SG lists, or upload a package nutrition label and OCR it.</p>
 
         <div class="mt-4 hint rounded-xl p-3">
-          <div class="font-bold text-sm">AI mode (selectable)</div>
+          <div class="font-bold text-sm">Kcal automation ✅</div>
           <div class="small text-gray-700 mt-1">
-            <b>Manual mode</b> = pick food from lists. <b>OCR mode</b> = upload photo of nutrition panel to extract text & try to parse macros.
-            (OCR may be slow on phones, depends on image clarity.)
+            Kcal will now auto-calculate from your edited macros using:
+            <b>kcal = 4×Protein + 4×Carbs + 9×Fat</b>.
+            (You can still type kcal manually if you turn off auto.)
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
 
-          <!-- Left column: Upload + OCR -->
+          <!-- Left: OCR -->
           <div class="space-y-3">
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Mode</div>
@@ -373,24 +364,30 @@
             <div class="bg-gray-50 rounded-xl p-3">
               <div class="font-bold text-sm mb-1">Preview</div>
               <img id="previewImg" class="w-full rounded-lg hidden" alt="preview" />
-              <div id="noPreview" class="text-sm text-gray-500">No photo yet. Upload a nutrition label (OCR mode) or ignore in manual mode.</div>
+              <div id="noPreview" class="text-sm text-gray-500">No photo yet. Upload a nutrition label (OCR mode) or ignore.</div>
             </div>
 
             <div id="statusBox" class="hidden rounded-xl p-3 small"></div>
 
             <details class="bg-gray-50 rounded-xl p-3">
               <summary class="font-bold text-sm flex items-center justify-between">
-                OCR Text (for troubleshooting)
+                OCR Text (debug)
                 <span class="text-xs text-gray-500">tap to expand</span>
               </summary>
-              <textarea id="ocrText" class="w-full border rounded-lg px-3 py-2 mt-2 text-xs mono" rows="8" placeholder="OCR text will appear here..."></textarea>
-              <div class="text-xs text-gray-500 mt-2">
-                Tip: use a straight, well-lit photo. Crop close to the nutrition panel.
-              </div>
+              <textarea id="ocrText" class="w-full border rounded-lg px-3 py-2 mt-2 text-xs mono" rows="8"
+                placeholder="OCR text will appear here..."></textarea>
             </details>
+
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Auto kcal from macros</div>
+              <select id="autoKcal" class="w-full border rounded-lg px-3 py-2">
+                <option value="on" selected>ON (recommended)</option>
+                <option value="off">OFF (manual kcal)</option>
+              </select>
+            </label>
           </div>
 
-          <!-- Right column: Pickers + editor -->
+          <!-- Right: Pickers + editor -->
           <div class="space-y-3">
             <div class="grid grid-cols-2 gap-3">
               <label class="text-sm block">
@@ -421,47 +418,28 @@
               <div class="text-xs text-gray-600 mt-1">x<span id="portionLabel" class="font-semibold">1.0</span></div>
             </label>
 
-            <!-- Collapsible pickers -->
             <details class="bg-white border rounded-xl p-3" open>
-              <summary class="font-extrabold flex items-center justify-between">
-                🇸🇬 Hawker foods (common)
-                <span class="text-xs text-gray-500">tap to collapse</span>
-              </summary>
+              <summary class="font-extrabold flex items-center justify-between">🇸🇬 Hawker foods <span class="text-xs text-gray-500">tap</span></summary>
               <div class="mt-3 grid grid-cols-1 gap-2">
                 <select id="hawkerPicker" class="w-full border rounded-lg px-3 py-2"></select>
-                <button id="useHawkerBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
-                  Use hawker item
-                </button>
+                <button id="useHawkerBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">Use hawker item</button>
               </div>
-              <div class="text-xs text-gray-500 mt-2">Pick → then you can edit kcal/P/C/F below.</div>
             </details>
 
             <details class="bg-white border rounded-xl p-3">
-              <summary class="font-extrabold flex items-center justify-between">
-                🍌 Common fruits
-                <span class="text-xs text-gray-500">tap to expand</span>
-              </summary>
+              <summary class="font-extrabold flex items-center justify-between">🍌 Fruits <span class="text-xs text-gray-500">tap</span></summary>
               <div class="mt-3 grid grid-cols-1 gap-2">
                 <select id="fruitPicker" class="w-full border rounded-lg px-3 py-2"></select>
-                <button id="useFruitBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
-                  Use fruit
-                </button>
+                <button id="useFruitBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">Use fruit</button>
               </div>
-              <div class="text-xs text-gray-500 mt-2">Fruit macros are per typical serving (1 piece / 1 cup).</div>
             </details>
 
             <details class="bg-white border rounded-xl p-3">
-              <summary class="font-extrabold flex items-center justify-between">
-                🥤 Common beverages
-                <span class="text-xs text-gray-500">tap to expand</span>
-              </summary>
+              <summary class="font-extrabold flex items-center justify-between">🥤 Beverages <span class="text-xs text-gray-500">tap</span></summary>
               <div class="mt-3 grid grid-cols-1 gap-2">
                 <select id="bevPicker" class="w-full border rounded-lg px-3 py-2"></select>
-                <button id="useBevBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
-                  Use beverage
-                </button>
+                <button id="useBevBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">Use beverage</button>
               </div>
-              <div class="text-xs text-gray-500 mt-2">Beverage macros assume common SG serving sizes.</div>
             </details>
 
             <!-- Editor -->
@@ -471,7 +449,7 @@
               <div class="mt-3 space-y-2">
                 <label class="text-sm block">
                   <div class="text-gray-600 mb-1">Detected / selected name</div>
-                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2" placeholder="e.g., Chicken rice, Banana, Kopi C, Yogurt" />
+                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2" placeholder="e.g., Chicken rice, Banana, Kopi C" />
                 </label>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -479,25 +457,26 @@
                     <div class="text-xs text-gray-500">kcal</div>
                     <input id="itemKcal" class="w-full border rounded-lg px-3 py-2 mono numInput"
                       type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0" maxlength="4" value="0" />
+                    <div class="text-[11px] text-gray-500 mt-1" id="kcalHint">Auto from P/C/F</div>
                   </div>
                   <div class="bg-gray-50 rounded-lg p-2">
                     <div class="text-xs text-gray-500">Protein (g)</div>
                     <input id="itemP" class="w-full border rounded-lg px-3 py-2 mono numInput"
-                      type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" placeholder="0" maxlength="6" value="0" />
+                      type="text" inputmode="decimal" placeholder="0" maxlength="6" value="0" />
                   </div>
                   <div class="bg-gray-50 rounded-lg p-2">
                     <div class="text-xs text-gray-500">Carbs (g)</div>
                     <input id="itemC" class="w-full border rounded-lg px-3 py-2 mono numInput"
-                      type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" placeholder="0" maxlength="6" value="0" />
+                      type="text" inputmode="decimal" placeholder="0" maxlength="6" value="0" />
                   </div>
                   <div class="bg-gray-50 rounded-lg p-2">
                     <div class="text-xs text-gray-500">Fat (g)</div>
                     <input id="itemF" class="w-full border rounded-lg px-3 py-2 mono numInput"
-                      type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" placeholder="0" maxlength="6" value="0" />
+                      type="text" inputmode="decimal" placeholder="0" maxlength="6" value="0" />
                   </div>
                 </div>
 
-                <div class="text-xs text-gray-500" id="metaLine">Manual mode. Pick items or type values.</div>
+                <div class="text-xs text-gray-500" id="metaLine">Pick items or OCR, then edit macros. Kcal can auto-calc.</div>
 
                 <button id="addItemBtn" class="w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
                   ➕ Add this item to current meal
@@ -525,9 +504,7 @@
               <div class="font-extrabold">Current meal items</div>
               <div class="text-xs text-gray-600">Add multiple items, then finalize meal.</div>
             </div>
-            <button id="clearMealBtn" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-              Clear meal items
-            </button>
+            <button id="clearMealBtn" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">Clear meal items</button>
           </div>
 
           <div id="mealItemsList" class="mt-3 space-y-2"></div>
@@ -579,12 +556,8 @@
             <p class="text-sm text-gray-600">Intake vs targets + macrodistribution. Export PDF for athlete reporting.</p>
           </div>
           <div class="flex gap-2">
-            <button id="exportPdfBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">
-              📄 Export PDF
-            </button>
-            <button id="clearBtn" class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">
-              Clear day
-            </button>
+            <button id="exportPdfBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">📄 Export PDF</button>
+            <button id="clearBtn" class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">Clear day</button>
           </div>
         </div>
 
@@ -644,9 +617,7 @@
   </main>
 
   <footer class="py-8">
-    <div class="max-w-7xl mx-auto px-4 text-xs text-gray-500">
-      © <span id="yearNow2"></span> Ng Jun Wei &amp; Ng Hong Wei
-    </div>
+    <div class="max-w-7xl mx-auto px-4 text-xs text-gray-500">© <span id="yearNow2"></span> Ng Jun Wei &amp; Ng Hong Wei</div>
   </footer>
 
 <script>
@@ -673,7 +644,7 @@ const HAWKER_DB = [
   { name:"Fried Rice (egg)", kcal:650, p:18, c:90, f:20 },
   { name:"Soto Ayam (bowl)", kcal:520, p:28, c:55, f:18 },
   { name:"Thosai (plain) + chutney", kcal:420, p:10, c:70, f:10 },
-  { name:"Soup Dumplings / Xiao Long Bao (6 pcs)", kcal:480, p:18, c:60, f:18 },
+  { name:"Xiao Long Bao (6 pcs)", kcal:480, p:18, c:60, f:18 },
 ];
 
 const FRUIT_DB = [
@@ -762,7 +733,7 @@ function setStatus(kind, text) {
   el.textContent = text;
 }
 
-function parseNumInput(id, isInt=false){
+function parseNumFromTextInput(id, isInt=false){
   const raw = ($(`${id}`).value || "").trim()
     .replace(",", ".")
     .replace(/[^0-9.]/g, "");
@@ -775,7 +746,7 @@ function parseNumInput(id, isInt=false){
 /* Per-day localStorage key */
 function getDateKey() {
   const d = $("logDate").value; // yyyy-mm-dd
-  return `MacroVision_v3_${d || "unknown"}`;
+  return `MacroVision_v4_${d || "unknown"}`;
 }
 
 function saveDay() {
@@ -783,11 +754,10 @@ function saveDay() {
     const payload = {
       entries, mealItems, currentImageDataUrl,
       profile: getProfileSnapshot(),
+      ui: { autoKcal: $("autoKcal").value, aiMode: $("aiMode").value }
     };
     localStorage.setItem(getDateKey(), JSON.stringify(payload));
-  }catch(e){
-    // storage might be full
-  }
+  }catch(e){}
 }
 
 function loadDay() {
@@ -811,6 +781,10 @@ function loadDay() {
     currentImageDataUrl = payload.currentImageDataUrl || null;
 
     if (payload.profile) applyProfileSnapshot(payload.profile);
+    if (payload.ui){
+      if (payload.ui.autoKcal) $("autoKcal").value = payload.ui.autoKcal;
+      if (payload.ui.aiMode) $("aiMode").value = payload.ui.aiMode;
+    }
 
     if (currentImageDataUrl){
       $("previewImg").src = currentImageDataUrl;
@@ -854,7 +828,28 @@ function applyProfileSnapshot(p){
 }
 
 /*************************************************************
- * 3) BMR/TDEE + TARGETS
+ * 3) AUTO KCAL FROM P/C/F
+ *************************************************************/
+function calcKcalFromMacros(p, c, f){
+  const kcal = (p*4) + (c*4) + (f*9);
+  return Math.max(0, Math.round(kcal));
+}
+function maybeAutoKcal(){
+  const mode = $("autoKcal").value;
+  if (mode !== "on") {
+    $("kcalHint").textContent = "Manual kcal";
+    return;
+  }
+  const p = clamp(parseNumFromTextInput("itemP", false), 0, 999);
+  const c = clamp(parseNumFromTextInput("itemC", false), 0, 999);
+  const f = clamp(parseNumFromTextInput("itemF", false), 0, 999);
+  const kcal = calcKcalFromMacros(p, c, f);
+  $("itemKcal").value = String(kcal);
+  $("kcalHint").textContent = "Auto from P/C/F";
+}
+
+/*************************************************************
+ * 4) BMR/TDEE + TARGETS
  *************************************************************/
 function bmrMifflin(weightKg, heightCm, age, sex) {
   const s = (sex === "Male") ? 5 : -161;
@@ -934,33 +929,31 @@ function computeTargets() {
 }
 
 /*************************************************************
- * 4) PICKERS → EDITOR
+ * 5) PICKERS → EDITOR
  *************************************************************/
 function applyDbRowToEditor(row, kindLabel){
   const portion = parseFloat($("portion").value || "1.0");
   $("itemLabel").value = row.name;
-  $("itemKcal").value = String(Math.round(row.kcal * portion));
   $("itemP").value = String(round1(row.p * portion));
   $("itemC").value = String(round1(row.c * portion));
   $("itemF").value = String(round1(row.f * portion));
-  $("metaLine").textContent = `${kindLabel} selected. Portion x${portion.toFixed(1)} applied. You can edit values.`;
+  // kcal will auto-calc if auto is ON; else set from db
+  if ($("autoKcal").value === "on") maybeAutoKcal();
+  else $("itemKcal").value = String(Math.round(row.kcal * portion));
+
+  $("metaLine").textContent = `${kindLabel} selected. Portion x${portion.toFixed(1)} applied. You can edit.`;
   setStatus("ok", `${kindLabel} loaded ✅ Edit if needed, then add item.`);
   saveDay();
 }
 
 function fillPickers(){
-  const hawker = $("hawkerPicker");
-  hawker.innerHTML = HAWKER_DB.map((x,i)=>`<option value="${i}">${x.name}</option>`).join("");
-
-  const fruit = $("fruitPicker");
-  fruit.innerHTML = FRUIT_DB.map((x,i)=>`<option value="${i}">${x.name}</option>`).join("");
-
-  const bev = $("bevPicker");
-  bev.innerHTML = BEV_DB.map((x,i)=>`<option value="${i}">${x.name}</option>`).join("");
+  $("hawkerPicker").innerHTML = HAWKER_DB.map((x,i)=>`<option value="${i}">${x.name}</option>`).join("");
+  $("fruitPicker").innerHTML = FRUIT_DB.map((x,i)=>`<option value="${i}">${x.name}</option>`).join("");
+  $("bevPicker").innerHTML = BEV_DB.map((x,i)=>`<option value="${i}">${x.name}</option>`).join("");
 }
 
 /*************************************************************
- * 5) MEAL BUILDER + FIXED DELETE BEHAVIOR
+ * 6) MEAL BUILDER
  *************************************************************/
 function sumMealItems() {
   return mealItems.reduce((acc, it) => {
@@ -968,7 +961,6 @@ function sumMealItems() {
     return acc;
   }, {kcal:0, p:0, c:0, f:0});
 }
-
 function updateMealSums() {
   const t = sumMealItems();
   $("mealSumKcal").textContent = round1(t.kcal);
@@ -976,7 +968,6 @@ function updateMealSums() {
   $("mealSumC").textContent = round1(t.c);
   $("mealSumF").textContent = round1(t.f);
 }
-
 function renderMealItems() {
   const list = $("mealItemsList");
   list.innerHTML = "";
@@ -1002,14 +993,13 @@ function renderMealItems() {
       btn.addEventListener("click", () => {
         const i = parseInt(btn.getAttribute("data-del-item"), 10);
         mealItems.splice(i, 1);
-        renderMealItems();        // IMPORTANT: re-render list so deleted item disappears immediately
+        renderMealItems();
         updateMealSums();
         render();
         saveDay();
       });
     });
   }
-
   updateMealSums();
 }
 
@@ -1020,23 +1010,34 @@ function addItem() {
 
   const portion = parseFloat($("portion").value || "1.0");
 
-  const kcal = clamp(parseNumInput("itemKcal", true), 0, 9999);
-  const p = clamp(parseNumInput("itemP", false), 0, 999);
-  const c = clamp(parseNumInput("itemC", false), 0, 999);
-  const f = clamp(parseNumInput("itemF", false), 0, 999);
+  const p = clamp(parseNumFromTextInput("itemP", false), 0, 999);
+  const c = clamp(parseNumFromTextInput("itemC", false), 0, 999);
+  const f = clamp(parseNumFromTextInput("itemF", false), 0, 999);
+
+  let kcal;
+  if ($("autoKcal").value === "on") {
+    kcal = calcKcalFromMacros(p, c, f);
+  } else {
+    kcal = clamp(parseNumFromTextInput("itemKcal", true), 0, 9999);
+  }
 
   const source = ($("aiMode").value === "ocr") ? "OCR/Manual edit" : "Manual picker/edit";
 
-  mealItems.push({ itemType, label, kcal, p: round1(p), c: round1(c), f: round1(f), portion, source });
+  mealItems.push({
+    itemType, label,
+    kcal, p: round1(p), c: round1(c), f: round1(f),
+    portion, source
+  });
 
-  // reset editor for next item
+  // reset editor
   $("itemLabel").value = "";
-  $("itemKcal").value = "0";
   $("itemP").value = "0";
   $("itemC").value = "0";
   $("itemF").value = "0";
-  $("metaLine").textContent = "Item added. Add next item or finalize meal.";
+  $("itemKcal").value = "0";
+  maybeAutoKcal();
 
+  $("metaLine").textContent = "Item added. Add next item or finalize meal.";
   renderMealItems();
   render();
   saveDay();
@@ -1078,7 +1079,7 @@ function finalizeMealToLog() {
 }
 
 /*************************************************************
- * 6) DAILY TOTALS + ADEQUACY + RENDER
+ * 7) DAILY TOTALS + ADEQUACY + RENDER
  *************************************************************/
 function calcTotals() {
   return entries.reduce((acc, e) => {
@@ -1094,7 +1095,6 @@ function adequacyLabel(value, lo, hi) {
   if (value > hi) return "Excess (maybe ok depending on training)";
   return "Sufficient";
 }
-
 function render() {
   const targets = computeTargets();
   const totals = calcTotals();
@@ -1109,10 +1109,9 @@ function render() {
 
   const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
   const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
-  const fatTarget = targets.fTarget;
-  const fatTol = Math.max(10, 0.15 * fatTarget);
+  const fatTol = Math.max(10, 0.15 * targets.fTarget);
   let fVer = "On target-ish";
-  if (Math.abs(totals.f - fatTarget) > fatTol) fVer = (totals.f > fatTarget) ? "High" : "Low";
+  if (Math.abs(totals.f - targets.fTarget) > fatTol) fVer = (totals.f > targets.fTarget) ? "High" : "Low";
 
   $("verP").textContent = `${pVer} (target ${targets.pRange[0]}–${targets.pRange[1]} g)`;
   $("verC").textContent = `${cVer} (target ${targets.cRange[0]}–${targets.cRange[1]} g)`;
@@ -1148,7 +1147,6 @@ function render() {
   // Logged entries
   const list = $("entriesList");
   list.innerHTML = "";
-
   entries.forEach((e, idx) => {
     const itemsHtml = (e.items || []).map((it) => `
       <div class="border rounded-lg p-2 bg-gray-50">
@@ -1184,11 +1182,11 @@ function render() {
     });
   });
 
-  saveDay(); // autosave on render changes
+  saveDay();
 }
 
 /*************************************************************
- * 7) OCR: upload -> preview -> extract -> parse macros
+ * 8) OCR
  *************************************************************/
 function setPreview(dataUrl) {
   currentImageDataUrl = dataUrl;
@@ -1197,34 +1195,29 @@ function setPreview(dataUrl) {
   $("noPreview").classList.add("hidden");
   saveDay();
 }
-
 function handleUpload(file) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => setPreview(reader.result);
   reader.readAsDataURL(file);
 }
-
 function extractNumberNear(text, keywords) {
-  // find first number after any keyword; supports "Protein 12g" or "Protein: 12 g"
   const t = text.toLowerCase();
   for (const k of keywords) {
     const idx = t.indexOf(k);
     if (idx >= 0) {
-      const slice = t.slice(idx, idx + 120);
+      const slice = t.slice(idx, idx + 140);
       const m = slice.match(/([0-9]+(?:\.[0-9]+)?)\s*(kcal|kj|g)?/i);
       if (m) return Number(m[1]);
     }
   }
   return null;
 }
-
 function parseOcrToMacros(ocrText) {
   const t = (ocrText || "").replace(/\s+/g," ").trim();
   if (!t) return null;
 
-  // Energy may be kcal or kJ. If kJ only, convert kJ->kcal (divide by 4.184)
-  let kcal = extractNumberNear(t, ["energy", "calories", "calorie"]);
+  let kcal = extractNumberNear(t, ["energy", "calories", "calorie", "kcal"]);
   let kj = extractNumberNear(t, ["kj"]);
   if (!kcal && kj) kcal = Math.round(kj / 4.184);
 
@@ -1232,22 +1225,13 @@ function parseOcrToMacros(ocrText) {
   const c = extractNumberNear(t, ["carbohydrate", "carb", "carbs"]);
   const f = extractNumberNear(t, ["fat", "total fat"]);
 
-  // name: try from first line-ish
   let name = "";
   const first = (ocrText || "").split("\n").map(s=>s.trim()).filter(Boolean)[0];
   if (first) name = first.slice(0, 40);
 
   if (kcal === null && p === null && c === null && f === null) return null;
-
-  return {
-    name: name || "Packaged item (OCR)",
-    kcal: kcal ?? 0,
-    p: p ?? 0,
-    c: c ?? 0,
-    f: f ?? 0
-  };
+  return { name: name || "Packaged item (OCR)", kcal: kcal ?? 0, p: p ?? 0, c: c ?? 0, f: f ?? 0 };
 }
-
 async function runOcr() {
   if ($("aiMode").value !== "ocr") {
     setStatus("warn", "Switch Mode to OCR label mode first.");
@@ -1260,31 +1244,29 @@ async function runOcr() {
 
   try {
     setStatus("warn", "Running OCR… (may take a while on phone)");
-    const res = await Tesseract.recognize(currentImageDataUrl, "eng", {
-      logger: m => {
-        // optional progress
-      }
-    });
+    const res = await Tesseract.recognize(currentImageDataUrl, "eng", {});
     const text = res.data.text || "";
     $("ocrText").value = text;
 
     const parsed = parseOcrToMacros(text);
     if (!parsed) {
-      setStatus("danger", "OCR done, but couldn't parse macros. You can manually fill kcal/P/C/F.");
-      $("metaLine").textContent = "OCR text available. Manual edit required.";
+      setStatus("danger", "OCR done, but couldn't parse macros. You can manually fill macros.");
       return;
     }
 
-    // apply portion multiplier
     const portion = parseFloat($("portion").value || "1.0");
     $("itemLabel").value = parsed.name;
-    $("itemKcal").value = String(Math.round(parsed.kcal * portion));
+
+    // set macros
     $("itemP").value = String(round1(parsed.p * portion));
     $("itemC").value = String(round1(parsed.c * portion));
     $("itemF").value = String(round1(parsed.f * portion));
 
-    $("metaLine").textContent = `OCR parsed macros (best effort). Portion x${portion.toFixed(1)} applied. Please verify.`;
-    setStatus("ok", "OCR parsed ✅ Please verify the numbers before adding item.");
+    // kcal: if auto, compute from macros; else use OCR kcal
+    if ($("autoKcal").value === "on") maybeAutoKcal();
+    else $("itemKcal").value = String(Math.round((parsed.kcal || 0) * portion));
+
+    setStatus("ok", "OCR parsed ✅ Verify values, then add item.");
     saveDay();
   } catch (e) {
     setStatus("danger", "OCR failed. Try a clearer, closer photo (straight-on, good lighting).");
@@ -1292,7 +1274,7 @@ async function runOcr() {
 }
 
 /*************************************************************
- * 8) PDF EXPORT
+ * 9) PDF EXPORT (unchanged)
  *************************************************************/
 async function exportPdf() {
   const targets = computeTargets();
@@ -1342,7 +1324,6 @@ async function exportPdf() {
 
   y = doc.lastAutoTable.finalY + 18;
 
-  // Macrodistribution by meal timing
   const bySlot = {};
   MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
   entries.forEach(e => {
@@ -1374,7 +1355,6 @@ async function exportPdf() {
     headStyles: { fillColor: [255, 247, 237], textColor: 20 },
   });
 
-  // Item-level details
   const detailRows = [];
   entries.forEach(e => {
     (e.items || []).forEach(it => {
@@ -1406,7 +1386,7 @@ async function exportPdf() {
 }
 
 /*************************************************************
- * 9) EVENTS / INIT
+ * 10) EVENTS / INIT
  *************************************************************/
 function bindEvents() {
   $("equation").addEventListener("change", () => {
@@ -1419,8 +1399,9 @@ function bindEvents() {
       $(id).addEventListener("input", () => {
         if (id === "fatPref") $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
         render();
+        saveDay();
       });
-      $(id).addEventListener("change", render);
+      $(id).addEventListener("change", () => { render(); saveDay(); });
     });
 
   $("uploadInput").addEventListener("change", (e) => handleUpload(e.target.files[0]));
@@ -1467,15 +1448,30 @@ function bindEvents() {
   });
 
   $("loadDateBtn").addEventListener("click", () => loadDay());
-  $("logDate").addEventListener("change", () => {
-    // switching date does not auto-load until user clicks Load (prevents accidental overwrite feeling)
-    setStatus("warn", "Date changed. Click Load to open that day's log.");
+  $("logDate").addEventListener("change", () => setStatus("warn", "Date changed. Click Load to open that day's log."));
+
+  // Auto kcal: recalc when macros change (debounced-ish by browser event loop)
+  ["itemP","itemC","itemF"].forEach(id => {
+    $(id).addEventListener("input", () => {
+      maybeAutoKcal();
+      saveDay();
+    });
+  });
+  $("autoKcal").addEventListener("change", () => {
+    maybeAutoKcal();
+    saveDay();
   });
 
-  // autosave on itemType / mealSlot / mode changes too
-  ["aiMode","itemType","mealSlot"].forEach(id => {
-    $(id).addEventListener("change", () => saveDay());
+  // If user manually edits kcal while auto is on, we keep auto as source of truth.
+  $("itemKcal").addEventListener("input", () => {
+    if ($("autoKcal").value === "on") {
+      // revert to computed on next tick
+      setTimeout(maybeAutoKcal, 0);
+    }
+    saveDay();
   });
+
+  ["aiMode","itemType","mealSlot"].forEach(id => $(id).addEventListener("change", saveDay));
 }
 
 function initDate(){
@@ -1497,8 +1493,9 @@ $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
 $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
 
 bindEvents();
-loadDay();          // load today's data if exists
+loadDay();
 renderMealItems();
+maybeAutoKcal();
 render();
 
 </script>
