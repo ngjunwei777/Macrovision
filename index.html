@@ -5,22 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>MacroVision</title>
 
-  <!-- Tailwind (CDN) -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
   <style>
-    /* Smooth-ish iOS scrolling and sticky header */
     html, body { height: 100%; }
     body { -webkit-font-smoothing: antialiased; }
     .no-spin::-webkit-outer-spin-button,
     .no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .no-spin { -moz-appearance: textfield; }
 
-    /* Horizontal scroll container for logs on phone */
     .hscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .minw-log { min-width: 860px; } /* ensures columns stay visible on portrait */
+    .minw-log { min-width: 900px; }
 
-    /* Floating action button */
     .fab {
       position: fixed;
       right: 16px;
@@ -29,7 +25,6 @@
       box-shadow: 0 12px 30px rgba(0,0,0,.18);
     }
 
-    /* Simple modal */
     .modal-backdrop { background: rgba(0,0,0,.55); }
   </style>
 </head>
@@ -39,15 +34,13 @@
   <header class="sticky top-0 z-50 bg-white border-b">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <!-- NEW: Suitable app logo (camera + fork) -->
+        <!-- App logo -->
         <div class="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center">
           <svg width="26" height="26" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="MacroVision logo">
-            <!-- camera -->
             <rect x="10" y="18" width="44" height="30" rx="8" fill="#ffffff" opacity="0.95"/>
             <circle cx="32" cy="33" r="9" fill="#111827"/>
             <circle cx="32" cy="33" r="5" fill="#ffffff" opacity="0.95"/>
             <rect x="18" y="14" width="12" height="8" rx="3" fill="#ffffff" opacity="0.95"/>
-            <!-- fork (stylized) -->
             <path d="M48 14v12c0 2-2 4-4 4s-4-2-4-4V14" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
             <path d="M44 30v10" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
           </svg>
@@ -59,12 +52,8 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <button id="btnExportJSON" class="px-3 py-2 rounded-lg border bg-white hover:bg-gray-50 text-sm">
-          Export
-        </button>
-        <button id="btnReset" class="px-3 py-2 rounded-lg border bg-white hover:bg-gray-50 text-sm text-red-600">
-          Reset
-        </button>
+        <button id="btnExportJSON" class="px-3 py-2 rounded-lg border bg-white hover:bg-gray-50 text-sm">Export</button>
+        <button id="btnReset" class="px-3 py-2 rounded-lg border bg-white hover:bg-gray-50 text-sm text-red-600">Reset</button>
       </div>
     </div>
   </header>
@@ -109,24 +98,25 @@
           <div class="text-xs text-gray-500" id="todayDate"></div>
         </div>
 
+        <!-- ✅ FIX: Total macros + total kcal always computed from log -->
         <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
           <div class="rounded-2xl bg-gray-50 border p-3">
-            <div class="text-xs text-gray-500">Consumed</div>
+            <div class="text-xs text-gray-500">Total kcal</div>
             <div class="text-2xl font-bold" id="sumKcal">0</div>
             <div class="text-xs text-gray-500">kcal</div>
           </div>
           <div class="rounded-2xl bg-gray-50 border p-3">
-            <div class="text-xs text-gray-500">Protein</div>
+            <div class="text-xs text-gray-500">Total Protein</div>
             <div class="text-2xl font-bold" id="sumP">0</div>
             <div class="text-xs text-gray-500">g</div>
           </div>
           <div class="rounded-2xl bg-gray-50 border p-3">
-            <div class="text-xs text-gray-500">Carbs</div>
+            <div class="text-xs text-gray-500">Total Carbs</div>
             <div class="text-2xl font-bold" id="sumC">0</div>
             <div class="text-xs text-gray-500">g</div>
           </div>
           <div class="rounded-2xl bg-gray-50 border p-3">
-            <div class="text-xs text-gray-500">Fat</div>
+            <div class="text-xs text-gray-500">Total Fat</div>
             <div class="text-2xl font-bold" id="sumF">0</div>
             <div class="text-xs text-gray-500">g</div>
           </div>
@@ -186,23 +176,20 @@
     <section class="bg-white rounded-2xl border p-4">
       <div class="flex items-center justify-between">
         <h2 class="font-semibold">Quick Add (Singapore context)</h2>
-        <div class="text-xs text-gray-500">Tap an item → edit macros → auto-kcal → save</div>
+        <div class="text-xs text-gray-500">Tap → edit macros → auto-kcal → save</div>
       </div>
 
       <div class="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <!-- Hawker Foods -->
         <details open class="rounded-2xl border bg-gray-50 p-3">
           <summary class="cursor-pointer font-medium">Hawker / Meals</summary>
           <div id="listFoods" class="mt-3 grid grid-cols-1 gap-2"></div>
         </details>
 
-        <!-- Fruits -->
         <details class="rounded-2xl border bg-gray-50 p-3">
           <summary class="cursor-pointer font-medium">Common Fruits</summary>
           <div id="listFruits" class="mt-3 grid grid-cols-1 gap-2"></div>
         </details>
 
-        <!-- Beverages -->
         <details class="rounded-2xl border bg-gray-50 p-3">
           <summary class="cursor-pointer font-medium">Common Beverages</summary>
           <div id="listBevs" class="mt-3 grid grid-cols-1 gap-2"></div>
@@ -214,7 +201,7 @@
     <section class="bg-white rounded-2xl border p-4">
       <div class="flex items-center justify-between">
         <h2 class="font-semibold">Food Log</h2>
-        <div class="text-xs text-gray-500">Swipe horizontally on phone to view all columns</div>
+        <div class="text-xs text-gray-500">Swipe horizontally on phone</div>
       </div>
 
       <div class="mt-3 hscroll">
@@ -235,18 +222,17 @@
       </div>
 
       <div class="mt-3 text-xs text-gray-500">
-        Note: kcal is always recalculated from macros on save (and when you edit a logged item).
+        kcal is always recalculated from macros on save/edit (4/4/9 rule).
       </div>
     </section>
 
     <footer class="text-xs text-gray-500 pb-6">
-      © 2026 MacroVision. Auto-kcal: 4/4/9 rule.
+      © 2026 MacroVision
     </footer>
   </main>
 
-  <!-- ✅ FIX 1: Visible Add Food button (always present) -->
-  <button id="btnAddFoodVisible"
-          class="fab inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-900 text-white">
+  <!-- Add Food button (always visible) -->
+  <button id="btnAddFoodVisible" class="fab inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-900 text-white">
     <span class="font-semibold">+ Add Food</span>
     <span class="text-xs opacity-80">(custom)</span>
   </button>
@@ -268,7 +254,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label class="text-sm">
             <div class="text-gray-600 mb-1">Item name</div>
-            <input id="editName" class="w-full border rounded-xl px-3 py-2" placeholder="e.g., Chicken rice" />
+            <input id="editName" class="w-full border rounded-xl px-3 py-2" placeholder="e.g., Cai fan (2 veg 1 meat)" />
           </label>
           <label class="text-sm">
             <div class="text-gray-600 mb-1">Category</div>
@@ -298,7 +284,6 @@
                    class="w-full border rounded-xl px-3 py-2 no-spin" />
           </label>
 
-          <!-- ✅ FIX 3: kcal is automated based on macros -->
           <div class="text-sm">
             <div class="text-gray-600 mb-1">Calories (kcal)</div>
             <div class="w-full border rounded-xl px-3 py-2 bg-gray-50">
@@ -335,17 +320,13 @@
       n = Number.isFinite(n) ? n : 0;
       return Math.min(max, Math.max(min, n));
     }
-
     function asNum(v) {
       const n = parseFloat(v);
       return Number.isFinite(n) ? n : 0;
     }
+    function round1(n) { return Math.round(n * 10) / 10; }
 
-    function round1(n) {
-      return Math.round(n * 10) / 10;
-    }
-
-    // ✅ FIX 3: kcal is always derived from macros
+    // ✅ kcal derived from macros
     function kcalFromMacros(p, c, f) {
       return Math.round((4 * p) + (4 * c) + (9 * f));
     }
@@ -355,13 +336,20 @@
       return d.toLocaleString(undefined, { year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
     }
 
+    function fmt1(n) { return String(round1(n)); }
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, (m) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+      }[m]));
+    }
+
     /***********************
      * Storage
      ***********************/
-    const STORAGE_KEY = "macrovision_v2";
+    const STORAGE_KEY = "macrovision_v3";
     const defaultState = {
       goals: { kcal: 2000, p: 140, c: 220, f: 60 },
-      log: [] // {id, name, category, p,c,f,kcal,time}
+      log: [] // {id,name,category,p,c,f,kcal,time}
     };
 
     function loadState() {
@@ -369,11 +357,20 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return structuredClone(defaultState);
         const s = JSON.parse(raw);
-        // Basic shape guards
         if (!s.goals) s.goals = structuredClone(defaultState.goals);
         if (!Array.isArray(s.log)) s.log = [];
+
+        // ✅ Backfill kcal if older entries missing
+        s.log = s.log.map(x => {
+          const p = round1(clampNum(asNum(x.p), 0, 9999));
+          const c = round1(clampNum(asNum(x.c), 0, 9999));
+          const f = round1(clampNum(asNum(x.f), 0, 9999));
+          const kcal = Number.isFinite(x.kcal) ? x.kcal : kcalFromMacros(p,c,f);
+          return { ...x, p, c, f, kcal };
+        });
+
         return s;
-      } catch (e) {
+      } catch {
         return structuredClone(defaultState);
       }
     }
@@ -385,16 +382,27 @@
     let state = loadState();
 
     /***********************
-     * Quick lists (editable templates)
-     * Note: These are "typical" values; user can edit in the modal.
+     * Presets (Hawker list expanded ✅ +10 items)
+     * Values are rough typical servings; user can edit before saving.
      ***********************/
     const presets = {
       foods: [
         { name:"Chicken rice (avg)", category:"Food", p: 28, c: 75, f: 18 },
         { name:"Cai fan (2 veg 1 meat)", category:"Food", p: 25, c: 80, f: 22 },
+        { name:"Cai fan (2 meat 1 veg)", category:"Food", p: 35, c: 75, f: 28 },
+        { name:"Cai fan (fish + veg + egg)", category:"Food", p: 32, c: 70, f: 20 },
         { name:"Ban mian soup", category:"Food", p: 22, c: 70, f: 12 },
+        { name:"Bak chor mee (dry)", category:"Food", p: 26, c: 85, f: 22 },
+        { name:"Char kway teow", category:"Food", p: 20, c: 90, f: 28 },
+        { name:"Hokkien mee", category:"Food", p: 24, c: 88, f: 26 },
+        { name:"Laksa (avg)", category:"Food", p: 22, c: 78, f: 30 },
         { name:"Nasi lemak (avg)", category:"Food", p: 18, c: 85, f: 28 },
+        { name:"Roti prata (2) + curry", category:"Food", p: 12, c: 70, f: 28 },
+        { name:"Mee goreng", category:"Food", p: 18, c: 95, f: 24 },
+        { name:"Economy bee hoon (egg + sausage)", category:"Food", p: 20, c: 85, f: 20 },
         { name:"Fish soup + rice", category:"Food", p: 30, c: 60, f: 10 },
+        { name:"Yong tau foo (7 pcs + soup)", category:"Food", p: 28, c: 45, f: 14 },
+        { name:"Sliced fish porridge", category:"Food", p: 18, c: 55, f: 6 },
         { name:"McD: McSpicy burger", category:"Food", p: 25, c: 49, f: 25 },
       ],
       fruits: [
@@ -414,7 +422,7 @@
     };
 
     /***********************
-     * UI Render
+     * Render
      ***********************/
     function renderDate() {
       $("todayDate").textContent = new Date().toLocaleDateString(undefined, { weekday:"short", year:"numeric", month:"short", day:"2-digit" });
@@ -433,7 +441,7 @@
       state.goals.c = clampNum(asNum($("goalC").value), 0, 9999);
       state.goals.f = clampNum(asNum($("goalF").value), 0, 9999);
       saveState();
-      renderSummary();
+      renderSummary(); // ✅ keep summary live
     }
 
     function renderQuickList(containerId, items) {
@@ -460,14 +468,6 @@
       });
     }
 
-    function fmt1(n) { return String(round1(n)); }
-
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, (m) => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
-      }[m]));
-    }
-
     function renderLog() {
       const wrap = $("logRows");
       wrap.innerHTML = "";
@@ -475,7 +475,7 @@
       if (state.log.length === 0) {
         const empty = document.createElement("div");
         empty.className = "p-4 text-sm text-gray-500";
-        empty.textContent = "No items yet. Use + Add Food or tap a preset above.";
+        empty.textContent = "No items yet. Tap a preset above or use + Add Food.";
         wrap.appendChild(empty);
         return;
       }
@@ -490,7 +490,7 @@
           <div class="col-span-1 text-right">${fmt1(row.c)}</div>
           <div class="col-span-1 text-right">${fmt1(row.f)}</div>
           <div class="col-span-1 text-right font-bold">${row.kcal}</div>
-          <div class="col-span-2 text-gray-600 text-xs md:text-sm">${escapeHtml(row.time)}</div>
+          <div class="col-span-2 text-gray-600 text-xs md:text-sm">${escapeHtml(row.time || "")}</div>
           <div class="col-span-1 text-right">
             <button class="px-3 py-1 rounded-lg border hover:bg-gray-50 text-xs" data-edit="${row.id}">Edit</button>
           </div>
@@ -507,26 +507,35 @@
       });
     }
 
-    function renderSummary() {
+    // ✅ FIX: compute totals (kcal + macros) every render
+    function computeTotals() {
       let p = 0, c = 0, f = 0, kcal = 0;
-      state.log.forEach((x) => {
-        p += x.p; c += x.c; f += x.f; kcal += x.kcal;
-      });
+      for (const x of state.log) {
+        const px = asNum(x.p), cx = asNum(x.c), fx = asNum(x.f);
+        p += px; c += cx; f += fx;
 
-      p = round1(p); c = round1(c); f = round1(f);
-      $("sumP").textContent = fmt1(p);
-      $("sumC").textContent = fmt1(c);
-      $("sumF").textContent = fmt1(f);
-      $("sumKcal").textContent = String(kcal);
+        // trust stored kcal, but if missing, compute
+        const k = Number.isFinite(x.kcal) ? x.kcal : kcalFromMacros(px, cx, fx);
+        kcal += k;
+      }
+      return { p: round1(p), c: round1(c), f: round1(f), kcal: Math.round(kcal) };
+    }
+
+    function renderSummary() {
+      const totals = computeTotals();
+
+      $("sumP").textContent = fmt1(totals.p);
+      $("sumC").textContent = fmt1(totals.c);
+      $("sumF").textContent = fmt1(totals.f);
+      $("sumKcal").textContent = String(totals.kcal);
 
       const g = state.goals;
-
       const pct = (val, goal) => goal > 0 ? Math.min(999, Math.round((val/goal)*100)) : 0;
 
-      const pk = pct(kcal, g.kcal);
-      const pp = pct(p, g.p);
-      const pc = pct(c, g.c);
-      const pf = pct(f, g.f);
+      const pk = pct(totals.kcal, g.kcal);
+      const pp = pct(totals.p, g.p);
+      const pc = pct(totals.c, g.c);
+      const pf = pct(totals.f, g.f);
 
       $("pctKcal").textContent = pk + "%";
       $("pctP").textContent = pp + "%";
@@ -538,8 +547,8 @@
       $("barC").style.width = Math.min(100, pc) + "%";
       $("barF").style.width = Math.min(100, pf) + "%";
 
-      const remaining = Math.max(0, g.kcal - kcal);
-      $("progressNote").textContent = remaining === 0 ? "Goal reached" : `${remaining} kcal remaining`;
+      const remaining = Math.max(0, g.kcal - totals.kcal);
+      $("progressNote").textContent = g.kcal === 0 ? "Set a kcal target" : (remaining === 0 ? "Goal reached" : `${remaining} kcal remaining`);
     }
 
     /***********************
@@ -560,8 +569,6 @@
       const p = clampNum(asNum($("editP").value), 0, 9999);
       const c = clampNum(asNum($("editC").value), 0, 9999);
       const f = clampNum(asNum($("editF").value), 0, 9999);
-
-      // ✅ FIX 3: automated kcal
       const kcal = kcalFromMacros(p, c, f);
       $("editKcalDisplay").textContent = String(kcal);
       $("kcalFormulaLine").textContent = `kcal = 4×${fmt1(p)} + 4×${fmt1(c)} + 9×${fmt1(f)} = ${kcal}`;
@@ -611,7 +618,7 @@
       const p = round1(clampNum(asNum($("editP").value), 0, 9999));
       const c = round1(clampNum(asNum($("editC").value), 0, 9999));
       const f = round1(clampNum(asNum($("editF").value), 0, 9999));
-      const kcal = kcalFromMacros(p, c, f); // ✅ FIX 3: always computed
+      const kcal = kcalFromMacros(p, c, f);
 
       if (modalContext.mode === "edit" && modalContext.editingId) {
         const idx = state.log.findIndex(x => x.id === modalContext.editingId);
@@ -620,7 +627,7 @@
         }
       } else {
         state.log.push({
-          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+          id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)),
           name, category, p, c, f, kcal,
           time: nowTimeStr()
         });
@@ -628,7 +635,7 @@
 
       saveState();
       closeModal();
-      renderAll();
+      renderAll(); // ✅ ensures totals update
     }
 
     function deleteModalItem() {
@@ -636,7 +643,7 @@
       state.log = state.log.filter(x => x.id !== modalContext.editingId);
       saveState();
       closeModal();
-      renderAll();
+      renderAll(); // ✅ ensures totals update
     }
 
     /***********************
@@ -667,13 +674,9 @@
     function renderAll() {
       renderDate();
       setGoalInputs();
-
-      // Quick lists
       renderQuickList("listFoods", presets.foods);
       renderQuickList("listFruits", presets.fruits);
       renderQuickList("listBevs", presets.beverages);
-
-      // Log + summary
       renderLog();
       renderSummary();
     }
@@ -682,32 +685,30 @@
      * Events
      ***********************/
     ["goalKcal","goalP","goalC","goalF"].forEach((id) => {
-      $(id).addEventListener("input", () => updateGoalsFromInputs());
-      $(id).addEventListener("change", () => updateGoalsFromInputs());
+      $(id).addEventListener("input", updateGoalsFromInputs);
+      $(id).addEventListener("change", updateGoalsFromInputs);
     });
 
     $("btnExportJSON").addEventListener("click", exportJSON);
     $("btnReset").addEventListener("click", resetAll);
 
-    // ✅ FIX 1: Visible Add Food button
     $("btnAddFoodVisible").addEventListener("click", openModalForBlankCustom);
 
     $("btnCloseModal").addEventListener("click", closeModal);
     $("btnSave").addEventListener("click", saveModal);
     $("btnDelete").addEventListener("click", deleteModalItem);
 
-    // Update kcal live when macros change
     ["editP","editC","editF"].forEach((id) => {
       $(id).addEventListener("input", syncKcalDisplay);
       $(id).addEventListener("change", syncKcalDisplay);
     });
 
-    // Close modal when clicking backdrop
+    // Close modal if clicking on backdrop area
     $("modal").addEventListener("click", (e) => {
       if (e.target === $("modal")) closeModal();
     });
 
-    // Initial render
+    // Init
     renderAll();
   </script>
 </body>
