@@ -4,260 +4,438 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>MacroVision</title>
+  <meta name="theme-color" content="#ffffff" />
 
+  <!-- Tailwind CDN (optional, but keeps styling simple) -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <!-- Tesseract OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
   <style>
+    /* ===== Base ===== */
     html, body { height: 100%; }
-    body { -webkit-font-smoothing: antialiased; }
-    .no-spin::-webkit-outer-spin-button,
-    .no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .no-spin { -moz-appearance: textfield; }
+    body { -webkit-font-smoothing: antialiased; background:#F7FAF9; color:#0F172A; }
+    .no-spin::-webkit-outer-spin-button, .no-spin::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+    .no-spin { -moz-appearance:textfield; }
 
-    .hscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .minw-log { min-width: 900px; }
+    /* ===== Minimal wellness header ===== */
+    .mv-top{
+      position: sticky; top: 0; z-index: 60;
+      background: rgba(255,255,255,.86);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(17,24,39,.08);
+    }
+    .mv-top-inner{
+      max-width: 1200px; margin: 0 auto;
+      padding: 12px 16px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 12px;
+    }
+    .mv-brand{ display:flex; align-items:center; gap:12px; min-width:0; }
+    .mv-logo{
+      width:42px; height:42px; border-radius:14px;
+      display:grid; place-items:center;
+      background: rgba(16,185,129,.10);
+      border: 1px solid rgba(16,185,129,.18);
+      flex: 0 0 auto;
+    }
+    .mv-logo svg{ width:26px; height:26px; color: rgba(6,95,70,.95); }
+    .mv-brand-text{ min-width:0; }
+    .mv-title{
+      font-size: 18px; font-weight: 800; letter-spacing:.2px;
+      color:#111827; line-height:1.1;
+    }
+    .mv-sub{
+      font-size:12.5px; color: rgba(17,24,39,.65);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      margin-top:2px;
+    }
+    .mv-actions{ display:flex; align-items:center; gap:10px; }
+    .mv-btn{
+      height: 38px; padding: 0 14px; border-radius: 999px;
+      font-size: 13px; font-weight: 700;
+      border: 1px solid rgba(17,24,39,.10);
+      transition: transform .08s ease, filter .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .mv-btn:active{ transform: scale(.98); }
+    .mv-btn-soft{ background: rgba(17,24,39,.04); color: rgba(17,24,39,.78); }
+    .mv-btn-soft:hover{ background: rgba(17,24,39,.06); }
+    .mv-btn-primary{
+      background: rgba(16,185,129,1);
+      border-color: rgba(16,185,129,.6);
+      color:#fff;
+    }
+    .mv-btn-primary:hover{ filter: brightness(1.03); }
+    @media (max-width: 640px){
+      .mv-sub{ display:none; }
+    }
 
-    .fab {
+    /* ===== Layout cards ===== */
+    .wrap{ max-width:1200px; margin:0 auto; padding: 16px; }
+    .card{
+      background:#fff; border:1px solid rgba(15,23,42,.08);
+      border-radius: 18px;
+      box-shadow: 0 10px 24px rgba(2,6,23,.04);
+    }
+    .card-h{ padding:14px 14px 0 14px; }
+    .card-b{ padding:14px; }
+    .muted{ color: rgba(15,23,42,.55); }
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(15,23,42,.03);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    /* ===== Inputs ===== */
+    .in{
+      width:100%;
+      border: 1px solid rgba(15,23,42,.10);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background:#fff;
+      outline:none;
+    }
+    .in:focus{ box-shadow: 0 0 0 4px rgba(16,185,129,.12); border-color: rgba(16,185,129,.45); }
+
+    /* ===== Buttons ===== */
+    .btn{
+      border-radius: 14px;
+      border: 1px solid rgba(15,23,42,.10);
+      padding: 10px 12px;
+      font-weight: 700;
+      background:#fff;
+      transition: transform .08s ease, filter .12s ease, background .12s ease;
+    }
+    .btn:active{ transform: scale(.99); }
+    .btn-soft{ background: rgba(15,23,42,.03); }
+    .btn-soft:hover{ background: rgba(15,23,42,.05); }
+    .btn-green{
+      background: rgba(16,185,129,1);
+      border-color: rgba(16,185,129,.5);
+      color:#fff;
+    }
+    .btn-green:hover{ filter: brightness(1.03); }
+    .btn-red{ color:#DC2626; background: rgba(220,38,38,.06); border-color: rgba(220,38,38,.18); }
+    .btn-red:hover{ background: rgba(220,38,38,.08); }
+
+    /* ===== Lists ===== */
+    .listBtn{
+      width:100%; text-align:left;
+      border-radius: 14px;
+      border: 1px solid rgba(15,23,42,.08);
+      background:#fff;
+      padding: 10px 12px;
+    }
+    .listBtn:hover{ background: rgba(15,23,42,.02); }
+    details summary{ list-style:none; cursor:pointer; }
+    details summary::-webkit-details-marker{ display:none; }
+
+    /* ===== Table scroll ===== */
+    .hscroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .minw-log{ min-width: 920px; }
+
+    /* ===== Floating add button ===== */
+    .fab{
       position: fixed;
       right: 16px;
       bottom: 16px;
-      z-index: 60;
-      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      z-index: 70;
+      box-shadow: 0 18px 40px rgba(2,6,23,.16);
     }
 
-    .modal-backdrop { background: rgba(0,0,0,.55); }
+    /* ===== Modal ===== */
+    .modal{ position: fixed; inset:0; display:none; z-index: 80; }
+    .modal.show{ display:block; }
+    .backdrop{ position:absolute; inset:0; background: rgba(2,6,23,.55); }
+    .sheet{
+      position: relative;
+      max-width: 720px;
+      margin: 24px auto;
+      background:#fff;
+      border-radius: 18px;
+      border: 1px solid rgba(15,23,42,.10);
+      overflow:hidden;
+      box-shadow: 0 18px 50px rgba(2,6,23,.28);
+    }
+    .sheetHead{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding: 14px;
+      border-bottom: 1px solid rgba(15,23,42,.08);
+    }
+    .sheetBody{ padding: 14px; }
+
+    /* OCR preview */
+    .preview{
+      border: 1px solid rgba(15,23,42,.10);
+      border-radius: 16px;
+      overflow:hidden;
+      background: rgba(15,23,42,.02);
+    }
+    video{ max-width:100%; display:block; }
+    canvas{ max-width:100%; display:block; }
   </style>
 </head>
 
-<body class="bg-gray-50 text-gray-900">
-  <!-- Top Bar -->
-  <header class="sticky top-0 z-50 bg-white border-b">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <!-- App logo -->
-        <div class="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center">
-          <svg width="26" height="26" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="MacroVision logo">
-            <rect x="10" y="18" width="44" height="30" rx="8" fill="#ffffff" opacity="0.95"/>
-            <circle cx="32" cy="33" r="9" fill="#111827"/>
-            <circle cx="32" cy="33" r="5" fill="#ffffff" opacity="0.95"/>
-            <rect x="18" y="14" width="12" height="8" rx="3" fill="#ffffff" opacity="0.95"/>
-            <path d="M48 14v12c0 2-2 4-4 4s-4-2-4-4V14" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
-            <path d="M44 30v10" stroke="#111827" stroke-width="3" stroke-linecap="round"/>
+<body>
+  <!-- Minimal wellness header -->
+  <header class="mv-top">
+    <div class="mv-top-inner">
+      <div class="mv-brand">
+        <div class="mv-logo" aria-label="MacroVision logo">
+          <!-- Leaf + ring logo -->
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <circle cx="32" cy="32" r="22" stroke="currentColor" stroke-width="2.6" opacity="0.40"/>
+            <path d="M42.5 22.5c-9.5 1.2-17 8.2-18.6 17.7-.4 2.3 1.5 4.2 3.8 3.8 9.5-1.6 16.5-9.1 17.7-18.6.2-1.7-1.2-3.1-2.9-2.9Z"
+                  fill="currentColor" opacity="0.80"/>
+            <path d="M24.5 41.5c6-6.2 12-10.2 18.5-13"
+                  stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
           </svg>
         </div>
-        <div>
-          <div class="text-lg font-bold leading-tight">MacroVision</div>
-          <div class="text-xs text-gray-500 -mt-0.5">Singapore food • macros • auto-kcal</div>
+        <div class="mv-brand-text">
+          <div class="mv-title">MacroVision</div>
+          <div class="mv-sub">Singapore food log • OCR nutrition label • Athlete targets</div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button id="btnExportJSON" class="px-3 py-2 rounded-lg border bg-white hover:bg-gray-50 text-sm">Export</button>
-        <button id="btnReset" class="px-3 py-2 rounded-lg border bg-white hover:bg-gray-50 text-sm text-red-600">Reset</button>
+      <div class="mv-actions">
+        <button class="mv-btn mv-btn-soft" id="btnOpenOCR">OCR</button>
+        <button class="mv-btn mv-btn-primary" id="btnPDF">PDF</button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-5 space-y-5 pb-24">
-    <!-- Goals + Summary -->
+  <main class="wrap space-y-4">
+    <!-- Top row: date + targets -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div class="bg-white rounded-2xl border p-4">
-        <div class="flex items-center justify-between">
-          <h2 class="font-semibold">Daily Targets</h2>
-          <span class="text-xs text-gray-500">Editable</span>
+      <div class="card">
+        <div class="card-h">
+          <div class="flex items-center justify-between">
+            <div class="font-extrabold text-lg">Today / Date</div>
+            <div class="chip"><span id="todayText">—</span></div>
+          </div>
+          <div class="text-sm muted mt-1">Switch date to view/edit that day’s log. Autosaves per day.</div>
         </div>
+        <div class="card-b">
+          <div class="grid grid-cols-3 gap-2 items-end">
+            <label class="text-sm col-span-2">
+              <div class="muted mb-1">Date</div>
+              <input id="datePicker" type="date" class="in" />
+            </label>
+            <button id="btnLoadDate" class="btn btn-soft h-12">Load</button>
+          </div>
 
-        <div class="mt-3 grid grid-cols-2 gap-3">
-          <label class="text-sm">
-            <div class="text-gray-600 mb-1">Calories (kcal)</div>
-            <input id="goalKcal" type="number" inputmode="numeric" class="w-full border rounded-xl px-3 py-2 no-spin" min="0" max="9999" />
-          </label>
-          <label class="text-sm">
-            <div class="text-gray-600 mb-1">Protein (g)</div>
-            <input id="goalP" type="number" inputmode="decimal" class="w-full border rounded-xl px-3 py-2 no-spin" min="0" max="9999" step="0.1" />
-          </label>
-          <label class="text-sm">
-            <div class="text-gray-600 mb-1">Carbs (g)</div>
-            <input id="goalC" type="number" inputmode="decimal" class="w-full border rounded-xl px-3 py-2 no-spin" min="0" max="9999" step="0.1" />
-          </label>
-          <label class="text-sm">
-            <div class="text-gray-600 mb-1">Fat (g)</div>
-            <input id="goalF" type="number" inputmode="decimal" class="w-full border rounded-xl px-3 py-2 no-spin" min="0" max="9999" step="0.1" />
-          </label>
-        </div>
+          <div class="mt-4">
+            <div class="font-bold">Daily targets</div>
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              <label class="text-sm">
+                <div class="muted mb-1">Calories (kcal)</div>
+                <input id="goalKcal" type="number" inputmode="numeric" class="in no-spin" min="0" max="9999" />
+              </label>
+              <label class="text-sm">
+                <div class="muted mb-1">Protein (g)</div>
+                <input id="goalP" type="number" inputmode="decimal" step="0.1" class="in no-spin" min="0" max="9999" />
+              </label>
+              <label class="text-sm">
+                <div class="muted mb-1">Carbs (g)</div>
+                <input id="goalC" type="number" inputmode="decimal" step="0.1" class="in no-spin" min="0" max="9999" />
+              </label>
+              <label class="text-sm">
+                <div class="muted mb-1">Fat (g)</div>
+                <input id="goalF" type="number" inputmode="decimal" step="0.1" class="in no-spin" min="0" max="9999" />
+              </label>
+            </div>
 
-        <div class="mt-4 text-xs text-gray-500 leading-relaxed">
-          <span class="font-medium text-gray-700">Auto-kcal rule:</span>
-          kcal = 4×Protein + 4×Carbs + 9×Fat
+            <div class="text-xs muted mt-3">
+              kcal is automated everywhere using <b>4×P + 4×C + 9×F</b>.
+            </div>
+          </div>
+
+          <div class="mt-4 flex gap-2">
+            <button id="btnResetDay" class="btn btn-red flex-1">Reset day</button>
+            <button id="btnResetAll" class="btn btn-red flex-1">Reset all</button>
+          </div>
         </div>
       </div>
 
-      <!-- ✅ THIS BOX shows totals (must exist for JS to update) -->
-      <div class="bg-white rounded-2xl border p-4 lg:col-span-2">
-        <div class="flex items-center justify-between">
-          <h2 class="font-semibold">Today Summary</h2>
-          <div class="text-xs text-gray-500" id="todayDate"></div>
-        </div>
-
-        <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="rounded-2xl bg-gray-50 border p-3">
-            <div class="text-xs text-gray-500">Total kcal</div>
-            <div class="text-2xl font-bold" id="sumKcal">0</div>
-            <div class="text-xs text-gray-500">kcal</div>
-          </div>
-          <div class="rounded-2xl bg-gray-50 border p-3">
-            <div class="text-xs text-gray-500">Total Protein</div>
-            <div class="text-2xl font-bold" id="sumP">0</div>
-            <div class="text-xs text-gray-500">g</div>
-          </div>
-          <div class="rounded-2xl bg-gray-50 border p-3">
-            <div class="text-xs text-gray-500">Total Carbs</div>
-            <div class="text-2xl font-bold" id="sumC">0</div>
-            <div class="text-xs text-gray-500">g</div>
-          </div>
-          <div class="rounded-2xl bg-gray-50 border p-3">
-            <div class="text-xs text-gray-500">Total Fat</div>
-            <div class="text-2xl font-bold" id="sumF">0</div>
-            <div class="text-xs text-gray-500">g</div>
+      <!-- Summary -->
+      <div class="card lg:col-span-2">
+        <div class="card-h">
+          <div class="flex items-center justify-between">
+            <div class="font-extrabold text-lg">Daily summary</div>
+            <div class="text-sm muted">Totals update automatically</div>
           </div>
         </div>
-
-        <div class="mt-4">
-          <div class="flex items-center justify-between mb-2">
-            <div class="text-sm font-medium">Goal Progress</div>
-            <div class="text-xs text-gray-500" id="progressNote">—</div>
+        <div class="card-b">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="p-3 rounded-2xl" style="background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.15)">
+              <div class="text-xs muted">Total kcal</div>
+              <div class="text-3xl font-extrabold" id="sumKcal">0</div>
+              <div class="text-xs muted">kcal</div>
+            </div>
+            <div class="p-3 rounded-2xl" style="background:rgba(15,23,42,.03); border:1px solid rgba(15,23,42,.07)">
+              <div class="text-xs muted">Protein</div>
+              <div class="text-3xl font-extrabold" id="sumP">0</div>
+              <div class="text-xs muted">g</div>
+            </div>
+            <div class="p-3 rounded-2xl" style="background:rgba(15,23,42,.03); border:1px solid rgba(15,23,42,.07)">
+              <div class="text-xs muted">Carbs</div>
+              <div class="text-3xl font-extrabold" id="sumC">0</div>
+              <div class="text-xs muted">g</div>
+            </div>
+            <div class="p-3 rounded-2xl" style="background:rgba(15,23,42,.03); border:1px solid rgba(15,23,42,.07)">
+              <div class="text-xs muted">Fat</div>
+              <div class="text-3xl font-extrabold" id="sumF">0</div>
+              <div class="text-xs muted">g</div>
+            </div>
           </div>
 
-          <div class="space-y-2">
+          <!-- Progress bars -->
+          <div class="mt-4 space-y-3">
+            <div class="flex items-center justify-between text-sm">
+              <div class="font-bold">Goal progress</div>
+              <div class="muted" id="progressNote">—</div>
+            </div>
+
             <div>
-              <div class="flex justify-between text-xs text-gray-600">
-                <span>Calories</span>
-                <span id="pctKcal">0%</span>
+              <div class="flex justify-between text-xs muted mb-1">
+                <span>Calories</span><span id="pctKcal">0%</span>
               </div>
-              <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div id="barKcal" class="h-3 bg-gray-900" style="width:0%"></div>
+              <div class="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
+                <div id="barKcal" class="h-3" style="width:0%; background: rgba(16,185,129,1)"></div>
               </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
               <div>
-                <div class="flex justify-between text-xs text-gray-600">
+                <div class="flex justify-between text-xs muted mb-1">
                   <span>P</span><span id="pctP">0%</span>
                 </div>
-                <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                  <div id="barP" class="h-3 bg-gray-900" style="width:0%"></div>
+                <div class="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
+                  <div id="barP" class="h-3" style="width:0%; background: rgba(15,23,42,.85)"></div>
                 </div>
               </div>
               <div>
-                <div class="flex justify-between text-xs text-gray-600">
+                <div class="flex justify-between text-xs muted mb-1">
                   <span>C</span><span id="pctC">0%</span>
                 </div>
-                <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                  <div id="barC" class="h-3 bg-gray-900" style="width:0%"></div>
+                <div class="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
+                  <div id="barC" class="h-3" style="width:0%; background: rgba(15,23,42,.85)"></div>
                 </div>
               </div>
               <div>
-                <div class="flex justify-between text-xs text-gray-600">
+                <div class="flex justify-between text-xs muted mb-1">
                   <span>F</span><span id="pctF">0%</span>
                 </div>
-                <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                  <div id="barF" class="h-3 bg-gray-900" style="width:0%"></div>
+                <div class="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
+                  <div id="barF" class="h-3" style="width:0%; background: rgba(15,23,42,.85)"></div>
                 </div>
               </div>
             </div>
+          </div>
 
+          <div class="mt-4 text-xs muted">
+            Tip: OCR is best after you <b>freeze frame</b> and crop tightly to the label.
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Food Pickers -->
-    <section class="bg-white rounded-2xl border p-4">
-      <div class="flex items-center justify-between">
-        <h2 class="font-semibold">Quick Add (Singapore context)</h2>
-        <div class="text-xs text-gray-500">Tap → edit macros → auto-kcal → save</div>
+    <!-- Quick Add -->
+    <section class="card">
+      <div class="card-h">
+        <div class="flex items-center justify-between">
+          <div class="font-extrabold text-lg">Quick add (Singapore)</div>
+          <div class="text-sm muted">Tap → edit → save</div>
+        </div>
       </div>
+      <div class="card-b">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <details open class="card" style="box-shadow:none">
+            <summary class="p-3 font-bold">Hawker / Meals</summary>
+            <div id="listFoods" class="p-3 pt-0 grid grid-cols-1 gap-2"></div>
+          </details>
 
-      <div class="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <details open class="rounded-2xl border bg-gray-50 p-3">
-          <summary class="cursor-pointer font-medium">Hawker / Meals</summary>
-          <div id="listFoods" class="mt-3 grid grid-cols-1 gap-2"></div>
-        </details>
+          <details class="card" style="box-shadow:none">
+            <summary class="p-3 font-bold">Fruits</summary>
+            <div id="listFruits" class="p-3 pt-0 grid grid-cols-1 gap-2"></div>
+          </details>
 
-        <details class="rounded-2xl border bg-gray-50 p-3">
-          <summary class="cursor-pointer font-medium">Common Fruits</summary>
-          <div id="listFruits" class="mt-3 grid grid-cols-1 gap-2"></div>
-        </details>
-
-        <details class="rounded-2xl border bg-gray-50 p-3">
-          <summary class="cursor-pointer font-medium">Common Beverages</summary>
-          <div id="listBevs" class="mt-3 grid grid-cols-1 gap-2"></div>
-        </details>
+          <details class="card" style="box-shadow:none">
+            <summary class="p-3 font-bold">Beverages</summary>
+            <div id="listBevs" class="p-3 pt-0 grid grid-cols-1 gap-2"></div>
+          </details>
+        </div>
       </div>
     </section>
 
     <!-- Log -->
-    <section class="bg-white rounded-2xl border p-4">
-      <div class="flex items-center justify-between">
-        <h2 class="font-semibold">Food Log</h2>
-        <div class="text-xs text-gray-500">Swipe horizontally on phone</div>
-      </div>
-
-      <div class="mt-3 hscroll">
-        <div class="minw-log">
-          <div class="grid grid-cols-12 text-xs text-gray-500 px-2 py-2 border-b">
-            <div class="col-span-3">Item</div>
-            <div class="col-span-2">Category</div>
-            <div class="col-span-1 text-right">P (g)</div>
-            <div class="col-span-1 text-right">C (g)</div>
-            <div class="col-span-1 text-right">F (g)</div>
-            <div class="col-span-1 text-right">kcal</div>
-            <div class="col-span-2">Time</div>
-            <div class="col-span-1 text-right">Actions</div>
-          </div>
-
-          <div id="logRows" class="divide-y"></div>
+    <section class="card">
+      <div class="card-h">
+        <div class="flex items-center justify-between">
+          <div class="font-extrabold text-lg">Food log</div>
+          <div class="text-sm muted">Swipe horizontally on mobile</div>
         </div>
       </div>
-
-      <div class="mt-3 text-xs text-gray-500">
-        kcal is always recalculated from macros on save/edit (4/4/9 rule).
+      <div class="card-b">
+        <div class="hscroll">
+          <div class="minw-log">
+            <div class="grid grid-cols-12 text-xs muted px-2 py-2 border-b" style="border-color:rgba(15,23,42,.08)">
+              <div class="col-span-3">Item</div>
+              <div class="col-span-2">Category</div>
+              <div class="col-span-1 text-right">P (g)</div>
+              <div class="col-span-1 text-right">C (g)</div>
+              <div class="col-span-1 text-right">F (g)</div>
+              <div class="col-span-1 text-right">kcal</div>
+              <div class="col-span-2">Time</div>
+              <div class="col-span-1 text-right">Actions</div>
+            </div>
+            <div id="logRows" class="divide-y"></div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <footer class="text-xs text-gray-500 pb-6">
-      © 2026 MacroVision
+    <footer class="text-xs muted py-6">
+      © 2026 Ng Jun Wei &amp; Ng Hong Wei • MacroVision autosaves on device
     </footer>
   </main>
 
-  <!-- Add Food button -->
-  <button id="btnAddFoodVisible" class="fab inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-900 text-white">
-    <span class="font-semibold">+ Add Food</span>
-    <span class="text-xs opacity-80">(custom)</span>
+  <!-- Floating add button -->
+  <button id="btnAddFood" class="fab btn btn-green">
+    + Add food
   </button>
 
-  <!-- Modal -->
-  <div id="modal" class="hidden fixed inset-0 z-50">
-    <div class="absolute inset-0 modal-backdrop"></div>
-
-    <div class="relative max-w-xl mx-auto mt-10 mb-10 bg-white rounded-2xl border shadow-xl overflow-hidden">
-      <div class="p-4 border-b flex items-center justify-between">
+  <!-- Item editor modal -->
+  <div id="modalEditor" class="modal" aria-hidden="true">
+    <div class="backdrop"></div>
+    <div class="sheet">
+      <div class="sheetHead">
         <div>
-          <div class="text-sm text-gray-500" id="modalMode">Add item</div>
-          <div class="text-lg font-bold" id="modalTitle">Item Editor</div>
+          <div class="text-xs muted" id="editorMode">Add item</div>
+          <div class="text-lg font-extrabold" id="editorTitle">Item editor</div>
         </div>
-        <button id="btnCloseModal" class="px-3 py-2 rounded-xl border hover:bg-gray-50">Close</button>
+        < noting>
+        <button id="btnCloseEditor" class="btn btn-soft">Close</button>
       </div>
-
-      <div class="p-4 space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="sheetBody space-y-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
           <label class="text-sm">
-            <div class="text-gray-600 mb-1">Item name</div>
-            <input id="editName" class="w-full border rounded-xl px-3 py-2" placeholder="e.g., Cai fan (2 veg 1 meat)" />
+            <div class="muted mb-1">Item name</div>
+            <input id="editName" class="in" placeholder="e.g., cai fan (2 veg 1 meat)" />
           </label>
           <label class="text-sm">
-            <div class="text-gray-600 mb-1">Category</div>
-            <select id="editCategory" class="w-full border rounded-xl px-3 py-2">
+            <div class="muted mb-1">Category</div>
+            <select id="editCategory" class="in">
               <option value="Food">Food</option>
               <option value="Fruit">Fruit</option>
               <option value="Beverage">Beverage</option>
@@ -266,127 +444,164 @@
           </label>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
           <label class="text-sm">
-            <div class="text-gray-600 mb-1">Protein (g)</div>
-            <input id="editP" type="number" inputmode="decimal" step="0.1" min="0" max="9999"
-                   class="w-full border rounded-xl px-3 py-2 no-spin" />
+            <div class="muted mb-1">Protein (g)</div>
+            <input id="editP" type="number" inputmode="decimal" step="0.1" min="0" max="9999" class="in no-spin" />
           </label>
           <label class="text-sm">
-            <div class="text-gray-600 mb-1">Carbs (g)</div>
-            <input id="editC" type="number" inputmode="decimal" step="0.1" min="0" max="9999"
-                   class="w-full border rounded-xl px-3 py-2 no-spin" />
+            <div class="muted mb-1">Carbs (g)</div>
+            <input id="editC" type="number" inputmode="decimal" step="0.1" min="0" max="9999" class="in no-spin" />
           </label>
           <label class="text-sm">
-            <div class="text-gray-600 mb-1">Fat (g)</div>
-            <input id="editF" type="number" inputmode="decimal" step="0.1" min="0" max="9999"
-                   class="w-full border rounded-xl px-3 py-2 no-spin" />
+            <div class="muted mb-1">Fat (g)</div>
+            <input id="editF" type="number" inputmode="decimal" step="0.1" min="0" max="9999" class="in no-spin" />
           </label>
 
-          <!-- kcal is DISPLAY ONLY -->
           <div class="text-sm">
-            <div class="text-gray-600 mb-1">Calories (kcal)</div>
-            <div class="w-full border rounded-xl px-3 py-2 bg-gray-50">
-              <span class="text-lg font-bold" id="editKcalDisplay">0</span>
-              <span class="text-xs text-gray-500">auto</span>
+            <div class="muted mb-1">Calories (auto)</div>
+            <div class="in" style="background:rgba(16,185,129,.06); border-color:rgba(16,185,129,.18)">
+              <span class="text-xl font-extrabold" id="editKcal">0</span>
+              <span class="text-xs muted">kcal</span>
             </div>
           </div>
         </div>
 
-        <div class="rounded-2xl bg-gray-50 border p-3">
-          <div class="text-xs text-gray-500">Auto-kcal preview</div>
-          <div class="mt-1 text-sm text-gray-700" id="kcalFormulaLine">kcal = 4×P + 4×C + 9×F</div>
+        <div class="text-xs muted" id="kcalLine">kcal = 4×P + 4×C + 9×F</div>
+
+        <div class="flex gap-2 pt-2">
+          <button id="btnDeleteItem" class="btn btn-red flex-1 hidden">Delete</button>
+          <button id="btnSaveItem" class="btn btn-green flex-1">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OCR modal -->
+  <div id="modalOCR" class="modal" aria-hidden="true">
+    <div class="backdrop"></div>
+    <div class="sheet">
+      <div class="sheetHead">
+        <div>
+          <div class="text-xs muted">OCR label scan</div>
+          <div class="text-lg font-extrabold">Capture nutrition label</div>
+        </div>
+        <button id="btnCloseOCR" class="btn btn-soft">Close</button>
+      </div>
+      <div class="sheetBody space-y-3">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <button id="btnStartCam" class="btn btn-soft">Start camera</button>
+          <button id="btnFreeze" class="btn btn-soft">Freeze frame</button>
+          <button id="btnRunOCR" class="btn btn-green">Run OCR</button>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <button id="btnDelete" class="hidden px-4 py-2 rounded-xl border text-red-600 hover:bg-red-50">Delete</button>
-          <button id="btnSave" class="px-4 py-2 rounded-xl bg-gray-900 text-white hover:opacity-95">Save</button>
+        <div class="text-xs muted">
+          For best results: hold steady, avoid glare, keep label flat, and crop tightly.
         </div>
+
+        <div class="preview">
+          <video id="video" playsinline autoplay muted></video>
+          <canvas id="captureCanvas" class="hidden"></canvas>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div class="card" style="box-shadow:none">
+            <div class="p-3 font-bold">OCR raw text</div>
+            <div class="p-3 pt-0">
+              <textarea id="ocrText" class="in" rows="7" placeholder="OCR output will appear here..."></textarea>
+            </div>
+          </div>
+          <div class="card" style="box-shadow:none">
+            <div class="p-3 font-bold">Extracted macros</div>
+            <div class="p-3 pt-0 space-y-2 text-sm">
+              <div class="flex justify-between"><span>Energy (kcal)</span><b id="ocrKcal">—</b></div>
+              <div class="flex justify-between"><span>Protein (g)</span><b id="ocrP">—</b></div>
+              <div class="flex justify-between"><span>Carbs (g)</span><b id="ocrC">—</b></div>
+              <div class="flex justify-between"><span>Fat (g)</span><b id="ocrF">—</b></div>
+
+              <button id="btnUseOCR" class="btn btn-green w-full mt-2">Use these values → Add item</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="ocrStatus" class="text-xs muted">Status: idle</div>
       </div>
     </div>
   </div>
 
   <script>
     /***********************
-     * Utilities
+     * State (per-day autosave)
      ***********************/
     const $ = (id) => document.getElementById(id);
 
-    function clampNum(n, min=0, max=9999) {
-      n = Number.isFinite(n) ? n : 0;
-      return Math.min(max, Math.max(min, n));
-    }
-    function asNum(v) {
-      const n = parseFloat(v);
-      return Number.isFinite(n) ? n : 0;
-    }
-    function round1(n) { return Math.round(n * 10) / 10; }
-    function fmt1(n) { return String(round1(n)); }
-
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, (m) => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
-      }[m]));
+    function todayISO() {
+      const d = new Date();
+      const off = d.getTimezoneOffset();
+      const local = new Date(d.getTime() - off * 60 * 1000);
+      return local.toISOString().slice(0,10);
     }
 
-    // ✅ kcal derived from macros always
-    function kcalFromMacros(p, c, f) {
-      return Math.round((4 * p) + (4 * c) + (9 * f));
+    const APP_KEY = "macrovision_minwell_v1";
+    const defaultDay = () => ({
+      goals: { kcal: 2000, p: 140, c: 220, f: 60 },
+      log: []
+    });
+
+    let activeDate = todayISO();
+    let dayState = defaultDay();
+
+    function loadAll() {
+      try { return JSON.parse(localStorage.getItem(APP_KEY) || "{}"); }
+      catch { return {}; }
+    }
+    function saveAll(obj) {
+      localStorage.setItem(APP_KEY, JSON.stringify(obj));
+    }
+    function loadDay(dateISO) {
+      const all = loadAll();
+      const d = all[dateISO] || null;
+      if (!d) return defaultDay();
+
+      // backfill kcal
+      d.log = (d.log || []).map(x => {
+        const p = num(x.p), c = num(x.c), f = num(x.f);
+        const kcal = Number.isFinite(x.kcal) ? x.kcal : kcalFromMacros(p,c,f);
+        return { ...x, p, c, f, kcal };
+      });
+
+      if (!d.goals) d.goals = defaultDay().goals;
+      return d;
+    }
+    function saveDay(dateISO, dstate) {
+      const all = loadAll();
+      all[dateISO] = dstate;
+      saveAll(all);
     }
 
-    function nowTimeStr() {
+    /***********************
+     * Numbers & kcal
+     ***********************/
+    function num(v){ const n = parseFloat(v); return Number.isFinite(n) ? n : 0; }
+    function round1(n){ return Math.round(n*10)/10; }
+    function clamp(n,min=0,max=9999){ return Math.min(max, Math.max(min, n)); }
+    function kcalFromMacros(p,c,f){ return Math.round(4*p + 4*c + 9*f); }
+    function fmt1(n){ return String(round1(n)); }
+    function nowStr(){
       const d = new Date();
       return d.toLocaleString(undefined, { year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
     }
-
-    /***********************
-     * Storage
-     ***********************/
-    const STORAGE_KEY = "macrovision_v4"; // bumped key so you won't get stuck with old cached schema
-    const defaultState = {
-      goals: { kcal: 2000, p: 140, c: 220, f: 60 },
-      log: []
-    };
-
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(defaultState);
-        const s = JSON.parse(raw);
-        if (!s.goals) s.goals = structuredClone(defaultState.goals);
-        if (!Array.isArray(s.log)) s.log = [];
-
-        // ✅ Backfill kcal for any old entries missing it
-        s.log = s.log.map(item => {
-          const p = round1(clampNum(asNum(item.p), 0, 9999));
-          const c = round1(clampNum(asNum(item.c), 0, 9999));
-          const f = round1(clampNum(asNum(item.f), 0, 9999));
-          const kcal = Number.isFinite(item.kcal) ? item.kcal : kcalFromMacros(p,c,f);
-          return { ...item, p, c, f, kcal };
-        });
-
-        return s;
-      } catch {
-        return structuredClone(defaultState);
-      }
+    function esc(s){
+      return String(s).replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
     }
 
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    let state = loadState();
-
     /***********************
-     * Presets
-     * ✅ +10 hawker items added (cai fan variants + more)
+     * Presets (hawker expanded)
      ***********************/
     const presets = {
       foods: [
         { name:"Chicken rice (avg)", category:"Food", p: 28, c: 75, f: 18 },
         { name:"Cai fan (2 veg 1 meat)", category:"Food", p: 25, c: 80, f: 22 },
-
-        // ✅ added cai fan variants + more hawker items (10+)
         { name:"Cai fan (2 meat 1 veg)", category:"Food", p: 35, c: 75, f: 28 },
         { name:"Cai fan (fish + veg + egg)", category:"Food", p: 32, c: 70, f: 20 },
         { name:"Bak chor mee (dry)", category:"Food", p: 26, c: 85, f: 22 },
@@ -398,7 +613,7 @@
         { name:"Economy bee hoon (egg + sausage)", category:"Food", p: 20, c: 85, f: 20 },
         { name:"Yong tau foo (7 pcs + soup)", category:"Food", p: 28, c: 45, f: 14 },
         { name:"Fish soup + rice", category:"Food", p: 30, c: 60, f: 10 },
-
+        { name:"Sliced fish porridge", category:"Food", p: 18, c: 55, f: 6 },
         { name:"Ban mian soup", category:"Food", p: 22, c: 70, f: 12 },
         { name:"Nasi lemak (avg)", category:"Food", p: 18, c: 85, f: 28 },
       ],
@@ -419,126 +634,56 @@
     };
 
     /***********************
-     * Totals
-     * ✅ This is the “missing” piece that guarantees totals always work
+     * Render helpers
      ***********************/
-    function computeTotals() {
-      let p = 0, c = 0, f = 0, kcal = 0;
-      for (const x of state.log) {
-        const px = asNum(x.p), cx = asNum(x.c), fx = asNum(x.f);
-        p += px; c += cx; f += fx;
-
-        // if kcal missing, compute it
-        const k = Number.isFinite(x.kcal) ? x.kcal : kcalFromMacros(px, cx, fx);
-        kcal += k;
-      }
-      return { p: round1(p), c: round1(c), f: round1(f), kcal: Math.round(kcal) };
+    function setTodayChip(){
+      $("todayText").textContent = activeDate;
     }
 
-    /***********************
-     * Render
-     ***********************/
-    function renderDate() {
-      $("todayDate").textContent = new Date().toLocaleDateString(undefined, {
-        weekday:"short", year:"numeric", month:"short", day:"2-digit"
-      });
-    }
-
-    function setGoalInputs() {
-      $("goalKcal").value = state.goals.kcal;
-      $("goalP").value = state.goals.p;
-      $("goalC").value = state.goals.c;
-      $("goalF").value = state.goals.f;
-    }
-
-    function updateGoalsFromInputs() {
-      state.goals.kcal = clampNum(parseInt($("goalKcal").value || "0", 10), 0, 9999);
-      state.goals.p = clampNum(asNum($("goalP").value), 0, 9999);
-      state.goals.c = clampNum(asNum($("goalC").value), 0, 9999);
-      state.goals.f = clampNum(asNum($("goalF").value), 0, 9999);
-      saveState();
-      renderSummary();
-    }
-
-    function renderQuickList(containerId, items) {
-      const container = $(containerId);
-      container.innerHTML = "";
-      items.forEach((it) => {
+    function renderQuickList(containerId, items){
+      const el = $(containerId);
+      el.innerHTML = "";
+      items.forEach(it => {
         const kcal = kcalFromMacros(it.p, it.c, it.f);
         const btn = document.createElement("button");
-        btn.className = "w-full text-left rounded-xl border bg-white hover:bg-gray-50 px-3 py-2";
+        btn.className = "listBtn";
         btn.innerHTML = `
-          <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start justify-between gap-3">
             <div>
-              <div class="font-medium">${escapeHtml(it.name)}</div>
-              <div class="text-xs text-gray-500">${escapeHtml(it.category)} • P ${fmt1(it.p)} / C ${fmt1(it.c)} / F ${fmt1(it.f)}</div>
+              <div class="font-extrabold">${esc(it.name)}</div>
+              <div class="text-xs muted">${esc(it.category)} • P ${fmt1(it.p)} / C ${fmt1(it.c)} / F ${fmt1(it.f)}</div>
             </div>
             <div class="text-right">
-              <div class="text-sm font-bold">${kcal}</div>
-              <div class="text-xs text-gray-500">kcal</div>
+              <div class="font-extrabold">${kcal}</div>
+              <div class="text-xs muted">kcal</div>
             </div>
           </div>
         `;
-        btn.addEventListener("click", () => openModalForPreset(it));
-        container.appendChild(btn);
+        btn.addEventListener("click", () => openEditor({ ...it }));
+        el.appendChild(btn);
       });
     }
 
-    function renderLog() {
-      const wrap = $("logRows");
-      wrap.innerHTML = "";
-
-      if (state.log.length === 0) {
-        const empty = document.createElement("div");
-        empty.className = "p-4 text-sm text-gray-500";
-        empty.textContent = "No items yet. Tap a preset above or use + Add Food.";
-        wrap.appendChild(empty);
-        return;
+    function computeTotals(){
+      let p=0,c=0,f=0,k=0;
+      for (const x of dayState.log){
+        p += num(x.p); c += num(x.c); f += num(x.f);
+        k += Number.isFinite(x.kcal) ? x.kcal : kcalFromMacros(num(x.p), num(x.c), num(x.f));
       }
-
-      state.log.slice().reverse().forEach((row) => {
-        const div = document.createElement("div");
-        div.className = "grid grid-cols-12 items-center px-2 py-2 text-sm";
-        div.innerHTML = `
-          <div class="col-span-3 font-medium">${escapeHtml(row.name)}</div>
-          <div class="col-span-2 text-gray-600">${escapeHtml(row.category)}</div>
-          <div class="col-span-1 text-right">${fmt1(row.p)}</div>
-          <div class="col-span-1 text-right">${fmt1(row.c)}</div>
-          <div class="col-span-1 text-right">${fmt1(row.f)}</div>
-          <div class="col-span-1 text-right font-bold">${row.kcal}</div>
-          <div class="col-span-2 text-gray-600 text-xs md:text-sm">${escapeHtml(row.time || "")}</div>
-          <div class="col-span-1 text-right">
-            <button class="px-3 py-1 rounded-lg border hover:bg-gray-50 text-xs" data-edit="${row.id}">Edit</button>
-          </div>
-        `;
-        wrap.appendChild(div);
-      });
-
-      wrap.querySelectorAll("[data-edit]").forEach((b) => {
-        b.addEventListener("click", (e) => {
-          const id = e.currentTarget.getAttribute("data-edit");
-          const item = state.log.find(x => x.id === id);
-          if (item) openModalForExisting(item);
-        });
-      });
+      return { p: round1(p), c: round1(c), f: round1(f), kcal: Math.round(k) };
     }
 
-    function renderSummary() {
-      const totals = computeTotals();
+    function renderSummary(){
+      const t = computeTotals();
+      $("sumKcal").textContent = String(t.kcal);
+      $("sumP").textContent = fmt1(t.p);
+      $("sumC").textContent = fmt1(t.c);
+      $("sumF").textContent = fmt1(t.f);
 
-      // ✅ totals always show here
-      $("sumKcal").textContent = String(totals.kcal);
-      $("sumP").textContent = fmt1(totals.p);
-      $("sumC").textContent = fmt1(totals.c);
-      $("sumF").textContent = fmt1(totals.f);
-
-      const g = state.goals;
+      const g = dayState.goals;
       const pct = (val, goal) => goal > 0 ? Math.min(999, Math.round((val/goal)*100)) : 0;
 
-      const pk = pct(totals.kcal, g.kcal);
-      const pp = pct(totals.p, g.p);
-      const pc = pct(totals.c, g.c);
-      const pf = pct(totals.f, g.f);
+      const pk = pct(t.kcal, g.kcal), pp = pct(t.p, g.p), pc = pct(t.c, g.c), pf = pct(t.f, g.f);
 
       $("pctKcal").textContent = pk + "%";
       $("pctP").textContent = pp + "%";
@@ -550,169 +695,481 @@
       $("barC").style.width = Math.min(100, pc) + "%";
       $("barF").style.width = Math.min(100, pf) + "%";
 
-      const remaining = Math.max(0, g.kcal - totals.kcal);
-      $("progressNote").textContent = g.kcal === 0 ? "Set a kcal target"
-        : (remaining === 0 ? "Goal reached" : `${remaining} kcal remaining`);
+      const remaining = Math.max(0, g.kcal - t.kcal);
+      $("progressNote").textContent = g.kcal === 0 ? "Set a kcal target" : (remaining === 0 ? "Goal reached" : `${remaining} kcal remaining`);
     }
 
-    /***********************
-     * Modal
-     ***********************/
-    let modalContext = { mode: "add", editingId: null };
+    function renderLog(){
+      const wrap = $("logRows");
+      wrap.innerHTML = "";
 
-    function openModal() {
-      $("modal").classList.remove("hidden");
-      document.body.style.overflow = "hidden";
-    }
-    function closeModal() {
-      $("modal").classList.add("hidden");
-      document.body.style.overflow = "";
-    }
-
-    function syncKcalDisplay() {
-      const p = clampNum(asNum($("editP").value), 0, 9999);
-      const c = clampNum(asNum($("editC").value), 0, 9999);
-      const f = clampNum(asNum($("editF").value), 0, 9999);
-      const kcal = kcalFromMacros(p, c, f);
-
-      $("editKcalDisplay").textContent = String(kcal);
-      $("kcalFormulaLine").textContent = `kcal = 4×${fmt1(p)} + 4×${fmt1(c)} + 9×${fmt1(f)} = ${kcal}`;
-      return kcal;
-    }
-
-    function setModalFields({ name, category, p, c, f }) {
-      $("editName").value = name ?? "";
-      $("editCategory").value = category ?? "Custom";
-      $("editP").value = (p ?? 0);
-      $("editC").value = (c ?? 0);
-      $("editF").value = (f ?? 0);
-      syncKcalDisplay();
-    }
-
-    function openModalForPreset(preset) {
-      modalContext = { mode: "add", editingId: null };
-      $("modalMode").textContent = "Add item";
-      $("modalTitle").textContent = preset.name;
-      $("btnDelete").classList.add("hidden");
-      setModalFields(preset);
-      openModal();
-    }
-
-    function openModalForExisting(item) {
-      modalContext = { mode: "edit", editingId: item.id };
-      $("modalMode").textContent = "Edit item";
-      $("modalTitle").textContent = item.name;
-      $("btnDelete").classList.remove("hidden");
-      setModalFields(item);
-      openModal();
-    }
-
-    function openModalForBlankCustom() {
-      modalContext = { mode: "add", editingId: null };
-      $("modalMode").textContent = "Add custom item";
-      $("modalTitle").textContent = "New Item";
-      $("btnDelete").classList.add("hidden");
-      setModalFields({ name:"", category:"Custom", p:0, c:0, f:0 });
-      openModal();
-      $("editName").focus();
-    }
-
-    function saveModal() {
-      const name = ($("editName").value || "").trim() || "Untitled";
-      const category = $("editCategory").value || "Custom";
-
-      const p = round1(clampNum(asNum($("editP").value), 0, 9999));
-      const c = round1(clampNum(asNum($("editC").value), 0, 9999));
-      const f = round1(clampNum(asNum($("editF").value), 0, 9999));
-      const kcal = kcalFromMacros(p, c, f); // ✅ auto
-
-      if (modalContext.mode === "edit" && modalContext.editingId) {
-        const idx = state.log.findIndex(x => x.id === modalContext.editingId);
-        if (idx >= 0) state.log[idx] = { ...state.log[idx], name, category, p, c, f, kcal };
-      } else {
-        state.log.push({
-          id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)),
-          name, category, p, c, f, kcal,
-          time: nowTimeStr()
-        });
+      if (!dayState.log.length){
+        const empty = document.createElement("div");
+        empty.className = "p-4 text-sm muted";
+        empty.textContent = "No items yet. Tap a preset or + Add food.";
+        wrap.appendChild(empty);
+        return;
       }
 
-      saveState();
-      closeModal();
-      renderAll(); // ✅ totals update immediately
+      dayState.log.slice().reverse().forEach(row => {
+        const div = document.createElement("div");
+        div.className = "grid grid-cols-12 items-center px-2 py-2 text-sm";
+        div.innerHTML = `
+          <div class="col-span-3 font-extrabold">${esc(row.name)}</div>
+          <div class="col-span-2 muted">${esc(row.category)}</div>
+          <div class="col-span-1 text-right">${fmt1(row.p)}</div>
+          <div class="col-span-1 text-right">${fmt1(row.c)}</div>
+          <div class="col-span-1 text-right">${fmt1(row.f)}</div>
+          <div class="col-span-1 text-right font-extrabold">${row.kcal}</div>
+          <div class="col-span-2 muted text-xs md:text-sm">${esc(row.time || "")}</div>
+          <div class="col-span-1 text-right">
+            <button class="btn btn-soft py-1 px-3 text-xs" data-edit="${row.id}">Edit</button>
+          </div>
+        `;
+        wrap.appendChild(div);
+      });
+
+      wrap.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const id = e.currentTarget.getAttribute("data-edit");
+          const item = dayState.log.find(x => x.id === id);
+          if (item) openEditor({ ...item }, true);
+        });
+      });
     }
 
-    function deleteModalItem() {
-      if (!(modalContext.mode === "edit" && modalContext.editingId)) return;
-      state.log = state.log.filter(x => x.id !== modalContext.editingId);
-      saveState();
-      closeModal();
-      renderAll(); // ✅ totals update immediately
+    function renderGoals(){
+      $("goalKcal").value = dayState.goals.kcal;
+      $("goalP").value = dayState.goals.p;
+      $("goalC").value = dayState.goals.c;
+      $("goalF").value = dayState.goals.f;
     }
 
-    /***********************
-     * Export / Reset
-     ***********************/
-    function exportJSON() {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `macrovision_${new Date().toISOString().slice(0,10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function resetAll() {
-      if (!confirm("Reset all goals and logs?")) return;
-      state = structuredClone(defaultState);
-      saveState();
-      renderAll();
-    }
-
-    /***********************
-     * Render all
-     ***********************/
-    function renderAll() {
-      renderDate();
-      setGoalInputs();
+    function renderAll(){
+      setTodayChip();
+      renderGoals();
       renderQuickList("listFoods", presets.foods);
       renderQuickList("listFruits", presets.fruits);
       renderQuickList("listBevs", presets.beverages);
       renderLog();
       renderSummary();
+      saveDay(activeDate, dayState);
     }
 
     /***********************
-     * Events
+     * Date load
      ***********************/
-    ["goalKcal","goalP","goalC","goalF"].forEach((id) => {
-      $(id).addEventListener("input", updateGoalsFromInputs);
-      $(id).addEventListener("change", updateGoalsFromInputs);
-    });
+    function setDatePickerValue(dateISO){
+      $("datePicker").value = dateISO;
+    }
 
-    $("btnExportJSON").addEventListener("click", exportJSON);
-    $("btnReset").addEventListener("click", resetAll);
+    function loadDate(dateISO){
+      activeDate = dateISO;
+      dayState = loadDay(activeDate);
+      setTodayChip();
+      renderAll();
+    }
 
-    $("btnAddFoodVisible").addEventListener("click", openModalForBlankCustom);
+    /***********************
+     * Editor modal
+     ***********************/
+    let editor = { isEdit:false, id:null };
 
-    $("btnCloseModal").addEventListener("click", closeModal);
-    $("btnSave").addEventListener("click", saveModal);
-    $("btnDelete").addEventListener("click", deleteModalItem);
+    function showModal(id){ $(id).classList.add("show"); }
+    function hideModal(id){ $(id).classList.remove("show"); }
 
-    ["editP","editC","editF"].forEach((id) => {
-      $(id).addEventListener("input", syncKcalDisplay);
-      $(id).addEventListener("change", syncKcalDisplay);
-    });
+    function syncEditorKcal(){
+      const p = clamp(num($("editP").value),0,9999);
+      const c = clamp(num($("editC").value),0,9999);
+      const f = clamp(num($("editF").value),0,9999);
+      const kcal = kcalFromMacros(p,c,f);
+      $("editKcal").textContent = String(kcal);
+      $("kcalLine").textContent = `kcal = 4×${fmt1(p)} + 4×${fmt1(c)} + 9×${fmt1(f)} = ${kcal}`;
+      return kcal;
+    }
 
-    $("modal").addEventListener("click", (e) => {
-      if (e.target === $("modal")) closeModal();
-    });
+    function openEditor(data = null, isEdit = false){
+      editor.isEdit = isEdit;
+      editor.id = isEdit ? data.id : null;
 
-    // Init
-    renderAll();
+      $("editorMode").textContent = isEdit ? "Edit item" : "Add item";
+      $("editorTitle").textContent = isEdit ? (data.name || "Item") : "New item";
+
+      $("btnDeleteItem").classList.toggle("hidden", !isEdit);
+
+      $("editName").value = data?.name || "";
+      $("editCategory").value = data?.category || "Custom";
+      $("editP").value = data?.p ?? 0;
+      $("editC").value = data?.c ?? 0;
+      $("editF").value = data?.f ?? 0;
+
+      syncEditorKcal();
+      showModal("modalEditor");
+    }
+
+    function closeEditor(){
+      hideModal("modalEditor");
+    }
+
+    function saveEditor(){
+      const name = ($("editName").value || "").trim() || "Untitled";
+      const category = $("editCategory").value || "Custom";
+      const p = round1(clamp(num($("editP").value),0,9999));
+      const c = round1(clamp(num($("editC").value),0,9999));
+      const f = round1(clamp(num($("editF").value),0,9999));
+      const kcal = kcalFromMacros(p,c,f);
+
+      if (editor.isEdit && editor.id){
+        const idx = dayState.log.findIndex(x => x.id === editor.id);
+        if (idx >= 0){
+          dayState.log[idx] = { ...dayState.log[idx], name, category, p, c, f, kcal };
+        }
+      } else {
+        const id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+        dayState.log.push({ id, name, category, p, c, f, kcal, time: nowStr() });
+      }
+
+      closeEditor();
+      renderAll();
+    }
+
+    function deleteEditor(){
+      if (!(editor.isEdit && editor.id)) return;
+      dayState.log = dayState.log.filter(x => x.id !== editor.id);
+      closeEditor();
+      renderAll();
+    }
+
+    /***********************
+     * Goals listeners
+     ***********************/
+    function updateGoals(){
+      dayState.goals.kcal = clamp(parseInt($("goalKcal").value || "0",10),0,9999);
+      dayState.goals.p = clamp(num($("goalP").value),0,9999);
+      dayState.goals.c = clamp(num($("goalC").value),0,9999);
+      dayState.goals.f = clamp(num($("goalF").value),0,9999);
+      renderSummary();
+      saveDay(activeDate, dayState);
+    }
+
+    /***********************
+     * Reset
+     ***********************/
+    function resetDay(){
+      if (!confirm("Reset this day’s log + goals?")) return;
+      dayState = defaultDay();
+      renderAll();
+    }
+
+    function resetAll(){
+      if (!confirm("Reset ALL days? This clears all local data.")) return;
+      localStorage.removeItem(APP_KEY);
+      dayState = defaultDay();
+      loadDate(todayISO());
+    }
+
+    /***********************
+     * PDF export
+     ***********************/
+    async function exportPDF(){
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit:"pt", format:"a4" });
+
+      const t = computeTotals();
+      const g = dayState.goals;
+
+      let y = 56;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("MacroVision Daily Log", 40, y);
+
+      doc.setFontSize(11);
+      doc.setFont("helvetica","normal");
+      y += 18;
+      doc.text(`Date: ${activeDate}`, 40, y);
+      y += 16;
+      doc.text(`Totals — kcal: ${t.kcal}, P: ${t.p}g, C: ${t.c}g, F: ${t.f}g`, 40, y);
+      y += 14;
+      doc.text(`Targets — kcal: ${g.kcal}, P: ${g.p}g, C: ${g.c}g, F: ${g.f}g`, 40, y);
+
+      y += 22;
+      doc.setFont("helvetica","bold");
+      doc.text("Items", 40, y);
+      y += 12;
+      doc.setDrawColor(220);
+      doc.line(40, y, 555, y);
+      y += 14;
+
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(10);
+
+      const rows = dayState.log.slice();
+      if (!rows.length){
+        doc.text("No items logged.", 40, y);
+      } else {
+        for (const r of rows){
+          const line = `${r.name} [${r.category}]  P ${r.p}  C ${r.c}  F ${r.f}  kcal ${r.kcal}  (${r.time || ""})`;
+          const split = doc.splitTextToSize(line, 520);
+          doc.text(split, 40, y);
+          y += split.length * 12 + 6;
+          if (y > 760){
+            doc.addPage();
+            y = 56;
+          }
+        }
+      }
+
+      y += 18;
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text("© 2026 Ng Jun Wei & Ng Hong Wei • Generated by MacroVision", 40, Math.min(800, y));
+
+      doc.save(`MacroVision_${activeDate}.pdf`);
+    }
+
+    /***********************
+     * OCR
+     ***********************/
+    let stream = null;
+    let frozen = false;
+
+    async function startCamera(){
+      const video = $("video");
+      $("ocrStatus").textContent = "Status: requesting camera…";
+
+      // request higher res for better OCR
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      });
+
+      video.srcObject = stream;
+
+      await new Promise(res => video.onloadedmetadata = res);
+      await video.play();
+      await new Promise(res => requestAnimationFrame(res));
+
+      $("ocrStatus").textContent = `Status: camera started (${video.videoWidth}×${video.videoHeight})`;
+      frozen = false;
+      $("captureCanvas").classList.add("hidden");
+    }
+
+    function freezeFrame(){
+      const video = $("video");
+      const canvas = $("captureCanvas");
+      const w = video.videoWidth, h = video.videoHeight;
+
+      if (!w || !h){
+        $("ocrStatus").textContent = "Status: video not ready yet (try again).";
+        return;
+      }
+
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, w, h);
+
+      canvas.classList.remove("hidden");
+      frozen = true;
+      $("ocrStatus").textContent = "Status: frame frozen (tip: crop by zooming label into view before freeze).";
+    }
+
+    function preprocessMild(srcCanvas){
+      const w = srcCanvas.width, h = srcCanvas.height;
+      const out = document.createElement("canvas");
+      out.width = w; out.height = h;
+      const ctx = out.getContext("2d", { willReadFrequently:true });
+      ctx.drawImage(srcCanvas, 0, 0);
+
+      const img = ctx.getImageData(0,0,w,h);
+      const d = img.data;
+
+      // grayscale + slight contrast
+      const contrast = 1.25;
+      const intercept = 128 * (1 - contrast);
+
+      for (let i=0;i<d.length;i+=4){
+        const y = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
+        let v = y * contrast + intercept;
+        v = Math.max(0, Math.min(255, v));
+        d[i]=d[i+1]=d[i+2]=v;
+      }
+
+      ctx.putImageData(img,0,0);
+      return out;
+    }
+
+    function parseNutritionText(rawText){
+      const t = (rawText || "").toLowerCase().replace(/\s+/g," ");
+
+      function findNear(pattern){
+        const re = new RegExp(`${pattern}[^0-9]{0,22}([0-9]+(?:\\.[0-9]+)?)\\s*(kcal|g|mg)?`, "i");
+        const m = t.match(re);
+        if (!m) return null;
+        return { value: parseFloat(m[1]), unit: (m[2]||"").toLowerCase() };
+      }
+
+      const protein = findNear("protein");
+      const fat = findNear("\\bfat\\b|total fat");
+      const carbs = findNear("carbohydrate|carbohydrates|carb|carbs");
+      const energy = findNear("energy|calories|calorie|kcal");
+
+      const normG = (x) => {
+        if (!x) return null;
+        if (x.unit === "mg") return x.value / 1000;
+        return x.value;
+      };
+
+      let p = protein ? normG(protein) : null;
+      let c = carbs ? normG(carbs) : null;
+      let f = fat ? normG(fat) : null;
+      let kcal = energy ? energy.value : null;
+
+      // If kcal missing or nonsense, derive from macros if available
+      if (p != null && c != null && f != null){
+        const calc = kcalFromMacros(p,c,f);
+        if (kcal == null || Math.abs(kcal - calc) > 60) kcal = calc;
+      }
+
+      return {
+        kcal: kcal != null ? Math.round(kcal) : null,
+        protein_g: p != null ? round1(p) : null,
+        carbs_g: c != null ? round1(c) : null,
+        fat_g: f != null ? round1(f) : null
+      };
+    }
+
+    async function runOCR(){
+      try{
+        const canvas = $("captureCanvas");
+        const video = $("video");
+
+        // If user didn't freeze, capture a frame anyway
+        if (!frozen){
+          const w = video.videoWidth, h = video.videoHeight;
+          if (!w || !h){
+            $("ocrStatus").textContent = "Status: start camera first.";
+            return;
+          }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(video,0,0,w,h);
+          canvas.classList.remove("hidden");
+        }
+
+        $("ocrStatus").textContent = "Status: preprocessing…";
+        const pre = preprocessMild(canvas);
+
+        $("ocrStatus").textContent = "Status: running OCR (this can take a while)…";
+        const { data } = await Tesseract.recognize(pre, "eng", {
+          logger: (m) => {
+            if (m.status) $("ocrStatus").textContent = `Status: ${m.status} ${Math.round((m.progress||0)*100)}%`;
+          }
+        });
+
+        const raw = data.text || "";
+        $("ocrText").value = raw;
+
+        const parsed = parseNutritionText(raw);
+        $("ocrKcal").textContent = parsed.kcal ?? "—";
+        $("ocrP").textContent = parsed.protein_g ?? "—";
+        $("ocrC").textContent = parsed.carbs_g ?? "—";
+        $("ocrF").textContent = parsed.fat_g ?? "—";
+
+        $("ocrStatus").textContent = "Status: done. Review values, then Use → Add item.";
+      } catch (e){
+        console.error(e);
+        $("ocrStatus").textContent = "Status: OCR failed. Try better lighting, higher res, and freeze closer to label.";
+      }
+    }
+
+    function useOCRValues(){
+      const kcal = num($("ocrKcal").textContent);
+      const p = num($("ocrP").textContent);
+      const c = num($("ocrC").textContent);
+      const f = num($("ocrF").textContent);
+
+      // If macros present, kcal should be derived anyway
+      openEditor({
+        name: "OCR label item",
+        category: "Custom",
+        p: p || 0,
+        c: c || 0,
+        f: f || 0,
+        kcal: kcal || kcalFromMacros(p||0, c||0, f||0)
+      }, false);
+
+      hideModal("modalOCR");
+    }
+
+    function openOCR(){
+      showModal("modalOCR");
+      $("ocrStatus").textContent = "Status: idle";
+    }
+    function closeOCR(){
+      hideModal("modalOCR");
+    }
+
+    /***********************
+     * Wire events
+     ***********************/
+    function bind(){
+      // Date
+      $("btnLoadDate").addEventListener("click", () => loadDate($("datePicker").value || todayISO()));
+      $("datePicker").addEventListener("change", () => {/* optional auto load */});
+
+      // Goals
+      ["goalKcal","goalP","goalC","goalF"].forEach(id => {
+        $(id).addEventListener("input", updateGoals);
+        $(id).addEventListener("change", updateGoals);
+      });
+
+      // Reset
+      $("btnResetDay").addEventListener("click", resetDay);
+      $("btnResetAll").addEventListener("click", resetAll);
+
+      // Editor
+      $("btnAddFood").addEventListener("click", () => openEditor(null,false));
+      $("btnCloseEditor").addEventListener("click", closeEditor);
+      $("btnSaveItem").addEventListener("click", saveEditor);
+      $("btnDeleteItem").addEventListener("click", deleteEditor);
+
+      ["editP","editC","editF"].forEach(id => {
+        $(id).addEventListener("input", syncEditorKcal);
+        $(id).addEventListener("change", syncEditorKcal);
+      });
+
+      // Close modals on backdrop click
+      $("modalEditor").querySelector(".backdrop").addEventListener("click", closeEditor);
+      $("modalOCR").querySelector(".backdrop").addEventListener("click", closeOCR);
+
+      // OCR
+      $("btnOpenOCR").addEventListener("click", openOCR);
+      $("btnCloseOCR").addEventListener("click", closeOCR);
+      $("btnStartCam").addEventListener("click", startCamera);
+      $("btnFreeze").addEventListener("click", freezeFrame);
+      $("btnRunOCR").addEventListener("click", runOCR);
+      $("btnUseOCR").addEventListener("click", useOCRValues);
+
+      // PDF
+      $("btnPDF").addEventListener("click", exportPDF);
+    }
+
+    /***********************
+     * Init
+     ***********************/
+    function init(){
+      const t = todayISO();
+      setDatePickerValue(t);
+      loadDate(t);
+      bind();
+    }
+
+    function setDatePickerValue(d){ $("datePicker").value = d; }
+    init();
   </script>
 </body>
 </html>
