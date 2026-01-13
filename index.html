@@ -99,7 +99,7 @@
       </div>
     </section>
 
-    <!-- PROFILE / TDEE / ATHLETE MODE (RESTORED) -->
+    <!-- PROFILE / TDEE / ATHLETE MODE -->
     <section class="bg-white card p-5">
       <div class="flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -217,7 +217,6 @@
               <input id="fatPref" type="range" min="20" max="35" value="28" class="w-full" />
               <div class="text-xs text-gray-600 mt-1">Selected: <span id="fatPrefLabel" class="font-semibold">28%</span></div>
             </label>
-
             <div class="text-xs text-gray-600 bg-white border rounded-lg p-3">
               <div class="font-bold mb-1">How targets are set</div>
               <div>• Carb target adapts by athlete type + season + day intensity</div>
@@ -229,7 +228,7 @@
 
       </div>
 
-      <!-- Results (RESTORED) -->
+      <!-- Results -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
         <div class="bg-white border rounded-xl p-3">
           <div class="text-xs text-gray-500">BMR</div>
@@ -265,7 +264,7 @@
           </div>
         </div>
 
-        <!-- Model selector (NEW) -->
+        <!-- Model selector -->
         <div class="mt-4 hint rounded-xl p-3">
           <div class="font-bold text-sm">AI model selector</div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
@@ -361,8 +360,11 @@
 
             <!-- Manual SG picker -->
             <div id="manualPickWrap" class="hidden bg-white border rounded-xl p-3">
-              <div class="font-bold text-sm mb-2">Manual SG dish picker</div>
-              <select id="manualDish" class="w-full border rounded-lg px-3 py-2"></select>
+              <div class="flex items-center justify-between">
+                <div class="font-bold text-sm">Manual SG dish picker</div>
+                <div class="text-xs text-gray-500">Works offline</div>
+              </div>
+              <select id="manualDish" class="w-full border rounded-lg px-3 py-2 mt-2"></select>
               <div class="text-xs text-gray-500 mt-2">Pick dish → macros auto-fill → you can edit.</div>
             </div>
 
@@ -456,16 +458,20 @@
 
       </div>
 
-      <!-- Log + meal timing table (RESTORED) -->
+      <!-- Log -->
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h2 class="text-xl font-extrabold">📋 Daily fueling check (athlete)</h2>
             <p class="text-sm text-gray-600">Intake vs targets + macrodistribution by meal timing. Export PDF.</p>
           </div>
-          <div class="flex gap-2">
+
+          <div class="flex flex-wrap gap-2">
             <button id="exportPdfBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">📄 Export PDF</button>
             <button id="clearBtn" class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">Clear day</button>
+            <button id="resetSavedBtn" class="bg-red-50 text-red-700 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-100">
+              Reset saved data
+            </button>
           </div>
         </div>
 
@@ -527,7 +533,9 @@
           </ul>
         </div>
 
-        <div class="text-xs text-gray-500 mt-4">Disclaimer: Detection is AI; macros are estimates. Always sanity-check.</div>
+        <div class="text-xs text-gray-500 mt-4">
+          Auto-save is ON (LocalStorage). Disclaimer: Detection is AI; macros are estimates.
+        </div>
       </div>
     </section>
 
@@ -582,6 +590,134 @@ function macroPercentages(p, c, f) {
 }
 
 /*************************************************************
+ * LOCAL STORAGE AUTOSAVE (NEW)
+ *************************************************************/
+const LS_KEY = "macrovision_state_v1";
+const LS_VER = 1;
+
+// throttle writes
+let _saveTimer = null;
+function scheduleSave() {
+  if (_saveTimer) return;
+  _saveTimer = setTimeout(() => {
+    _saveTimer = null;
+    saveStateToLocalStorage();
+  }, 350);
+}
+
+function getUiState() {
+  return {
+    version: LS_VER,
+    savedAt: new Date().toISOString(),
+    ui: {
+      sex: $("sex").value,
+      age: $("age").value,
+      heightCm: $("heightCm").value,
+      weightKg: $("weightKg").value,
+      athleteType: $("athleteType").value,
+      seasonPhase: $("seasonPhase").value,
+      dayIntensity: $("dayIntensity").value,
+      equation: $("equation").value,
+      bfPercent: $("bfPercent").value,
+      activity: $("activity").value,
+      goal: $("goal").value,
+      fatPref: $("fatPref").value,
+
+      modelMode: $("modelMode").value,
+      itemType: $("itemType").value,
+      mealSlot: $("mealSlot").value,
+      portion: $("portion").value,
+      manualDish: $("manualDish").value || "",
+      mealNotes: $("mealNotes").value || "",
+    },
+    data: {
+      entries,
+      mealItems,
+      currentImageDataUrl: currentImageDataUrl || null,
+    }
+  };
+}
+
+function applyUiState(state) {
+  if (!state || !state.ui) return;
+
+  const u = state.ui;
+
+  if (u.sex) $("sex").value = u.sex;
+  if (u.age != null) $("age").value = u.age;
+  if (u.heightCm != null) $("heightCm").value = u.heightCm;
+  if (u.weightKg != null) $("weightKg").value = u.weightKg;
+
+  if (u.athleteType) $("athleteType").value = u.athleteType;
+  if (u.seasonPhase) $("seasonPhase").value = u.seasonPhase;
+  if (u.dayIntensity) $("dayIntensity").value = u.dayIntensity;
+
+  if (u.equation) $("equation").value = u.equation;
+  if (u.bfPercent != null) $("bfPercent").value = u.bfPercent;
+  if (u.activity) $("activity").value = u.activity;
+
+  if (u.goal) $("goal").value = u.goal;
+  if (u.fatPref != null) $("fatPref").value = u.fatPref;
+
+  if (u.modelMode) $("modelMode").value = u.modelMode;
+  if (u.itemType) $("itemType").value = u.itemType;
+  if (u.mealSlot) $("mealSlot").value = u.mealSlot;
+  if (u.portion != null) $("portion").value = u.portion;
+
+  if (u.mealNotes != null) $("mealNotes").value = u.mealNotes;
+
+  // derived labels
+  $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
+  $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+
+  // Katch BF field visibility
+  $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
+}
+
+function saveStateToLocalStorage() {
+  try {
+    const state = getUiState();
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  } catch (e) {
+    // storage might be full or disabled; fail silently
+  }
+}
+
+function loadStateFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    const state = JSON.parse(raw);
+    return state;
+  } catch {
+    return null;
+  }
+}
+
+function resetSavedData() {
+  if (!confirm("Reset saved MacroVision data? This clears saved profile + log + meal items.")) return;
+  try { localStorage.removeItem(LS_KEY); } catch {}
+  // reset in-memory
+  entries = [];
+  mealItems = [];
+  currentImageDataUrl = null;
+
+  // reset some UI defaults (keep camera stopped)
+  $("mealNotes").value = "";
+  $("itemLabel").value = "";
+  $("itemKcal").value = 0;
+  $("itemP").value = 0;
+  $("itemC").value = 0;
+  $("itemF").value = 0;
+  $("metaLine").textContent = "No detection yet.";
+
+  renderMealItems();
+  render();
+  updateModelStatusUI();
+  setStatus("ok", "Saved data cleared ✅");
+}
+
+/*************************************************************
  * 1) STATE
  *************************************************************/
 let entries = [];
@@ -622,6 +758,7 @@ const SG_COMMON_DB = [
   { name: "Mee Siam", kcal: 580, p: 18, c: 88, f: 16, type:"food" },
   { name: "Satay (10 sticks)", kcal: 550, p: 35, c: 20, f: 35, type:"food" },
   { name: "McD Big Mac (approx)", kcal: 550, p: 25, c: 45, f: 30, type:"food" },
+
   { name: "Kopi (with sugar+milk)", kcal: 140, p: 3, c: 22, f: 4, type:"drink" },
   { name: "Kopi C", kcal: 100, p: 2, c: 16, f: 3, type:"drink" },
   { name: "Teh Tarik", kcal: 180, p: 4, c: 28, f: 5, type:"drink" },
@@ -708,7 +845,7 @@ async function updateModelStatusUI() {
 }
 
 /*************************************************************
- * 5) ATHLETE TARGET LOGIC (RESTORED)
+ * 5) ATHLETE TARGET LOGIC
  *************************************************************/
 const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
 const ATHLETE_CARB_BASE = {
@@ -891,7 +1028,7 @@ function stopCamera() {
 async function loadMobileNet(kind) {
   if (mobileNetModel) return mobileNetModel;
   setStatus("warn", "Loading MobileNet (first time may take a bit)...");
-  const alpha = (kind === "accurate") ? 1.0 : 0.75; // accurate = bigger, slower
+  const alpha = (kind === "accurate") ? 1.0 : 0.75;
   mobileNetModel = await mobilenet.load({ version: 2, alpha });
   setStatus("ok", `MobileNet loaded ✅ (alpha ${alpha})`);
   return mobileNetModel;
@@ -907,7 +1044,6 @@ async function loadSgLocalModel() {
   if (!labResp.ok) throw new Error("labels.json not found for local SG model.");
   sgLabels = await labResp.json();
 
-  // try graph model, fallback layers model
   try {
     sgLocalModel = await tf.loadGraphModel(SG_MODEL_URL);
   } catch {
@@ -963,7 +1099,7 @@ async function classifyFrame() {
   if (mode === "sg_local") {
     const { sgLocalModel, sgLabels } = await loadSgLocalModel();
 
-    const INPUT = 224; // adjust if your local model uses different input
+    const INPUT = 224; // adjust for your local model
     const logits = tf.tidy(() => {
       let img = tf.browser.fromPixels(v);
       img = tf.image.resizeBilinear(img, [INPUT, INPUT]);
@@ -1008,6 +1144,7 @@ function setPreview(dataUrl) {
   $("noPreview").classList.add("hidden");
   $("statusBox").classList.add("hidden");
   $("metaLine").textContent = "Ready. Edit if needed, then add to meal.";
+  scheduleSave();
 }
 
 async function snapPhoto() {
@@ -1055,6 +1192,7 @@ async function estimateFromCurrentMode() {
     $("itemF").value = macros.f;
     $("metaLine").textContent = `Manual SG DB: ${row.name}. Portion x${portion.toFixed(1)}.`;
     setStatus("ok", "Manual selection applied ✅");
+    scheduleSave();
     return;
   } else {
     $("manualPickWrap").classList.add("hidden");
@@ -1064,7 +1202,6 @@ async function estimateFromCurrentMode() {
   const prob = lastLive.prob || 0;
   const confPct = Math.round(prob * 100);
 
-  // Map AI label to SG dish list (best effort)
   const mm = bestSgDishMatch(label, itemType);
   let base = null;
   let source = "";
@@ -1073,7 +1210,6 @@ async function estimateFromCurrentMode() {
     base = mm.best;
     source = `Mapped to SG dish list (${Math.round(mm.bestScore*100)}%)`;
   } else {
-    // fallback heuristic (still editable)
     source = "Generic heuristic (edit required)";
     base = (itemType === "drink")
       ? { name: label || "Drink", kcal: 120, p: 2, c: 20, f: 3, type:"drink" }
@@ -1093,10 +1229,12 @@ async function estimateFromCurrentMode() {
   else if (prob < 0.35) setStatus("danger", `Low confidence (${confPct}%). Please edit. ${source}`);
   else if (prob < 0.60) setStatus("warn", `Medium confidence (${confPct}%). Quick check recommended. ${source}`);
   else setStatus("ok", `High confidence (${confPct}%). ${source}`);
+
+  scheduleSave();
 }
 
 /*************************************************************
- * 10) MEAL BUILDER (RESTORED)
+ * 10) MEAL BUILDER
  *************************************************************/
 function sumMealItems() {
   return mealItems.reduce((acc, it) => {
@@ -1130,6 +1268,7 @@ function renderMealItems() {
         const i = parseInt(btn.getAttribute("data-del-item"), 10);
         mealItems.splice(i, 1);
         updateMealSums();
+        scheduleSave();
       });
     });
   }
@@ -1173,12 +1312,14 @@ function addItem() {
   $("itemF").value = 0;
   $("metaLine").textContent = "Item added. Snap/upload next item.";
   renderMealItems();
+  scheduleSave();
 }
 
 function clearMeal() {
   if (!confirm("Clear current meal items?")) return;
   mealItems = [];
   renderMealItems();
+  scheduleSave();
 }
 
 function finalizeMealToLog() {
@@ -1206,11 +1347,12 @@ function finalizeMealToLog() {
   $("mealNotes").value = "";
   renderMealItems();
   render();
+  scheduleSave();
   alert("Meal logged ✅");
 }
 
 /*************************************************************
- * 11) DAILY TOTALS + ADEQUACY + TABLE RENDER (RESTORED)
+ * 11) DAILY TOTALS + ADEQUACY + TABLE RENDER
  *************************************************************/
 function calcTotals() {
   return entries.reduce((acc, e) => {
@@ -1251,7 +1393,6 @@ function render() {
   $("verC").textContent = `${cVer} (target ${targets.cRange[0]}–${targets.cRange[1]} g)`;
   $("verF").textContent = `${fVer} (target ~${targets.fTarget} g; fat AMDR ${targets.fatRatioPct}% kcal)`;
 
-  // by-slot table
   const bySlot = {};
   MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
   entries.forEach(e => {
@@ -1278,7 +1419,6 @@ function render() {
     tbody.appendChild(tr);
   });
 
-  // entries list
   const list = $("entriesList");
   list.innerHTML = "";
   entries.forEach((e, idx) => {
@@ -1312,12 +1452,15 @@ function render() {
       const i = parseInt(btn.getAttribute("data-del"), 10);
       entries.splice(i, 1);
       render();
+      scheduleSave();
     });
   });
+
+  scheduleSave();
 }
 
 /*************************************************************
- * 12) PDF EXPORT (RESTORED + item detail page)
+ * 12) PDF EXPORT
  *************************************************************/
 async function exportPdf() {
   const targets = computeTargets();
@@ -1366,7 +1509,6 @@ async function exportPdf() {
 
   y = doc.lastAutoTable.finalY + 18;
 
-  // Macrodistribution by meal timing
   const bySlot = {};
   MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
   entries.forEach(e => {
@@ -1398,7 +1540,6 @@ async function exportPdf() {
     headStyles: { fillColor: [255, 247, 237], textColor: 20 },
   });
 
-  // Item-level details
   const detailRows = [];
   entries.forEach(e => {
     (e.items || []).forEach(it => {
@@ -1447,10 +1588,10 @@ function onModelModeChange() {
   clearOverlay();
   updateModelStatusUI();
   setStatus("warn", `Switched mode: ${mode}. Start camera (if AI) and snap to fill macros.`);
+  scheduleSave();
 }
 
 function bindEvents() {
-  // athlete
   $("equation").addEventListener("change", () => {
     $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
     render();
@@ -1465,25 +1606,28 @@ function bindEvents() {
       $(id).addEventListener("change", render);
     });
 
-  // camera + actions
   $("startCamBtn").addEventListener("click", startCamera);
   $("stopCamBtn").addEventListener("click", stopCamera);
   $("snapBtn").addEventListener("click", snapPhoto);
   $("uploadInput").addEventListener("change", (e) => handleUpload(e.target.files[0]));
   window.addEventListener("resize", resizeOverlay);
 
-  // item / manual
   $("modelMode").addEventListener("change", onModelModeChange);
   $("itemType").addEventListener("change", () => {
     if ($("modelMode").value === "manual") {
       populateManualDishOptions();
       estimateFromCurrentMode();
     }
+    scheduleSave();
   });
-  $("manualDish").addEventListener("change", () => estimateFromCurrentMode());
+  $("mealSlot").addEventListener("change", scheduleSave);
+  $("mealNotes").addEventListener("input", scheduleSave);
+
+  $("manualDish").addEventListener("change", () => { estimateFromCurrentMode(); scheduleSave(); });
 
   $("portion").addEventListener("input", () => {
     $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+    scheduleSave();
   });
 
   $("addItemBtn").addEventListener("click", addItem);
@@ -1491,27 +1635,64 @@ function bindEvents() {
   $("finalizeMealBtn").addEventListener("click", finalizeMealToLog);
 
   $("exportPdfBtn").addEventListener("click", exportPdf);
+
   $("clearBtn").addEventListener("click", () => {
     if (!confirm("Clear all logged meals for today?")) return;
     entries = [];
     render();
+    scheduleSave();
   });
+
+  $("resetSavedBtn").addEventListener("click", resetSavedData);
 }
 
+/*************************************************************
+ * INIT: restore saved state first
+ *************************************************************/
 $("yearNow").textContent = new Date().getFullYear();
 $("yearNow2").textContent = new Date().getFullYear();
-$("fatPrefLabel").textContent = `${$("fatPref").value}%`;
-$("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
-$("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
 
 populateManualDishOptions();
 bindEvents();
+
+const saved = loadStateFromLocalStorage();
+if (saved) {
+  // restore memory objects first
+  if (saved.data) {
+    entries = Array.isArray(saved.data.entries) ? saved.data.entries : [];
+    mealItems = Array.isArray(saved.data.mealItems) ? saved.data.mealItems : [];
+    currentImageDataUrl = saved.data.currentImageDataUrl || null;
+
+    // restore preview image if we have one
+    if (currentImageDataUrl) {
+      $("previewImg").src = currentImageDataUrl;
+      $("previewImg").classList.remove("hidden");
+      $("noPreview").classList.add("hidden");
+    }
+  }
+
+  applyUiState(saved);
+
+  // manual pick UI restore
+  if ($("modelMode").value === "manual") {
+    $("manualPickWrap").classList.remove("hidden");
+    populateManualDishOptions();
+    if (saved.ui?.manualDish) $("manualDish").value = saved.ui.manualDish;
+  } else {
+    $("manualPickWrap").classList.add("hidden");
+  }
+
+  setStatus("ok", "Restored saved session ✅");
+}
+
 updateModelStatusUI();
 renderMealItems();
 render();
 
-// start live loop on camera start only; stop on unload
-window.addEventListener("beforeunload", stopCamera);
+window.addEventListener("beforeunload", () => {
+  stopCamera();
+  saveStateToLocalStorage();
+});
 </script>
 
 </body>
