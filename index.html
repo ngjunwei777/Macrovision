@@ -8,8 +8,9 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
-  <!-- TensorFlow.js -->
+  <!-- TFJS + Public Pretrained Models (no local model files needed) -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
 
   <!-- jsPDF + AutoTable -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -30,8 +31,6 @@
     .overlayWrap { position: relative; }
     #overlayCanvas { position:absolute; inset:0; pointer-events:none; border-radius:12px; }
     .stickyBar { position: sticky; top: 0; z-index: 20; }
-    .brandMark { width: 34px; height: 34px; border-radius: 12px; background: #111827; display:flex; align-items:center; justify-content:center; }
-    .brandMark svg { width: 22px; height: 22px; }
   </style>
 </head>
 
@@ -41,23 +40,22 @@
   <nav class="bg-white shadow-sm stickyBar">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <div class="brandMark" aria-hidden="true">
-          <!-- simple “food” mark (plate + leaf) -->
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M12 20c4.418 0 8-3.582 8-8S16.418 4 12 4 4 7.582 4 12s3.582 8 8 8Z" stroke="#fff" stroke-width="2"/>
-            <path d="M15.5 7.8c-2.2.2-4.2 1.7-5.1 3.7-.6 1.3-.7 2.7-.3 3.9 2.2.2 4.4-.9 5.6-2.8.9-1.5 1.1-3.3-.2-4.8Z" fill="#fff" opacity=".9"/>
+        <!-- Simple “food logo” (SVG bowl + leaf) -->
+        <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M4 12c0 4.418 3.582 8 8 8s8-3.582 8-8H4Z" stroke="#ea580c" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 8c2-3 6-3 8 0" stroke="#ea580c" stroke-width="2" stroke-linecap="round"/>
+            <path d="M16.5 6.5c1.5-1 3.5-1 3.5-1s0 2-1 3.5-3.5 1-3.5 1 0-2 1-3.5Z" fill="#16a34a"/>
           </svg>
         </div>
-        <div>
-          <div class="text-xl font-extrabold text-gray-900 leading-tight">MacroVision</div>
-          <div class="text-xs text-gray-500 -mt-0.5">Camera-based meal logging • Athlete fueling targets • PDF report</div>
+        <div class="leading-tight">
+          <div class="text-lg font-extrabold text-gray-900">MacroVision</div>
+          <div class="text-xs text-gray-500">Singapore food macro estimator • Camera AI</div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <span class="bg-gray-900 text-white text-xs px-3 py-1.5 pill">In-browser</span>
-        <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">Snap + Upload</span>
-        <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Export</span>
+      <div class="text-xs text-gray-500 hidden sm:block">
+        No local model files needed ✅
       </div>
     </div>
   </nav>
@@ -71,23 +69,22 @@
             <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
               Athlete App
             </span>
-            <span class="text-gray-300 text-sm">
-              Singapore-aware macro database • AI optional • Live overlay • PDF athlete report
-            </span>
+            <span class="text-gray-300 text-sm">Live camera AI • SG macro DB • Editable overrides • PDF export</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
           <p class="text-gray-300 max-w-2xl">
-            Starts your camera instantly. If you host a <b>public TFJS food classifier</b>, MacroVision can show
-            an optional live prediction overlay — but the app works fully in <b>manual mode</b> too.
+            Uses a <b>public in-browser AI model</b> (MobileNet) to suggest what you’re eating, then maps it to a
+            <b>Singapore macro database</b>. Macros are always editable (because portions, oil, sauces vary).
           </p>
           <div class="mt-4 text-sm text-gray-200">
-            Note: AI food detection is best-effort and should be verified. Macros remain editable.
+            Tip: This version removes FoodSG-233 so camera won’t fail due to missing model files.
           </div>
         </div>
+
         <div class="flex flex-wrap gap-2">
-          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">Public TFJS Model</span>
-          <span class="bg-green-600 text-white text-xs px-3 py-1.5 pill">Athlete Targets</span>
-          <span class="bg-yellow-500 text-gray-900 text-xs px-3 py-1.5 pill">Manual Override</span>
+          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">Public AI Model</span>
+          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">SG Macro DB</span>
+          <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Athlete Report</span>
         </div>
       </div>
     </div>
@@ -100,12 +97,11 @@
       <div class="warn rounded-xl p-3">
         <div class="font-extrabold">Important</div>
         <div class="text-sm text-gray-700 mt-1">
-          The camera will start even without any AI model. If AI is unavailable, you can still
-          <b>snap/upload</b>, then <b>type/edit food name and macros</b> before logging.
+          The AI model predicts a <b>label</b> from the camera. Your macros are then estimated using a <b>Singapore macro DB</b> + portion multiplier.
+          Because the AI was not trained specifically on hawker dishes, always sanity-check and edit.
         </div>
         <div class="text-xs text-gray-600 mt-2">
-          ✅ To enable AI recognition, host TFJS model files at <span class="mono">/models/public_food/</span>:
-          <span class="mono">model.json</span>, shard bins, and <span class="mono">labels.json</span>.
+          ✅ Camera works immediately (no FoodSG-233 files required). If you later want a true SG-hawker classifier, you’ll need a trained model hosted online.
         </div>
       </div>
     </section>
@@ -230,9 +226,7 @@
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Fat preference (% kcal) AMDR 20–35%</div>
               <input id="fatPref" type="range" min="20" max="35" value="28" class="w-full" />
-              <div class="text-xs text-gray-600 mt-1">
-                Selected: <span id="fatPrefLabel" class="font-semibold">28%</span>
-              </div>
+              <div class="text-xs text-gray-600 mt-1">Selected: <span id="fatPrefLabel" class="font-semibold">28%</span></div>
             </label>
 
             <div class="text-xs text-gray-600 bg-white border rounded-lg p-3">
@@ -251,17 +245,14 @@
           <div class="text-xs text-gray-500">BMR</div>
           <div class="text-2xl font-extrabold mono"><span id="bmrOut">-</span> <span class="text-sm font-bold text-gray-500">kcal</span></div>
         </div>
-
         <div class="bg-white border rounded-xl p-3">
           <div class="text-xs text-gray-500">TDEE</div>
           <div class="text-2xl font-extrabold mono"><span id="tdeeOut">-</span> <span class="text-sm font-bold text-gray-500">kcal</span></div>
         </div>
-
         <div class="bg-white border rounded-xl p-3">
           <div class="text-xs text-gray-500">Target kcal/day</div>
           <div class="text-2xl font-extrabold mono"><span id="kcalTargetOut">-</span></div>
         </div>
-
         <div class="bg-white border rounded-xl p-3">
           <div class="text-xs text-gray-500">Targets (P/C/F)</div>
           <div class="text-sm font-bold mono">
@@ -276,45 +267,34 @@
 
     <!-- CAPTURE + LOG -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
       <!-- Capture -->
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-extrabold">📸 Camera → Optional AI Overlay → Macro Estimate → Log</h2>
+            <h2 class="text-xl font-extrabold">📸 Live Camera AI → SG Macro Estimate → Log</h2>
             <p class="text-sm text-gray-600">
-              Camera starts instantly. If a public TFJS model is hosted, you’ll see a prediction overlay.
-              Either way, snap/upload and edit macros before logging.
+              Choose an AI model, start the camera, and the overlay will show the predicted label + confidence.
+              Then we map it to SG macros (always editable).
             </p>
           </div>
         </div>
 
-        <!-- Model control -->
         <div class="mt-4 hint rounded-xl p-3">
-          <div class="font-bold text-sm">Model Source (Public)</div>
+          <div class="font-bold text-sm">AI model selection</div>
           <div class="small text-gray-700 mt-1">
-            AI is optional. Host TFJS model files at <span class="mono">models/public_food/</span> then click “Load Model”.
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
-            <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Model folder path</div>
-              <input id="modelFolder" class="w-full border rounded-lg px-3 py-2 mono" value="models/public_food/" />
-            </label>
-
-            <button id="loadModelBtn" class="bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800 mt-6 md:mt-0">
-              ⚡ Load Model
-            </button>
-
-            <div class="bg-white border rounded-lg p-3 text-xs text-gray-700">
-              <div class="font-bold mb-1">Status</div>
-              <div id="modelStatus">Not loaded (manual mode)</div>
-            </div>
+            This version uses <b>public TFJS models</b> (no local model files). MobileNet is recommended for reliability. :contentReference[oaicite:1]{index=1}
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div class="space-y-3">
+            <label class="text-sm block">
+              <div class="text-gray-600 mb-1">Select AI model</div>
+              <select id="aiModel" class="w-full border rounded-lg px-3 py-2">
+                <option value="mobilenet" selected>MobileNet (public, fast, no files)</option>
+              </select>
+            </label>
+
             <div class="flex gap-2">
               <button id="startCamBtn" class="flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
                 <i class="fa fa-camera mr-2"></i>Start Camera
@@ -330,9 +310,7 @@
             </div>
 
             <div class="grid grid-cols-2 gap-2">
-              <button id="snapBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
-                📸 Snap
-              </button>
+              <button id="snapBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">📸 Snap</button>
               <label class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-center">
                 <input id="uploadInput" type="file" accept="image/*" class="hidden" />
                 ⬆️ Upload
@@ -347,7 +325,7 @@
                 <span class="badge bg-gray-100 text-gray-900" id="liveLabelBadge">—</span>
                 <span class="mono text-gray-700 ml-2" id="liveConf">—</span>
               </div>
-              <div class="text-xs text-gray-500 mt-2">Tip: closer shot + less background clutter = higher confidence.</div>
+              <div class="text-xs text-gray-500 mt-2">Tip: closer shot + less clutter = better guesses.</div>
             </div>
           </div>
 
@@ -394,8 +372,7 @@
               <div class="mt-3 space-y-2">
                 <label class="text-sm block">
                   <div class="text-gray-600 mb-1">Detected / selected name</div>
-                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2"
-                         placeholder="e.g., Chicken rice, Char kway teow, Kopi C, Isotonic drink" />
+                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2" placeholder="e.g., Chicken rice, Char kway teow, Kopi C" />
                 </label>
 
                 <div class="grid grid-cols-4 gap-2">
@@ -427,8 +404,7 @@
 
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Meal notes (optional)</div>
-              <textarea id="mealNotes" class="w-full border rounded-lg px-3 py-2" rows="2"
-                        placeholder="e.g., extra oil, gravy heavy, added egg, shared with friend"></textarea>
+              <textarea id="mealNotes" class="w-full border rounded-lg px-3 py-2" rows="2" placeholder="e.g., extra oil, gravy heavy, added egg"></textarea>
             </label>
 
             <button id="finalizeMealBtn" class="w-full bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-gray-800">
@@ -475,7 +451,7 @@
         <div class="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h2 class="text-xl font-extrabold">📋 Daily fueling check (athlete)</h2>
-            <p class="text-sm text-gray-600">Intake vs targets + macrodistribution. Export PDF for athlete reporting.</p>
+            <p class="text-sm text-gray-600">Intake vs targets + macrodistribution. Export PDF for reporting.</p>
           </div>
           <div class="flex gap-2">
             <button id="exportPdfBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">📄 Export PDF</button>
@@ -542,7 +518,7 @@
         </div>
 
         <div class="text-xs text-gray-500 mt-4">
-          Disclaimer: AI detection is optional and best-effort; macros are estimates. Always sanity-check.
+          Disclaimer: AI label is approximate; macro estimates vary by portion/oil/sauce. Always sanity-check.
         </div>
       </div>
     </section>
@@ -550,95 +526,48 @@
 
   <footer class="py-8">
     <div class="max-w-7xl mx-auto px-4 text-xs text-gray-500">
-      © <span id="yearNow"></span> MacroVision. All rights reserved.
+      © <span id="yearNow"></span> MacroVision. Built for Singapore food macro estimation.
     </div>
   </footer>
 
   <script>
     /*************************************************************
-     * 1) MODEL LOADING (Public TFJS Food Classifier) — OPTIONAL
-     * Host at: models/public_food/
-     * - model.json
-     * - group1-shard*.bin
-     * - labels.json (JSON array of class names)
+     * 0) AI MODEL (PUBLIC) — MobileNet
+     * Loads from CDN. No local model files required.
      *************************************************************/
-    let MODEL_URL = new URL("models/public_food/model.json", window.location.href).toString();
-    let LABELS_URL = new URL("models/public_food/labels.json", window.location.href).toString();
+    let aiModel = null;        // mobilenet model
+    let aiModelName = "mobilenet";
+    let stream = null;
+    let liveLoopRunning = false;
 
-    let foodModel = null;
-    let foodLabels = null;
-    let modelInputSize = 224;
+    // last prediction
+    let lastLive = { label: "", prob: 0, top3: [] };
 
-    function setModelStatus(text) {
-      const el = document.getElementById("modelStatus");
-      if (el) el.textContent = text;
-    }
+    async function loadSelectedAiModel() {
+      const selected = document.getElementById("aiModel").value;
+      aiModelName = selected;
 
-    function resolveModelUrls() {
-      const folder = (document.getElementById("modelFolder")?.value || "models/public_food/").trim();
-      const safeFolder = folder.endsWith("/") ? folder : folder + "/";
-      MODEL_URL = new URL(safeFolder + "model.json", window.location.href).toString();
-      LABELS_URL = new URL(safeFolder + "labels.json", window.location.href).toString();
-      return { MODEL_URL, LABELS_URL };
-    }
-
-    async function loadPublicModel() {
-      if (foodModel && foodLabels) return true;
-
-      const { MODEL_URL, LABELS_URL } = resolveModelUrls();
-      setStatus("warn", "Loading AI model (optional)…");
-      setModelStatus("Loading…");
-
-      try {
-        const labResp = await fetch(LABELS_URL, { cache: "no-store" });
-        if (!labResp.ok) throw new Error("labels.json not found at " + LABELS_URL);
-        const labels = await labResp.json();
-        if (!Array.isArray(labels)) throw new Error("labels.json must be a JSON array of strings");
-        foodLabels = labels;
-
-        foodModel = await tf.loadLayersModel(MODEL_URL);
-
-        tf.tidy(() => {
-          const x = tf.zeros([1, modelInputSize, modelInputSize, 3]);
-          foodModel.predict(x);
-        });
-
-        setStatus("ok", `Model loaded ✅ (${foodLabels.length} classes).`);
-        setModelStatus(`Loaded ✅ (${foodLabels.length} classes)`);
-        return true;
-
-      } catch (e) {
-        foodModel = null;
-        foodLabels = null;
-        setStatus("warn", "AI model not loaded (manual mode). Camera & logging still work.");
-        setModelStatus("Not loaded (manual mode)");
-        console.warn("Model load failed:", e);
-        return false;
+      setStatus("warn", "Loading AI model… (first time may take a while)");
+      if (selected === "mobilenet") {
+        // MobileNet model from @tensorflow-models/mobilenet
+        aiModel = await mobilenet.load({ version: 2, alpha: 1.0 });
+        setStatus("ok", "MobileNet loaded ✅ Start camera.");
+      } else {
+        throw new Error("Unknown model selection.");
       }
     }
 
-    function topKFromProbs(probArray, k = 3) {
-      const pairs = probArray.map((p, i) => ({ i, p }));
-      pairs.sort((a, b) => b.p - a.p);
-      return pairs.slice(0, k).map(x => ({ label: foodLabels?.[x.i] ?? `Class ${x.i}`, prob: x.p }));
-    }
-
     async function classifyElement(el) {
-      if (!foodModel || !foodLabels) return [];
-      const logits = tf.tidy(() => {
-        let img = tf.browser.fromPixels(el);
-        img = tf.image.resizeBilinear(img, [modelInputSize, modelInputSize]);
-        img = img.toFloat().div(255.0).expandDims(0);
-        const out = foodModel.predict(img);
-        return out.squeeze();
-      });
-      const probs = await logits.data();
-      logits.dispose();
-      return topKFromProbs(Array.from(probs), 3);
+      if (!aiModel) await loadSelectedAiModel();
+
+      // mobilenet.classify returns [{className, probability}, ...]
+      const preds = await aiModel.classify(el, 3);
+      const top3 = preds.map(p => ({ label: p.className, prob: p.probability }));
+      return top3;
     }
 
     /*************************************************************
-     * 2) MACRO DATABASE (SG foods + drinks) + matching helpers
+     * 1) MACRO DATABASE (SG foods + drinks) + matching helpers
      *************************************************************/
     const FOOD_DB = [
       { name: "Chicken Rice", keys: ["chicken rice","hainanese chicken rice"], kcal: 650, p: 35, c: 75, f: 20 },
@@ -651,6 +580,8 @@
       { name: "Fish Soup", keys: ["fish soup"], kcal: 420, p: 35, c: 35, f: 10 },
       { name: "Yong Tau Foo", keys: ["yong tau foo"], kcal: 500, p: 28, c: 50, f: 15 },
       { name: "Satay (10 sticks)", keys: ["satay"], kcal: 550, p: 35, c: 20, f: 35 },
+
+      // Generic fallbacks
       { name: "Burger", keys: ["burger","cheeseburger","hamburger"], kcal: 550, p: 28, c: 45, f: 28 },
       { name: "Pizza (2 slices)", keys: ["pizza"], kcal: 600, p: 25, c: 70, f: 22 },
       { name: "Salad (with protein)", keys: ["salad"], kcal: 450, p: 35, c: 25, f: 20 },
@@ -658,9 +589,9 @@
     ];
 
     const DRINK_DB = [
-      { name: "Kopi (with sugar+milk)", keys: ["kopi","coffee with milk","coffee"], kcal: 140, p: 3, c: 22, f: 4 },
+      { name: "Kopi (with sugar+milk)", keys: ["kopi","coffee with milk","coffee","latte","cappuccino"], kcal: 140, p: 3, c: 22, f: 4 },
       { name: "Kopi C", keys: ["kopi c"], kcal: 100, p: 2, c: 16, f: 3 },
-      { name: "Teh Tarik", keys: ["teh tarik","teh","milk tea"], kcal: 180, p: 4, c: 28, f: 5 },
+      { name: "Teh Tarik", keys: ["teh tarik","tea","milk tea"], kcal: 180, p: 4, c: 28, f: 5 },
       { name: "Bubble Tea", keys: ["bubble tea","boba"], kcal: 380, p: 4, c: 75, f: 8 },
       { name: "Isotonic Drink (500ml)", keys: ["sports drink","isotonic"], kcal: 120, p: 0, c: 30, f: 0 },
       { name: "Plain Water", keys: ["water"], kcal: 0, p: 0, c: 0, f: 0 },
@@ -708,18 +639,18 @@
     function heuristicMacros(label, type) {
       const s = normalize(label);
 
+      // drink fallback
       if (type === "drink") {
         if (s.includes("water")) return { kcal:0, p:0, c:0, f:0 };
-        if (s.includes("kopi") || s.includes("coffee")) return { kcal:120, p:2, c:20, f:3 };
-        if (s.includes("tea") || s.includes("teh")) return { kcal:150, p:3, c:24, f:4 };
-        if (s.includes("bubble") || s.includes("boba")) return { kcal:350, p:4, c:70, f:8 };
+        if (s.includes("coffee") || s.includes("latte") || s.includes("cappuccino")) return { kcal:120, p:2, c:20, f:3 };
+        if (s.includes("tea")) return { kcal:150, p:3, c:24, f:4 };
         return { kcal:80, p:0, c:18, f:1 };
       }
 
       // food fallback
       let kcal = 520, p=20, c=60, f=15;
       if (s.includes("rice")) { kcal=650; p=25; c=85; f=18; }
-      if (s.includes("noodle") || s.includes("noodles") || s.includes("mee")) { kcal=620; p=22; c=80; f=18; }
+      if (s.includes("noodle") || s.includes("noodles")) { kcal=620; p=22; c=80; f=18; }
       if (s.includes("fried")) { kcal += 120; f += 8; }
       if (s.includes("soup")) { kcal -= 120; f = Math.max(0, f-6); }
       if (s.includes("salad")) { kcal=400; p=30; c=25; f=18; }
@@ -729,47 +660,39 @@
     }
 
     /*************************************************************
-     * 3) ATHLETE TARGET LOGIC
+     * 2) ATHLETE TARGET LOGIC (same as your original)
      *************************************************************/
     const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
-
     const ATHLETE_CARB_BASE = {
       skill: [3.0, 5.0],
       strength: [3.0, 6.0],
       mixed: [4.0, 7.0],
       endurance:[6.0, 10.0],
     };
-
     const SEASON_NUDGE = {
       off: { carbShift: -0.5, kcalShift: 0 },
       pre: { carbShift: +0.5, kcalShift: +100 },
       in:  { carbShift: +0.3, kcalShift: +150 },
     };
-
     const DAY_NUDGE = {
       easy:  { carbShift: -0.5, kcalShift: 0 },
       normal:{ carbShift: 0.0,  kcalShift: 0 },
       hard:  { carbShift: +1.0, kcalShift: +250 },
       comp:  { carbShift: +1.5, kcalShift: +350 },
     };
-
     const GOALS = {
       gain:     {kcalAdjust: +250, proteinGkg: [1.6, 2.2]},
       maintain: {kcalAdjust: 0,    proteinGkg: [1.4, 2.0]},
       lose:     {kcalAdjust: -500, proteinGkg: [2.3, 3.1]},
     };
-
     const AMDR_FAT = [0.20, 0.35];
 
     /*************************************************************
-     * 4) STATE + DOM UTILS
+     * 3) STATE + DOM UTILS
      *************************************************************/
     let entries = [];
     let mealItems = [];
     let currentImageDataUrl = null;
-    let stream = null;
-    let liveLoopRunning = false;
-    let lastLive = { label: "", prob: 0, top3: [] };
 
     const $ = (id) => document.getElementById(id);
     const round1 = (x) => Math.round(x * 10) / 10;
@@ -780,9 +703,7 @@
     };
 
     function escapeHtml(s) {
-      return (s || "").replace(/[&<>"']/g, (c) => ({
-        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
-      }[c]));
+      return (s || "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
     }
 
     function macroPercentages(p, c, f) {
@@ -801,18 +722,16 @@
     }
 
     /*************************************************************
-     * 5) BMR/TDEE + TARGETS
+     * 4) BMR/TDEE + TARGETS
      *************************************************************/
     function bmrMifflin(weightKg, heightCm, age, sex) {
       const s = (sex === "Male") ? 5 : -161;
       return 10 * weightKg + 6.25 * heightCm - 5 * age + s;
     }
-
     function bmrKatch(weightKg, bfPercent) {
       const lbm = weightKg * (1 - bfPercent / 100);
       return 370 + 21.6 * lbm;
     }
-
     function athleteCarbRangeGkg(athleteType, seasonPhase, dayIntensity) {
       const base = ATHLETE_CARB_BASE[athleteType] || [4.0, 7.0];
       const season = SEASON_NUDGE[seasonPhase] || { carbShift: 0, kcalShift: 0 };
@@ -885,17 +804,19 @@
     }
 
     /*************************************************************
-     * 6) CAMERA + LIVE LOOP (AI OPTIONAL)
+     * 5) CAMERA + LIVE LOOP
      *************************************************************/
     async function startCamera() {
       try {
-        // Start camera first (do not block on model)
+        await loadSelectedAiModel();
+
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
           audio: false
         });
 
         $("video").srcObject = stream;
+
         $("video").onloadedmetadata = () => {
           resizeOverlay();
           if (!liveLoopRunning) {
@@ -904,12 +825,8 @@
           }
         };
 
-        // Try to load model in the background (optional)
-        loadPublicModel();
-
-        setStatus("ok", "Camera started ✅ (AI optional).");
       } catch (e) {
-        setStatus("danger", "Camera error: " + e.message + " (Tip: HTTPS + allow permissions. On iPhone: Settings → Safari → Camera.)");
+        setStatus("danger", "Camera/model error: " + e.message + " (Tip: must be HTTPS, and allow camera permission.)");
       }
     }
 
@@ -944,28 +861,33 @@
     function drawOverlay(label, prob, mappedName, source, itemType) {
       const c = $("overlayCanvas");
       const ctx = c.getContext("2d");
-      ctx.clearRect(0, 0, c.width, c.height);
-      const w = c.width || 640;
-      const pad = 18;
-      const confPct = Math.round((prob || 0) * 100);
+      ctx.clearRect(0,0,c.width,c.height);
 
-      const line1 = prob > 0 ? `${label} (${confPct}%)` : `${label}`;
+      const w = c.width;
+      const pad = 18;
+      const confPct = Math.round(prob * 100);
+
+      const line1 = `${label} (${confPct}%)`;
       const line2 = mappedName ? `→ ${mappedName} [${source}]` : "";
-      const line3 = `Mode: ${String(itemType || "food").toUpperCase()} • Edit if wrong`;
+      const line3 = `Model: ${aiModelName.toUpperCase()} • Mode: ${itemType.toUpperCase()} • Edit if wrong`;
 
       ctx.save();
       ctx.globalAlpha = 0.92;
       ctx.fillStyle = "#111827";
-      ctx.fillRect(0, 0, w, 84);
+      ctx.fillRect(0, 0, w, 92);
       ctx.globalAlpha = 1;
+
       ctx.fillStyle = "#fff";
-      ctx.font = "bold 22px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.font = "bold 20px system-ui, -apple-system, Segoe UI, Roboto";
       ctx.fillText(line1, pad, 30);
+
       ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto";
       ctx.fillStyle = "#e5e7eb";
-      ctx.fillText(line2, pad, 54);
+      ctx.fillText(line2, pad, 55);
+
       ctx.fillStyle = "#d1d5db";
-      ctx.fillText(line3, pad, 74);
+      ctx.fillText(line3, pad, 78);
+
       ctx.restore();
     }
 
@@ -973,34 +895,22 @@
       if (!liveLoopRunning) return;
 
       const v = $("video");
-      if (!v || !v.videoWidth) {
+      if (!v || !v.videoWidth || !aiModel) {
         requestAnimationFrame(liveLoop);
         return;
       }
 
-      const itemType = $("itemType").value;
-
       try {
-        if (!foodModel || !foodLabels) {
-          $("liveLabelBadge").textContent = "Manual mode";
-          $("liveConf").textContent = "AI model not loaded";
-          drawOverlay("Manual mode", 0, "Edit food + macros manually", "No model", itemType);
-          setTimeout(() => requestAnimationFrame(liveLoop), 900);
-          return;
-        }
-
         const top3 = await classifyElement(v);
-        if (!top3.length) {
-          setTimeout(() => requestAnimationFrame(liveLoop), 900);
-          return;
-        }
-
         const top = top3[0];
         lastLive = { label: top.label, prob: top.prob, top3 };
+
+        const itemType = $("itemType").value;
 
         const m = bestDbMatch(top.label, itemType);
         let mappedName = "";
         let source = "";
+
         if (m.best && m.bestScore >= 0.35) {
           mappedName = m.best.name;
           source = "SG Macro DB";
@@ -1010,18 +920,20 @@
         }
 
         $("liveLabelBadge").textContent = top.label;
-        $("liveConf").textContent = `Confidence: ${Math.round(top.prob * 100)}%`;
+        $("liveConf").textContent = `Confidence: ${Math.round(top.prob*100)}%`;
+
         drawOverlay(top.label, top.prob, mappedName, source, itemType);
 
       } catch (e) {
         // ignore transient
       }
 
-      setTimeout(() => requestAnimationFrame(liveLoop), 650);
+      // cadence
+      setTimeout(() => requestAnimationFrame(liveLoop), 700);
     }
 
     /*************************************************************
-     * 7) SNAP / UPLOAD → ESTIMATE
+     * 6) SNAP / UPLOAD → ESTIMATE
      *************************************************************/
     function setPreview(dataUrl) {
       currentImageDataUrl = dataUrl;
@@ -1043,10 +955,10 @@
       canvas.width = v.videoWidth;
       canvas.height = v.videoHeight;
       canvas.getContext("2d").drawImage(v, 0, 0);
+
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       setPreview(dataUrl);
 
-      // If model exists, try classify; else just keep manual mode
       await estimateFromCapturedCanvas(canvas);
     }
 
@@ -1062,11 +974,6 @@
 
     async function estimateFromCapturedCanvas(canvasEl) {
       try {
-        if (!foodModel || !foodLabels) {
-          // Manual-only: don’t error
-          setStatus("warn", "Manual mode: type food name + macros, then add item.");
-          return;
-        }
         const top3 = await classifyElement(canvasEl);
         const top = top3[0];
         lastLive = { label: top.label, prob: top.prob, top3 };
@@ -1078,10 +985,7 @@
 
     async function estimateFromImageDataUrl(dataUrl) {
       try {
-        if (!foodModel || !foodLabels) {
-          setStatus("warn", "Manual mode: type food name + macros, then add item.");
-          return;
-        }
+        await loadSelectedAiModel();
         const img = new Image();
         img.src = dataUrl;
         await new Promise(res => img.onload = res);
@@ -1108,10 +1012,10 @@
       if (m.best && m.bestScore >= 0.35) {
         finalName = m.best.name;
         macros = { kcal: m.best.kcal, p: m.best.p, c: m.best.c, f: m.best.f };
-        source = `SG Macro DB match (${Math.round(m.bestScore * 100)}%)`;
+        source = `SG Macro DB match (${Math.round(m.bestScore*100)}%)`;
       } else {
         macros = heuristicMacros(label, itemType);
-        source = "Heuristic estimate (no strong DB match)";
+        source = "Heuristic estimate (no strong SG DB match)";
       }
 
       macros = {
@@ -1130,31 +1034,19 @@
       const confPct = Math.round((prob || 0) * 100);
       $("metaLine").textContent = `Detected: "${label}" (${confPct}%). ${source}. You can edit name/macros.`;
 
-      if ((prob || 0) < 0.45) setStatus("danger", `Low confidence (${confPct}%). Please confirm/edit. ${source}`);
-      else if ((prob || 0) < 0.65) setStatus("warn", `Medium confidence (${confPct}%). Quick check recommended. ${source}`);
+      if ((prob || 0) < 0.35) setStatus("danger", `Low confidence (${confPct}%). Please confirm/edit. ${source}`);
+      else if ((prob || 0) < 0.60) setStatus("warn", `Medium confidence (${confPct}%). Quick check recommended. ${source}`);
       else setStatus("ok", `High confidence (${confPct}%). ${source}`);
     }
 
     /*************************************************************
-     * 8) MEAL BUILDER
+     * 7) MEAL BUILDER
      *************************************************************/
     function sumMealItems() {
       return mealItems.reduce((acc, it) => {
-        acc.kcal += it.kcal;
-        acc.p += it.p;
-        acc.c += it.c;
-        acc.f += it.f;
+        acc.kcal += it.kcal; acc.p += it.p; acc.c += it.c; acc.f += it.f;
         return acc;
       }, {kcal:0, p:0, c:0, f:0});
-    }
-
-    function updateMealSums() {
-      const t = sumMealItems();
-      $("mealSumKcal").textContent = round1(t.kcal);
-      $("mealSumP").textContent = round1(t.p);
-      $("mealSumC").textContent = round1(t.c);
-      $("mealSumF").textContent = round1(t.f);
-      render();
     }
 
     function renderMealItems() {
@@ -1169,11 +1061,9 @@
           row.className = "bg-white border rounded-xl p-3 flex items-start gap-3";
           row.innerHTML = `
             <div class="flex-1">
-              <div class="font-extrabold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${escapeHtml(it.itemType)})</span></div>
+              <div class="font-extrabold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
               <div class="text-xs text-gray-500">From: ${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
-              <div class="text-sm mono font-bold mt-1">
-                ${it.kcal} kcal | P ${it.p}g | C ${it.c}g | F ${it.f}g
-              </div>
+              <div class="text-sm mono font-bold mt-1">${it.kcal} kcal | P ${it.p}g | C ${it.c}g | F ${it.f}g</div>
             </div>
             <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
           `;
@@ -1184,12 +1074,21 @@
           btn.addEventListener("click", () => {
             const i = parseInt(btn.getAttribute("data-del-item"), 10);
             mealItems.splice(i, 1);
-            renderMealItems();
+            updateMealSums();
           });
         });
       }
 
       updateMealSums();
+    }
+
+    function updateMealSums() {
+      const t = sumMealItems();
+      $("mealSumKcal").textContent = round1(t.kcal);
+      $("mealSumP").textContent = round1(t.p);
+      $("mealSumC").textContent = round1(t.c);
+      $("mealSumF").textContent = round1(t.f);
+      render();
     }
 
     function addItem() {
@@ -1204,8 +1103,9 @@
       const f = clamp(safeNum($("itemF").value), 0, 300);
 
       const confPct = Math.round((lastLive.prob || 0) * 100);
+
       const m = bestDbMatch(label, itemType);
-      const source = (m.best && m.bestScore >= 0.35) ? "SG Macro DB" : (foodModel ? "Manual/Heuristic" : "Manual (no model)");
+      const source = (m.best && m.bestScore >= 0.35) ? "SG Macro DB" : "Manual/Heuristic";
 
       mealItems.push({ itemType, label, kcal, p, c, f, portion, confPct, source });
 
@@ -1215,7 +1115,6 @@
       $("itemC").value = 0;
       $("itemF").value = 0;
       $("metaLine").textContent = "Item added. Snap/upload next item.";
-
       renderMealItems();
     }
 
@@ -1232,7 +1131,7 @@
       const notes = ($("mealNotes").value || "").trim();
       const sum = sumMealItems();
 
-      const label = (mealItems.length === 1)
+      const label = mealItems.length === 1
         ? mealItems[0].label
         : `Meal (${mealItems.length} items): ` + mealItems.map(i => i.label).slice(0,4).join(" + ") + (mealItems.length > 4 ? " + ..." : "");
 
@@ -1254,14 +1153,11 @@
     }
 
     /*************************************************************
-     * 9) DAILY TOTALS + ADEQUACY
+     * 8) DAILY TOTALS + ADEQUACY
      *************************************************************/
     function calcTotals() {
       return entries.reduce((acc, e) => {
-        acc.kcal += e.macros.kcal;
-        acc.p += e.macros.p;
-        acc.c += e.macros.c;
-        acc.f += e.macros.f;
+        acc.kcal += e.macros.kcal; acc.p += e.macros.p; acc.c += e.macros.c; acc.f += e.macros.f;
         return acc;
       }, {kcal:0, p:0, c:0, f:0});
     }
@@ -1312,7 +1208,7 @@
         const pct = macroPercentages(t.p, t.c, t.f);
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td class="p-3 border-b font-semibold">${escapeHtml(slot)}</td>
+          <td class="p-3 border-b font-semibold">${slot}</td>
           <td class="p-3 border-b text-center mono">${round1(t.kcal)}</td>
           <td class="p-3 border-b text-center mono">${round1(t.p)}</td>
           <td class="p-3 border-b text-center mono">${round1(t.c)}</td>
@@ -1327,7 +1223,7 @@
       entries.forEach((e, idx) => {
         const itemsHtml = (e.items || []).map((it) => `
           <div class="border rounded-lg p-2 bg-gray-50">
-            <div class="text-sm font-bold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${escapeHtml(it.itemType)})</span></div>
+            <div class="text-sm font-bold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
             <div class="text-xs text-gray-500">${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
             <div class="text-xs mono font-bold mt-1">${it.kcal} kcal | P ${it.p} C ${it.c} F ${it.f}</div>
           </div>
@@ -1340,10 +1236,8 @@
             ${e.imgDataUrl ? `<img src="${e.imgDataUrl}" class="w-full h-full object-cover" alt="thumb">` : ""}
           </div>
           <div class="flex-1">
-            <div class="font-extrabold">${escapeHtml(e.mealSlot)} — ${escapeHtml(e.label)}</div>
-            <div class="text-sm mt-1 mono font-bold">
-              ${e.macros.kcal} kcal | P ${e.macros.p}g | C ${e.macros.c}g | F ${e.macros.f}g
-            </div>
+            <div class="font-extrabold">${e.mealSlot} — ${escapeHtml(e.label)}</div>
+            <div class="text-sm mt-1 mono font-bold">${e.macros.kcal} kcal | P ${e.macros.p}g | C ${e.macros.c}g | F ${e.macros.f}g</div>
             ${e.notes ? `<div class="text-xs text-gray-600 mt-1">Notes: ${escapeHtml(e.notes)}</div>` : ""}
             <div class="mt-2 space-y-2">${itemsHtml || ""}</div>
           </div>
@@ -1362,7 +1256,7 @@
     }
 
     /*************************************************************
-     * 10) PDF EXPORT
+     * 9) PDF EXPORT (same as your original, slightly reworded footer)
      *************************************************************/
     async function exportPdf() {
       const targets = computeTargets();
@@ -1389,14 +1283,12 @@
 
       const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
       const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
-
       const fatTol = Math.max(10, 0.15 * targets.fTarget);
       const fVer = (Math.abs(totals.f - targets.fTarget) <= fatTol) ? "On target-ish" : (totals.f > targets.fTarget ? "High" : "Low");
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.text("Daily Intake vs Targets", margin, y);
-      y += 8;
 
       doc.autoTable({
         startY: y + 10,
@@ -1428,7 +1320,6 @@
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.text("Macrodistribution by Meal Timing", margin, y);
-      y += 8;
 
       const mealRows = MEAL_SLOTS.map(slot => {
         const t = bySlot[slot];
@@ -1470,15 +1361,14 @@
 
       doc.setFontSize(9);
       doc.setTextColor(120);
-      doc.text(`© ${new Date().getFullYear()} MacroVision. AI optional; macros are estimates.`, margin, pageH - 24);
+      doc.text(`© ${new Date().getFullYear()} MacroVision. AI label is approximate; macros are estimates.`, margin, pageH - 24);
       doc.setTextColor(0);
 
-      const fname = `MacroVision_Report_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"")}.pdf`;
-      doc.save(fname);
+      doc.save(`MacroVision_Athlete_Report_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"")}.pdf`);
     }
 
     /*************************************************************
-     * 11) EVENTS / INIT
+     * 10) EVENTS / INIT
      *************************************************************/
     function bindEvents() {
       $("equation").addEventListener("change", () => {
@@ -1495,6 +1385,17 @@
           $(id).addEventListener("change", render);
         });
 
+      $("aiModel").addEventListener("change", async () => {
+        // reload model on selection change
+        aiModel = null;
+        setStatus("warn", "AI model switched. Loading new model…");
+        try {
+          await loadSelectedAiModel();
+        } catch (e) {
+          setStatus("danger", "Model load failed: " + e.message);
+        }
+      });
+
       $("startCamBtn").addEventListener("click", startCamera);
       $("stopCamBtn").addEventListener("click", stopCamera);
       $("snapBtn").addEventListener("click", snapPhoto);
@@ -1508,22 +1409,18 @@
         setStatus("warn", `Switched to ${$("itemType").value.toUpperCase()} mode. Snap again for best matching.`);
       });
 
+      window.addEventListener("resize", resizeOverlay);
+
       $("addItemBtn").addEventListener("click", addItem);
       $("clearMealBtn").addEventListener("click", clearMeal);
       $("finalizeMealBtn").addEventListener("click", finalizeMealToLog);
-      $("exportPdfBtn").addEventListener("click", exportPdf);
 
+      $("exportPdfBtn").addEventListener("click", exportPdf);
       $("clearBtn").addEventListener("click", () => {
         if (!confirm("Clear all logged meals for today?")) return;
         entries = [];
         render();
       });
-
-      $("loadModelBtn").addEventListener("click", async () => {
-        await loadPublicModel();
-      });
-
-      window.addEventListener("resize", resizeOverlay);
     }
 
     // Init UI defaults
