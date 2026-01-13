@@ -8,13 +8,15 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
-  <!-- TFJS + MobileNet (public, works on GitHub Pages) -->
+  <!-- TFJS (for generic CV if you want) -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
 
   <!-- jsPDF + AutoTable -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
     .card { border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
@@ -31,36 +33,32 @@
     .overlayWrap { position: relative; }
     #overlayCanvas { position:absolute; inset:0; pointer-events:none; border-radius:12px; }
     .stickyBar { position: sticky; top: 0; z-index: 20; }
-    .brandIcon {
-      width: 42px; height: 42px; border-radius: 12px;
+    .brandMark {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: linear-gradient(135deg, #fb923c, #f97316);
       display:flex; align-items:center; justify-content:center;
-      background: #111827; color: #fff; font-weight: 900;
+      box-shadow: 0 10px 20px rgba(249,115,22,0.25);
+      flex-shrink: 0;
     }
-    .numInput {
-      width: 100%;
-      font-variant-numeric: tabular-nums;
-      text-align: right;
-    }
+    .brandMark i { color: #fff; font-size: 18px; }
+    details > summary { cursor: pointer; user-select: none; }
   </style>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
-  <!-- NAV (clean branding) -->
+  <!-- NAV -->
   <nav class="bg-white shadow-sm stickyBar">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <div class="brandIcon" title="MacroVision">
-          <i class="fa-solid fa-bowl-rice"></i>
-        </div>
+        <div class="brandMark" aria-hidden="true"><i class="fa-solid fa-bowl-food"></i></div>
         <div>
-          <div class="text-xl font-extrabold text-gray-900 leading-tight">MacroVision</div>
-          <div class="text-xs text-gray-500 -mt-0.5">Food tracking • Athlete fueling • SG-ready</div>
+          <div class="text-xl font-extrabold text-orange-600 leading-tight">MacroVision</div>
+          <div class="text-xs text-gray-500 -mt-0.5">SG-focused fueling + OCR label reader</div>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill font-bold">GitHub Pages</span>
-        <span class="bg-gray-100 text-gray-800 text-xs px-3 py-1.5 pill font-bold">MobileNet Food Filter</span>
-        <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill font-bold">PDF Export</span>
+
+      <div class="text-xs text-gray-500">
+        <span id="modelStatus" class="badge bg-gray-100 text-gray-900">Model: Manual mode</span>
       </div>
     </div>
   </nav>
@@ -71,25 +69,24 @@
       <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
         <div>
           <div class="flex items-center gap-3 mb-3">
-            <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
-              Athlete App
-            </span>
-            <span class="text-gray-300 text-sm">Singapore hawker DB • Generic camera AI • Manual mode • Per-day autosave</span>
+            <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide"> Athlete App </span>
+            <span class="text-gray-300 text-sm">Singapore-optimised • Manual SG DB • OCR (Label/Nutrition) • PDF export • Auto-save</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
           <p class="text-gray-300 max-w-2xl">
-            Works fully in-browser (no server). Use <b>Generic AI (MobileNet)</b> to suggest food-like items (with a strong non-food blocklist),
-            or switch to <b>Manual SG Dish Picker</b> and edit macros anytime.
+            Capture food photos, pick a Singapore dish (manual), optionally run OCR for packaged foods, estimate macros, and log meals.
+            Athlete targets adapt to training context. Exports a clean PDF report.
           </p>
           <div class="mt-4 text-sm text-gray-200">
             © <span id="yearNow"></span> Ng Jun Wei &amp; Ng Hong Wei.
           </div>
         </div>
 
-        <div class="bg-white/10 rounded-2xl p-4 w-full md:w-auto">
-          <div class="text-sm font-bold mb-2">Daily Log Date</div>
-          <input id="dateSel" type="date" class="w-full md:w-56 text-gray-900 rounded-lg px-3 py-2" />
-          <div class="text-xs text-gray-300 mt-2">Autosaves per date locally on this device.</div>
+        <div class="flex flex-wrap gap-2">
+          <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">Manual SG Dish DB</span>
+          <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">OCR Label Reader</span>
+          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">PDF Athlete Report</span>
+          <span class="bg-gray-700 text-white text-xs px-3 py-1.5 pill">LocalStorage Daily</span>
         </div>
       </div>
     </div>
@@ -101,11 +98,8 @@
       <div class="warn rounded-xl p-3">
         <div class="font-extrabold">Important</div>
         <div class="text-sm text-gray-700 mt-1">
-          Generic camera AI is <b>not a nutrition model</b>. It only helps suggest likely food labels.
-          Macros come from the SG dish database (20 common hawker dishes) + your edits.
-        </div>
-        <div class="text-xs text-gray-600 mt-2">
-          ✅ For fewer false positives (phones/clock/tub), the app uses a strong <b>Non-Food Blocklist</b> and requires food evidence keywords.
+          This is <b>not medical advice</b>. AI/OCR macros are <b>estimates</b>.
+          Packaged food OCR works best with <b>clear, close, glare-free</b> Nutrition Facts.
         </div>
       </div>
     </section>
@@ -115,11 +109,9 @@
       <div class="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 class="text-xl font-extrabold">👤 Athlete Profile → TDEE → Fueling Targets</h2>
-          <p class="text-gray-600 text-sm">
-            Targets adapt using athlete type + season + day intensity (IOC-style carb bands, ISSN-style protein ranges, AMDR fat).
-          </p>
+          <p class="text-gray-600 text-sm">Targets adapt using athlete type + season + day intensity (IOC-style carb bands, ISSN-style protein ranges, AMDR fat).</p>
         </div>
-        <div class="text-xs text-gray-500">*General guidance, not medical advice.</div>
+        <div class="text-xs text-gray-500">*General guidance only.</div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-5">
@@ -263,39 +255,58 @@
       </div>
     </section>
 
+    <!-- DATE + MODE -->
+    <section class="bg-white card p-5">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 class="text-xl font-extrabold">📅 Daily Log (Auto-saved)</h2>
+          <p class="text-sm text-gray-600">Choose a date. Your meals auto-save per day in your browser (LocalStorage).</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <label class="text-sm block">
+          <div class="text-gray-600 mb-1">Date</div>
+          <input id="dateSel" type="date" class="w-full border rounded-lg px-3 py-2" />
+        </label>
+
+        <label class="text-sm block">
+          <div class="text-gray-600 mb-1">AI / Detection Mode</div>
+          <select id="aiMode" class="w-full border rounded-lg px-3 py-2">
+            <option value="manual" selected>Manual SG Dish Picker (recommended)</option>
+            <option value="ocrLabel">OCR: Read Package Label (front)</option>
+            <option value="ocrNutri">OCR: Read Nutrition Label (kcal/P/C/F)</option>
+          </select>
+          <div class="text-xs text-gray-500 mt-1">Tip: Use OCR for packaged food; use Manual for hawker meals.</div>
+        </label>
+
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="font-bold mb-1 text-sm">Quick controls</div>
+          <div class="flex gap-2 mt-2">
+            <button id="saveBtn" class="flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">Save</button>
+            <button id="resetDayBtn" class="flex-1 bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200">Reset day</button>
+          </div>
+          <div class="text-xs text-gray-500 mt-2">Auto-save occurs after every change too.</div>
+        </div>
+      </div>
+    </section>
+
     <!-- CAPTURE + LOG -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Capture -->
       <div class="bg-white card p-5">
-        <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="flex items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-extrabold">📸 Camera → (AI or Manual SG Picker) → Macro Estimate → Log</h2>
+            <h2 class="text-xl font-extrabold">📸 Capture → Estimate → Log</h2>
             <p class="text-sm text-gray-600">
-              Choose <b>Generic AI</b> to suggest labels with a strict food-only filter, or use <b>Manual SG Dish Picker</b>.
-              Macros are always editable.
+              Snap/upload multiple items per meal. Use Manual SG Dish Picker for hawker food, OCR for packaged food.
             </p>
           </div>
         </div>
 
         <div class="mt-4 hint rounded-xl p-3">
-          <div class="font-bold text-sm">Model Mode</div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-            <label class="text-sm block">
-              <div class="text-gray-600 mb-1">AI mode</div>
-              <select id="aiMode" class="w-full border rounded-lg px-3 py-2">
-                <option value="manual" selected>Manual SG Dish Picker (recommended)</option>
-                <option value="generic">Generic AI (MobileNet + Food Filter)</option>
-              </select>
-            </label>
-            <label class="text-sm block">
-              <div class="text-gray-600 mb-1">Sensitivity</div>
-              <select id="aiStrict" class="w-full border rounded-lg px-3 py-2">
-                <option value="strict" selected>Strict (fewer false positives)</option>
-                <option value="balanced">Balanced</option>
-              </select>
-            </label>
-          </div>
-          <div class="text-xs text-gray-700 mt-2" id="modelStatus">Model: not loaded yet</div>
+          <div class="font-bold text-sm">GitHub Pages Friendly</div>
+          <div class="small text-gray-700 mt-1">No custom TFJS model needed. OCR runs fully in-browser.</div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -322,15 +333,17 @@
               </label>
             </div>
 
+            <div class="grid grid-cols-2 gap-2">
+              <button id="ocrLabelBtn" class="bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">🔎 OCR (Label)</button>
+              <button id="ocrNutriBtn" class="bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">🔎 OCR (Nutrition)</button>
+            </div>
+
             <canvas id="captureCanvas" class="hidden"></canvas>
 
             <div class="bg-gray-50 rounded-xl p-3">
-              <div class="font-bold text-sm mb-1">Live detection</div>
-              <div class="text-sm">
-                <span class="badge bg-gray-100 text-gray-900" id="liveLabelBadge">—</span>
-                <span class="mono text-gray-700 ml-2" id="liveConf">—</span>
-              </div>
-              <div class="text-xs text-gray-500 mt-2">Tip: closer shot + less background clutter = better.</div>
+              <div class="font-bold text-sm mb-1">Status</div>
+              <div id="statusBox" class="hidden rounded-xl p-3 small"></div>
+              <div class="text-xs text-gray-500 mt-2" id="metaLine">Snap/upload to begin.</div>
             </div>
           </div>
 
@@ -340,8 +353,6 @@
               <img id="previewImg" class="w-full rounded-lg hidden" alt="preview" />
               <div id="noPreview" class="text-sm text-gray-500">No photo yet. Snap/upload to preview.</div>
             </div>
-
-            <div id="statusBox" class="hidden rounded-xl p-3 small"></div>
 
             <div class="grid grid-cols-2 gap-3">
               <label class="text-sm block">
@@ -368,54 +379,57 @@
 
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Portion multiplier</div>
-              <input id="portion" type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full" />
+              <input id="portion" type="range" min="0.5" max="3.0" step="0.1" value="1.0" class="w-full" />
               <div class="text-xs text-gray-600 mt-1">x<span id="portionLabel" class="font-semibold">1.0</span></div>
             </label>
 
-            <!-- Manual SG picker -->
+            <!-- Manual SG dish picker -->
             <div class="bg-white border rounded-xl p-3">
-              <div class="font-bold mb-2">Manual SG Dish Picker</div>
-              <div class="grid grid-cols-1 gap-2">
-                <select id="sgDishSel" class="w-full border rounded-lg px-3 py-2">
-                  <!-- filled by JS -->
-                </select>
-                <div class="text-xs text-gray-500">Pick dish → macros auto-fill → you can edit kcal/P/C/F.</div>
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="font-bold">Manual SG dish picker (20 common hawker dishes)</div>
+                  <div class="text-xs text-gray-500">Pick dish → macros load → you can edit numbers freely.</div>
+                </div>
+              </div>
+              <div class="mt-3 grid grid-cols-1 gap-2">
+                <select id="sgDish" class="w-full border rounded-lg px-3 py-2"></select>
+                <button id="applyDishBtn" class="w-full bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200">
+                  Apply selected dish to editor
+                </button>
               </div>
             </div>
 
             <div class="bg-white border rounded-xl p-3">
-              <div class="font-bold">Item editor (always editable)</div>
+              <div class="font-extrabold">Item editor (always editable)</div>
               <div class="mt-3 space-y-2">
                 <label class="text-sm block">
                   <div class="text-gray-600 mb-1">Detected / selected name</div>
-                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2" placeholder="e.g., Chicken rice, Laksa, Kopi C" />
+                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2" placeholder="e.g., Chicken rice, Char kway teow, Kopi C, Protein bar" />
                 </label>
 
-                <!-- FIX: numeric inputs allow multi-digit (100g protein, 1000 kcal etc.) -->
+                <!-- IMPORTANT: allow 3-4 digits -->
                 <div class="grid grid-cols-4 gap-2">
                   <div class="bg-gray-50 rounded-lg p-2">
                     <div class="text-xs text-gray-500">kcal</div>
-                    <input id="itemKcal" class="numInput border rounded-lg px-2 py-1 mono"
-                           type="number" inputmode="numeric" step="1" min="0" max="99999" value="0" />
+                    <input id="itemKcal" class="w-full border rounded-lg px-2 py-1 mono" type="number"
+                           min="0" max="99999" step="1" inputmode="numeric" placeholder="e.g. 650" />
                   </div>
                   <div class="bg-gray-50 rounded-lg p-2">
                     <div class="text-xs text-gray-500">Protein (g)</div>
-                    <input id="itemP" class="numInput border rounded-lg px-2 py-1 mono"
-                           type="number" inputmode="decimal" step="0.1" min="0" max="9999" value="0" />
+                    <input id="itemP" class="w-full border rounded-lg px-2 py-1 mono" type="number"
+                           min="0" max="9999" step="0.1" inputmode="decimal" placeholder="e.g. 35" />
                   </div>
                   <div class="bg-gray-50 rounded-lg p-2">
                     <div class="text-xs text-gray-500">Carbs (g)</div>
-                    <input id="itemC" class="numInput border rounded-lg px-2 py-1 mono"
-                           type="number" inputmode="decimal" step="0.1" min="0" max="9999" value="0" />
+                    <input id="itemC" class="w-full border rounded-lg px-2 py-1 mono" type="number"
+                           min="0" max="9999" step="0.1" inputmode="decimal" placeholder="e.g. 75" />
                   </div>
                   <div class="bg-gray-50 rounded-lg p-2">
                     <div class="text-xs text-gray-500">Fat (g)</div>
-                    <input id="itemF" class="numInput border rounded-lg px-2 py-1 mono"
-                           type="number" inputmode="decimal" step="0.1" min="0" max="9999" value="0" />
+                    <input id="itemF" class="w-full border rounded-lg px-2 py-1 mono" type="number"
+                           min="0" max="9999" step="0.1" inputmode="decimal" placeholder="e.g. 20" />
                   </div>
                 </div>
-
-                <div class="text-xs text-gray-500" id="metaLine">No detection yet.</div>
 
                 <button id="addItemBtn" class="w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
                   ➕ Add this item to current meal
@@ -425,8 +439,7 @@
 
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Meal notes (optional)</div>
-              <textarea id="mealNotes" class="w-full border rounded-lg px-3 py-2" rows="2"
-                        placeholder="e.g., extra oil, gravy heavy, added egg, shared with friend"></textarea>
+              <textarea id="mealNotes" class="w-full border rounded-lg px-3 py-2" rows="2" placeholder="e.g., extra oil, gravy heavy, added egg, shared with friend"></textarea>
             </label>
 
             <button id="finalizeMealBtn" class="w-full bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-gray-800">
@@ -444,9 +457,7 @@
             </div>
             <button id="clearMealBtn" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">Clear meal items</button>
           </div>
-
           <div id="mealItemsList" class="mt-3 space-y-2"></div>
-
           <div class="grid grid-cols-4 gap-2 mt-4">
             <div class="bg-white rounded-lg border p-2">
               <div class="text-xs text-gray-500">Meal kcal</div>
@@ -473,7 +484,7 @@
         <div class="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h2 class="text-xl font-extrabold">📋 Daily fueling check (athlete)</h2>
-            <p class="text-sm text-gray-600">Intake vs targets + macrodistribution. Export PDF for reporting.</p>
+            <p class="text-sm text-gray-600">Intake vs targets + macrodistribution. Export PDF for athlete reporting.</p>
           </div>
           <div class="flex gap-2">
             <button id="exportPdfBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">📄 Export PDF</button>
@@ -528,190 +539,171 @@
           <div id="entriesList" class="space-y-3"></div>
         </div>
 
-        <div class="mt-6 bg-gray-50 rounded-xl p-4">
-          <div class="font-bold mb-2">🧠 Micronutrients (athlete checklist)</div>
-          <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1">
-            <li><b>Iron</b> (oxygen transport): red meat, ikan bilis, leafy greens, legumes; pair with <b>Vitamin C</b>.</li>
-            <li><b>Calcium + Vitamin D</b> (bone & muscle): dairy/tofu/small fish with bones; sunlight/fortified foods.</li>
-            <li><b>B Vitamins</b> (energy metabolism): whole grains, meats, eggs, leafy greens.</li>
-            <li><b>Magnesium + Zinc</b> (repair/immunity): nuts/seeds, seafood, meat, legumes.</li>
-            <li><b>Antioxidants</b> (Vitamins C & E): fruits/veg; nuts/seeds.</li>
-          </ul>
+        <!-- NEW: Collapsible micronutrients folder -->
+        <div class="mt-6">
+          <details class="bg-gray-50 rounded-xl p-4 border">
+            <summary class="font-bold mb-2">🧠 Micronutrients (click to expand)</summary>
+            <div class="text-sm text-gray-700 space-y-3 mt-2">
+              <div class="text-xs text-gray-600">
+                This is a <b>checklist</b> (not a computed total). Use it as a daily reminder to include micronutrient-rich foods.
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="bg-white border rounded-xl p-3">
+                  <div class="font-bold">Iron</div>
+                  <div class="text-xs text-gray-600 mt-1">Oxygen transport; fatigue prevention.</div>
+                  <ul class="list-disc pl-5 text-sm mt-2 space-y-1">
+                    <li>Red meat, liver (small amounts)</li>
+                    <li>Ikan bilis, sardines</li>
+                    <li>Spinach, legumes</li>
+                    <li><b>Pair with Vitamin C</b> to improve absorption</li>
+                  </ul>
+                </div>
+
+                <div class="bg-white border rounded-xl p-3">
+                  <div class="font-bold">Vitamin C</div>
+                  <div class="text-xs text-gray-600 mt-1">Iron absorption; antioxidant; immune support.</div>
+                  <ul class="list-disc pl-5 text-sm mt-2 space-y-1">
+                    <li>Guava, oranges, kiwi</li>
+                    <li>Bell peppers, broccoli</li>
+                    <li>Fresh fruits over long-cooked</li>
+                  </ul>
+                </div>
+
+                <div class="bg-white border rounded-xl p-3">
+                  <div class="font-bold">Calcium</div>
+                  <div class="text-xs text-gray-600 mt-1">Bone & muscle contraction.</div>
+                  <ul class="list-disc pl-5 text-sm mt-2 space-y-1">
+                    <li>Milk, yogurt, cheese</li>
+                    <li>Calcium-set tofu</li>
+                    <li>Small fish with bones</li>
+                  </ul>
+                </div>
+
+                <div class="bg-white border rounded-xl p-3">
+                  <div class="font-bold">Vitamin D</div>
+                  <div class="text-xs text-gray-600 mt-1">Calcium absorption; immune function.</div>
+                  <ul class="list-disc pl-5 text-sm mt-2 space-y-1">
+                    <li>Sun exposure (safe, short duration)</li>
+                    <li>Egg yolk, fatty fish</li>
+                    <li>Fortified milk/foods</li>
+                  </ul>
+                </div>
+
+                <div class="bg-white border rounded-xl p-3">
+                  <div class="font-bold">B Vitamins</div>
+                  <div class="text-xs text-gray-600 mt-1">Energy metabolism; red blood cell support.</div>
+                  <ul class="list-disc pl-5 text-sm mt-2 space-y-1">
+                    <li>Whole grains</li>
+                    <li>Meat, eggs</li>
+                    <li>Leafy greens, legumes</li>
+                  </ul>
+                </div>
+
+                <div class="bg-white border rounded-xl p-3">
+                  <div class="font-bold">Magnesium</div>
+                  <div class="text-xs text-gray-600 mt-1">Recovery, muscle function, sleep quality.</div>
+                  <ul class="list-disc pl-5 text-sm mt-2 space-y-1">
+                    <li>Nuts & seeds</li>
+                    <li>Whole grains</li>
+                    <li>Legumes, dark leafy greens</li>
+                  </ul>
+                </div>
+
+                <div class="bg-white border rounded-xl p-3">
+                  <div class="font-bold">Zinc</div>
+                  <div class="text-xs text-gray-600 mt-1">Repair, immune support.</div>
+                  <ul class="list-disc pl-5 text-sm mt-2 space-y-1">
+                    <li>Seafood (oysters), meat</li>
+                    <li>Beans, nuts</li>
+                    <li>Dairy</li>
+                  </ul>
+                </div>
+
+                <div class="bg-white border rounded-xl p-3">
+                  <div class="font-bold">Antioxidants</div>
+                  <div class="text-xs text-gray-600 mt-1">Reduce oxidative stress (training load).</div>
+                  <ul class="list-disc pl-5 text-sm mt-2 space-y-1">
+                    <li>Colorful fruits & veg (berries, leafy greens)</li>
+                    <li>Nuts & seeds (Vitamin E)</li>
+                    <li>Tea (polyphenols), cocoa (in moderation)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
 
-        <div class="text-xs text-gray-500 mt-4">Disclaimer: AI suggestions are imperfect; macros are estimates. Always sanity-check.</div>
+        <div class="text-xs text-gray-500 mt-4">
+          Disclaimer: OCR and manual estimates. Always sanity-check.
+        </div>
       </div>
     </section>
   </main>
 
   <footer class="py-8">
     <div class="max-w-7xl mx-auto px-4 text-xs text-gray-500">
-      © <span id="yearNow2"></span> Ng Jun Wei &amp; Ng Hong Wei.
+      © <span id="yearNow2"></span> Ng Jun Wei &amp; Ng Hong Wei. All rights reserved.
     </div>
   </footer>
 
   <script>
     /*************************************************************
-     * SG Dish DB (20 common hawker foods) + drinks
+     * 0) UTIL
      *************************************************************/
-    const FOOD_DB = [
-      { name:"Chicken Rice", keys:["chicken rice","hainanese chicken rice"], kcal:650, p:35, c:75, f:20 },
-      { name:"Char Kway Teow", keys:["char kway teow","fried kway teow"], kcal:750, p:20, c:90, f:30 },
-      { name:"Laksa", keys:["laksa"], kcal:700, p:25, c:70, f:35 },
-      { name:"Ban Mian", keys:["ban mian","ban mian soup"], kcal:600, p:25, c:75, f:18 },
-      { name:"Bak Chor Mee", keys:["bak chor mee","minced meat noodles"], kcal:680, p:28, c:85, f:22 },
-      { name:"Nasi Lemak", keys:["nasi lemak"], kcal:720, p:25, c:80, f:32 },
-      { name:"Wanton Mee", keys:["wanton mee","wonton mee"], kcal:620, p:24, c:80, f:18 },
-      { name:"Hokkien Mee", keys:["hokkien mee"], kcal:730, p:26, c:85, f:28 },
-      { name:"Roti Prata (2)", keys:["roti prata","prata"], kcal:550, p:14, c:70, f:24 },
-      { name:"Mee Siam", keys:["mee siam"], kcal:520, p:18, c:80, f:12 },
-      { name:"Nasi Briyani", keys:["briyani","biryani"], kcal:780, p:28, c:95, f:28 },
-      { name:"Economic Rice (Cai Fan)", keys:["cai fan","economic rice","chap fan"], kcal:700, p:30, c:85, f:22 },
-      { name:"Yong Tau Foo", keys:["yong tau foo"], kcal:500, p:28, c:50, f:15 },
-      { name:"Fish Soup", keys:["fish soup"], kcal:420, p:35, c:35, f:10 },
-      { name:"Satay (10 sticks)", keys:["satay"], kcal:550, p:35, c:20, f:35 },
-      { name:"Chicken Chop", keys:["chicken chop"], kcal:780, p:45, c:60, f:35 },
-      { name:"Sushi (8 pcs)", keys:["sushi"], kcal:520, p:22, c:80, f:12 },
-      { name:"Burger", keys:["burger","cheeseburger","hamburger"], kcal:550, p:28, c:45, f:28 },
-      { name:"Pizza (2 slices)", keys:["pizza"], kcal:600, p:25, c:70, f:22 },
-      { name:"Salad (with protein)", keys:["salad"], kcal:450, p:35, c:25, f:20 },
-    ];
-
-    const DRINK_DB = [
-      { name:"Kopi (with sugar+milk)", keys:["kopi","coffee with milk","coffee"], kcal:140, p:3, c:22, f:4 },
-      { name:"Kopi C", keys:["kopi c"], kcal:100, p:2, c:16, f:3 },
-      { name:"Teh Tarik", keys:["teh tarik","teh","milk tea"], kcal:180, p:4, c:28, f:5 },
-      { name:"Bubble Tea", keys:["bubble tea","boba"], kcal:380, p:4, c:75, f:8 },
-      { name:"Isotonic Drink (500ml)", keys:["sports drink","isotonic"], kcal:120, p:0, c:30, f:0 },
-      { name:"Plain Water", keys:["water"], kcal:0, p:0, c:0, f:0 },
-    ];
-
-    /*************************************************************
-     * Non-food blocklist + "food evidence" filter for Generic AI
-     *************************************************************/
-    const NON_FOOD_BLOCKLIST = [
-      // Your reported false positives
-      "telephone","phone","cellphone","smartphone",
-      "sunscreen","sunblock","lotion","cream",
-      "wall clock","clock","watch",
-      "bathtub","tub","bucket","basin",
-
-      // common non-food
-      "remote","keyboard","mouse","laptop","computer","monitor","screen","television","tv",
-      "toilet","sink","shower","soap","detergent","shampoo","toothbrush","toothpaste",
-      "helmet","shoe","sneaker","sandal","backpack","bag","wallet","purse",
-      "book","notebook","paper","envelope",
-      "chair","couch","sofa","table","desk","wardrobe","cabinet",
-      "curtain","lamp","light","fan",
-      "microwave","refrigerator","fridge","oven","stove",
-      "tool","hammer","screwdriver","wrench",
-      "mask","glove","towel"
-    ];
-
-    const FOOD_EVIDENCE = [
-      "food","dish","meal","cuisine","breakfast","lunch","dinner","snack",
-      "rice","noodle","noodles","mee","pasta","bread","toast","bun","cake","cookie","biscuit","dessert",
-      "soup","salad","curry","stew","sandwich","burger","pizza","dumpling","wonton","sushi",
-      "chicken","fish","prawn","shrimp","crab","beef","pork","egg","tofu",
-      "banana","apple","orange","mango","pineapple","grape","watermelon","papaya","tomato","cucumber","carrot",
-      "laksa","prata","dosa","briyani","biryani","nasi","hokkien","kway","chap","cai fan","bak chor","yong tau foo",
-      "coffee","kopi","tea","teh","juice","milk","beverage","drink","soda","cola","water"
-    ];
-
-    const normalize = (s) => (s || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g," ")
-      .replace(/\s+/g," ")
-      .trim();
-
-    function similarity(a, b) {
-      a = normalize(a); b = normalize(b);
-      if (!a || !b) return 0;
-      if (a === b) return 1;
-      const bigrams = (str) => {
-        const arr = [];
-        for (let i=0;i<str.length-1;i++) arr.push(str.slice(i,i+2));
-        return arr;
-      };
-      const A = bigrams(a), B = bigrams(b);
-      const map = new Map();
-      A.forEach(x => map.set(x, (map.get(x)||0)+1));
-      let inter = 0;
-      B.forEach(x => {
-        const c = map.get(x)||0;
-        if (c>0) { inter++; map.set(x,c-1); }
-      });
-      return (2*inter)/(A.length+B.length);
+    const $ = (id) => document.getElementById(id);
+    const round1 = (x) => Math.round(x * 10) / 10;
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const safeNum = (x) => {
+      const n = Number(x);
+      return Number.isFinite(n) ? n : 0;
+    };
+    function escapeHtml(s) {
+      return (s || "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
     }
-
-    function bestDbMatch(label, type) {
-      const db = (type === "drink") ? DRINK_DB : FOOD_DB;
-      const q = normalize(label);
-      let best = null, bestScore = 0;
-      for (const row of db) {
-        for (const k of row.keys) {
-          const score = similarity(q, normalize(k));
-          if (score > bestScore) { bestScore = score; best = row; }
-        }
-      }
-      return { best, bestScore };
+    function setStatus(kind, text) {
+      const el = $("statusBox");
+      el.classList.remove("hidden","warn","ok","danger");
+      if (kind === "ok") el.classList.add("ok");
+      else if (kind === "danger") el.classList.add("danger");
+      else el.classList.add("warn");
+      el.textContent = text;
     }
-
-    function looksEdible(label, itemType, strictMode = "strict") {
-      const s = normalize(label);
-
-      // 1) hard block
-      for (const bad of NON_FOOD_BLOCKLIST) {
-        if (s.includes(normalize(bad))) return false;
-      }
-
-      // 2) strong SG DB match -> allow
-      const mFood = bestDbMatch(label, "food");
-      const mDrink = bestDbMatch(label, "drink");
-      if ((mFood.best && mFood.bestScore >= 0.35) || (mDrink.best && mDrink.bestScore >= 0.35)) return true;
-
-      // 3) must have food evidence keyword
-      const hasEvidence = FOOD_EVIDENCE.some(k => s.includes(normalize(k)));
-      if (!hasEvidence) return false;
-
-      // 4) strict extra: reject vague containers in strict mode
-      if (strictMode === "strict") {
-        const vague = ["bottle","cup","mug","jar","can"];
-        if (vague.some(v => s.includes(v))) {
-          // allow if drink mode or label contains drink evidence
-          const drinkHints = ["coffee","kopi","tea","teh","juice","milk","drink","water","cola","soda","beverage"];
-          const drinkOk = (itemType === "drink") || drinkHints.some(d => s.includes(d));
-          if (!drinkOk) return false;
-        }
-      }
-
-      return true;
-    }
-
-    function heuristicMacros(label, type) {
-      const s = normalize(label);
-      if (type === "drink") {
-        let kcal = 80, p=0, c=18, f=1;
-        if (s.includes("water")) return { kcal:0, p:0, c:0, f:0 };
-        if (s.includes("kopi") || s.includes("coffee")) return { kcal:120, p:2, c:20, f:3 };
-        if (s.includes("tea") || s.includes("teh")) return { kcal:150, p:3, c:24, f:4 };
-        if (s.includes("bubble") || s.includes("boba")) return { kcal:350, p:4, c:70, f:8 };
-        return { kcal, p, c, f };
-      }
-      // food fallback
-      let kcal = 520, p=20, c=60, f=15;
-      if (s.includes("rice")) { kcal=650; p=25; c=85; f=18; }
-      if (s.includes("noodle") || s.includes("noodles") || s.includes("mee")) { kcal=620; p=22; c=80; f=18; }
-      if (s.includes("fried")) { kcal += 120; f += 8; }
-      if (s.includes("soup")) { kcal -= 120; f = Math.max(0, f-6); }
-      if (s.includes("salad")) { kcal=400; p=30; c=25; f=18; }
-      if (s.includes("burger")) { kcal=550; p=28; c=45; f=28; }
-      if (s.includes("pizza")) { kcal=600; p=25; c=70; f=22; }
-      return { kcal, p, c, f };
+    function macroPercentages(p, c, f) {
+      const pK = p * 4, cK = c * 4, fK = f * 9;
+      const total = Math.max(1, pK + cK + fK);
+      return { p: round1(100*pK/total), c: round1(100*cK/total), f: round1(100*fK/total) };
     }
 
     /*************************************************************
-     * Athlete target logic
+     * 1) SG DISH DB (20 common hawker foods)
+     *    values are typical estimates for one serving
+     *************************************************************/
+    const SG_DISHES = [
+      { name:"Chicken Rice", kcal:650, p:35, c:75, f:20 },
+      { name:"Char Kway Teow", kcal:750, p:20, c:90, f:30 },
+      { name:"Laksa", kcal:700, p:25, c:70, f:35 },
+      { name:"Nasi Lemak", kcal:720, p:25, c:80, f:32 },
+      { name:"Bak Chor Mee", kcal:680, p:28, c:85, f:22 },
+      { name:"Wanton Mee", kcal:620, p:24, c:80, f:18 },
+      { name:"Ban Mian", kcal:600, p:25, c:75, f:18 },
+      { name:"Fish Soup (Bee Hoon)", kcal:450, p:35, c:45, f:10 },
+      { name:"Yong Tau Foo", kcal:500, p:28, c:50, f:15 },
+      { name:"Hokkien Mee", kcal:720, p:28, c:80, f:28 },
+      { name:"Satay (10 sticks)", kcal:550, p:35, c:20, f:35 },
+      { name:"Roti Prata (2 plain)", kcal:520, p:12, c:70, f:22 },
+      { name:"Mee Siam", kcal:560, p:18, c:85, f:15 },
+      { name:"Teochew Porridge (set)", kcal:500, p:22, c:70, f:14 },
+      { name:"Economy Rice (2 meat 1 veg)", kcal:750, p:38, c:85, f:28 },
+      { name:"Kway Chap", kcal:650, p:30, c:60, f:28 },
+      { name:"Murtabak (1 pc)", kcal:700, p:28, c:70, f:35 },
+      { name:"Sushi (8 pcs)", kcal:520, p:22, c:80, f:12 },
+      { name:"Burger", kcal:550, p:28, c:45, f:28 },
+      { name:"Salad (with protein)", kcal:450, p:35, c:25, f:20 },
+    ];
+
+    /*************************************************************
+     * 2) ATHLETE TARGET LOGIC
      *************************************************************/
     const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
     const ATHLETE_CARB_BASE = {
@@ -726,106 +718,67 @@
       in:  { carbShift: +0.3, kcalShift: +150 },
     };
     const DAY_NUDGE = {
-      easy:   { carbShift: -0.5, kcalShift: 0 },
-      normal: { carbShift:  0.0, kcalShift: 0 },
-      hard:   { carbShift: +1.0, kcalShift: +250 },
-      comp:   { carbShift: +1.5, kcalShift: +350 },
+      easy:  { carbShift: -0.5, kcalShift: 0 },
+      normal:{ carbShift:  0.0, kcalShift: 0 },
+      hard:  { carbShift: +1.0, kcalShift: +250 },
+      comp:  { carbShift: +1.5, kcalShift: +350 },
     };
     const GOALS = {
-      gain:     { kcalAdjust: +250, proteinGkg: [1.6, 2.2] },
-      maintain: { kcalAdjust: 0,    proteinGkg: [1.4, 2.0] },
-      lose:     { kcalAdjust: -500, proteinGkg: [2.3, 3.1] },
+      gain:     {kcalAdjust: +250, proteinGkg: [1.6, 2.2]},
+      maintain: {kcalAdjust: 0,    proteinGkg: [1.4, 2.0]},
+      lose:     {kcalAdjust: -500, proteinGkg: [2.3, 3.1]},
     };
     const AMDR_FAT = [0.20, 0.35];
 
     /*************************************************************
-     * State + DOM
+     * 3) STATE + STORAGE (per day)
      *************************************************************/
     let entries = [];
     let mealItems = [];
     let currentImageDataUrl = null;
     let stream = null;
-    let liveLoopRunning = false;
 
-    let mobileNetModel = null;
-    let lastLive = { label: "", prob: 0, top3: [] };
-
-    const $ = (id) => document.getElementById(id);
-    const round1 = (x) => Math.round(x * 10) / 10;
-    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
-    const safeNum = (x) => {
-      const n = Number(x);
-      return Number.isFinite(n) ? n : 0;
-    };
-    function escapeHtml(s) {
-      return (s || "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
+    function isoDateLocal(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${day}`;
     }
 
-    function setStatus(kind, text) {
-      const el = $("statusBox");
-      el.classList.remove("hidden","warn","ok","danger");
-      if (kind === "ok") el.classList.add("ok");
-      else if (kind === "danger") el.classList.add("danger");
-      else el.classList.add("warn");
-      el.textContent = text;
+    function storageKeyForDate(dateStr) {
+      return `macrovision_day_${dateStr}`;
     }
 
-    function macroPercentages(p, c, f) {
-      const pK = p * 4, cK = c * 4, fK = f * 9;
-      const total = Math.max(1, pK + cK + fK);
-      return { p: round1(100*pK/total), c: round1(100*cK/total), f: round1(100*fK/total) };
-    }
-
-    /*************************************************************
-     * LocalStorage per day
-     *************************************************************/
-    function pad2(n){ return String(n).padStart(2,"0"); }
-    function todayISO() {
-      const d = new Date();
-      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-    }
-    function storageKey(dateStr) {
-      return `macrovision_v1_${dateStr}`;
-    }
-    function saveDay() {
-      const dateStr = $("dateSel").value || todayISO();
-      const payload = {
-        dateStr,
-        entries,
-        mealItems,
-        currentImageDataUrl,
-        profile: getProfileState()
-      };
-      localStorage.setItem(storageKey(dateStr), JSON.stringify(payload));
-    }
-    function loadDay(dateStr) {
-      const raw = localStorage.getItem(storageKey(dateStr));
+    function loadDay() {
+      const dateStr = $("dateSel").value;
+      const raw = localStorage.getItem(storageKeyForDate(dateStr));
       if (!raw) {
         entries = [];
         mealItems = [];
-        currentImageDataUrl = null;
-        // keep current profile UI (or restore defaults)
         renderMealItems();
         render();
         return;
       }
-      try{
-        const p = JSON.parse(raw);
-        entries = Array.isArray(p.entries) ? p.entries : [];
-        mealItems = Array.isArray(p.mealItems) ? p.mealItems : [];
-        currentImageDataUrl = p.currentImageDataUrl || null;
-        if (p.profile) setProfileState(p.profile);
-      } catch(e){
+      try {
+        const obj = JSON.parse(raw);
+        entries = Array.isArray(obj.entries) ? obj.entries : [];
+        mealItems = Array.isArray(obj.mealItems) ? obj.mealItems : [];
+      } catch (e) {
         entries = [];
         mealItems = [];
-        currentImageDataUrl = null;
       }
       renderMealItems();
       render();
     }
 
+    function saveDay() {
+      const dateStr = $("dateSel").value;
+      const obj = { entries, mealItems, savedAt: new Date().toISOString() };
+      localStorage.setItem(storageKeyForDate(dateStr), JSON.stringify(obj));
+    }
+
     /*************************************************************
-     * BMR/TDEE + Targets
+     * 4) BMR/TDEE + TARGETS
      *************************************************************/
     function bmrMifflin(weightKg, heightCm, age, sex) {
       const s = (sex === "Male") ? 5 : -161;
@@ -867,7 +820,6 @@
       const day = DAY_NUDGE[dayIntensity] || { carbShift: 0, kcalShift: 0 };
 
       const kcalTarget = tdee + goalCfg.kcalAdjust + season.kcalShift + day.kcalShift;
-
       const pLo = goalCfg.proteinGkg[0] * weightKg;
       const pHi = goalCfg.proteinGkg[1] * weightKg;
       const pTarget = (pLo + pHi) / 2;
@@ -907,74 +859,9 @@
       };
     }
 
-    function adequacyLabel(value, lo, hi) {
-      if (value < lo) return "Insufficient";
-      if (value > hi) return "Excess (maybe ok depending on training)";
-      return "Sufficient";
-    }
-
-    function calcTotals() {
-      return entries.reduce((acc, e) => {
-        acc.kcal += e.macros.kcal;
-        acc.p += e.macros.p;
-        acc.c += e.macros.c;
-        acc.f += e.macros.f;
-        return acc;
-      }, {kcal:0, p:0, c:0, f:0});
-    }
-
     /*************************************************************
-     * Camera + overlay
+     * 5) CAMERA (no ML model required)
      *************************************************************/
-    function resizeOverlay() {
-      const v = $("video");
-      const c = $("overlayCanvas");
-      if (!v.videoWidth) return;
-      c.width = v.videoWidth;
-      c.height = v.videoHeight;
-      c.style.width = v.clientWidth + "px";
-      c.style.height = v.clientHeight + "px";
-    }
-    function clearOverlay() {
-      const c = $("overlayCanvas");
-      const ctx = c.getContext("2d");
-      ctx.clearRect(0, 0, c.width, c.height);
-    }
-
-    function drawOverlay(line1, line2="", line3="") {
-      const c = $("overlayCanvas");
-      const ctx = c.getContext("2d");
-      ctx.clearRect(0,0,c.width,c.height);
-      const w = c.width || 640;
-      const pad = 18;
-
-      ctx.save();
-      ctx.globalAlpha = 0.92;
-      ctx.fillStyle = "#111827";
-      ctx.fillRect(0, 0, w, 92);
-      ctx.globalAlpha = 1;
-
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 22px system-ui, -apple-system, Segoe UI, Roboto";
-      ctx.fillText(String(line1).slice(0,48), pad, 30);
-
-      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto";
-      ctx.fillStyle = "#e5e7eb";
-      ctx.fillText(String(line2).slice(0,72), pad, 56);
-
-      ctx.fillStyle = "#d1d5db";
-      ctx.fillText(String(line3).slice(0,72), pad, 78);
-
-      ctx.restore();
-    }
-
-    async function ensureMobileNet() {
-      if (mobileNetModel) return;
-      $("modelStatus").textContent = "Model: loading MobileNet…";
-      mobileNetModel = await mobilenet.load({ version: 2, alpha: 1.0 });
-      $("modelStatus").textContent = "Model: MobileNet loaded ✅";
-    }
-
     async function startCamera() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -984,134 +871,64 @@
         $("video").srcObject = stream;
         $("video").onloadedmetadata = () => {
           resizeOverlay();
-          if (!liveLoopRunning) {
-            liveLoopRunning = true;
-            liveLoop();
-          }
+          setStatus("ok", "Camera started ✅");
         };
-        setStatus("ok","Camera started ✅");
       } catch (e) {
-        setStatus("danger","Camera error: " + e.message);
+        setStatus("danger", "Camera error: " + e.message + " (Tip: HTTPS + permissions.)");
       }
     }
 
     function stopCamera() {
-      liveLoopRunning = false;
       if (stream) {
         stream.getTracks().forEach(t => t.stop());
         stream = null;
       }
       $("video").srcObject = null;
       clearOverlay();
-      $("liveLabelBadge").textContent = "—";
-      $("liveConf").textContent = "—";
+      setStatus("warn", "Camera stopped.");
     }
 
-    async function liveLoop() {
-      if (!liveLoopRunning) return;
+    function resizeOverlay() {
       const v = $("video");
-      if (!v || !v.videoWidth) {
-        requestAnimationFrame(liveLoop);
-        return;
-      }
+      const c = $("overlayCanvas");
+      if (!v.videoWidth) return;
+      c.width = v.videoWidth;
+      c.height = v.videoHeight;
+      c.style.width = v.clientWidth + "px";
+      c.style.height = v.clientHeight + "px";
+    }
 
-      const mode = $("aiMode").value;
-      const strictMode = $("aiStrict").value;
-      const itemType = $("itemType").value;
-
-      // Only run Generic AI in generic mode
-      if (mode !== "generic") {
-        $("liveLabelBadge").textContent = "Manual mode";
-        $("liveConf").textContent = "—";
-        drawOverlay("Manual mode", "Use SG dish picker below", "or Snap/Upload then pick dish");
-        setTimeout(() => requestAnimationFrame(liveLoop), 900);
-        return;
-      }
-
-      try {
-        await ensureMobileNet();
-
-        // MobileNet classify
-        const preds = await mobileNetModel.classify(v, 3);
-        const top = preds && preds[0] ? preds[0] : { className:"", probability:0 };
-        const confPct = Math.round((top.probability || 0) * 100);
-
-        // Confidence floor (reduces random objects)
-        const confFloor = (strictMode === "strict") ? 35 : 25;
-        if (confPct < confFloor) {
-          $("liveLabelBadge").textContent = "Uncertain";
-          $("liveConf").textContent = `Low (${confPct}%)`;
-          drawOverlay("Uncertain", "Move closer + reduce background", "Or switch to Manual mode");
-          setTimeout(() => requestAnimationFrame(liveLoop), 900);
-          return;
-        }
-
-        // Food-only filter
-        const edible = looksEdible(top.className, itemType, strictMode);
-
-        if (!edible) {
-          $("liveLabelBadge").textContent = "Non-food blocked";
-          $("liveConf").textContent = `Top: ${top.className} (${confPct}%)`;
-          drawOverlay("Non-food blocked", top.className, "Try tighter framing on the food");
-          setTimeout(() => requestAnimationFrame(liveLoop), 900);
-          return;
-        }
-
-        lastLive = { label: top.className, prob: top.probability, top3: preds };
-
-        // map to SG DB if possible
-        const m = bestDbMatch(top.className, itemType);
-        let mappedName = "";
-        let source = "";
-        if (m.best && m.bestScore >= 0.35) {
-          mappedName = m.best.name;
-          source = "SG Dish DB";
-        } else {
-          mappedName = "Generic estimate";
-          source = "Heuristic";
-        }
-
-        $("liveLabelBadge").textContent = top.className;
-        $("liveConf").textContent = `Confidence: ${confPct}%`;
-        drawOverlay(`${top.className} (${confPct}%)`, `→ ${mappedName} [${source}]`, `Mode: ${itemType.toUpperCase()} • Edit if wrong`);
-
-      } catch (e) {
-        // ignore transient
-      }
-
-      setTimeout(() => requestAnimationFrame(liveLoop), 850);
+    function clearOverlay() {
+      const c = $("overlayCanvas");
+      const ctx = c.getContext("2d");
+      ctx.clearRect(0, 0, c.width, c.height);
     }
 
     /*************************************************************
-     * Snap / Upload
+     * 6) SNAP / UPLOAD
      *************************************************************/
     function setPreview(dataUrl) {
       currentImageDataUrl = dataUrl;
       $("previewImg").src = dataUrl;
       $("previewImg").classList.remove("hidden");
       $("noPreview").classList.add("hidden");
-      $("statusBox").classList.add("hidden");
-      $("metaLine").textContent = "Ready. Edit if needed, then add to meal.";
+      $("metaLine").textContent = "Ready. Select a dish or run OCR, then edit macros and add item.";
       saveDay();
     }
 
     async function snapPhoto() {
       const v = $("video");
       if (!v || !v.videoWidth) {
-        setStatus("warn","Camera not ready. Start camera first, or upload an image.");
+        setStatus("warn", "Camera not ready. Start camera first, or upload an image.");
         return;
       }
       const canvas = $("captureCanvas");
       canvas.width = v.videoWidth;
       canvas.height = v.videoHeight;
       canvas.getContext("2d").drawImage(v, 0, 0);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
       setPreview(dataUrl);
-
-      // in generic mode, estimate from captured frame too
-      if ($("aiMode").value === "generic") {
-        await estimateFromElement(canvas);
-      }
+      setStatus("ok", "Captured ✅ (Now select dish / OCR / edit macros)");
     }
 
     function handleUpload(file) {
@@ -1119,150 +936,133 @@
       const reader = new FileReader();
       reader.onload = async () => {
         setPreview(reader.result);
-        await estimateFromImageDataUrl(reader.result);
+        setStatus("ok", "Uploaded ✅ (Now select dish / OCR / edit macros)");
       };
       reader.readAsDataURL(file);
     }
 
-    async function estimateFromImageDataUrl(dataUrl) {
-      try {
-        const img = new Image();
-        img.src = dataUrl;
-        await new Promise(res => img.onload = res);
-
-        if ($("aiMode").value !== "generic") {
-          setStatus("ok","Uploaded ✅ (Manual mode: pick SG dish / edit macros)");
-          return;
-        }
-
-        await estimateFromElement(img);
-      } catch (e) {
-        setStatus("danger","Upload detection failed. You can use Manual SG dish picker and edit macros.");
-      }
-    }
-
-    async function estimateFromElement(el) {
-      try {
-        await ensureMobileNet();
-        const preds = await mobileNetModel.classify(el, 3);
-        const top = preds && preds[0] ? preds[0] : { className:"", probability:0 };
-        const confPct = Math.round((top.probability || 0) * 100);
-
-        const strictMode = $("aiStrict").value;
-        const itemType = $("itemType").value;
-
-        if (!looksEdible(top.className, itemType, strictMode)) {
-          setStatus("danger", `Non-food blocked: "${top.className}". Switch to Manual mode / pick SG dish.`);
-          $("metaLine").textContent = "Non-food blocked. Use manual SG dish picker.";
-          return;
-        }
-
-        lastLive = { label: top.className, prob: top.probability, top3: preds };
-        await estimateFromLabel(top.className, top.probability);
-
-      } catch (e) {
-        setStatus("danger","Detection failed. Use Manual SG dish picker and edit macros.");
-      }
-    }
-
-    async function estimateFromLabel(label, prob) {
-      const itemType = $("itemType").value;
-      const portion = parseFloat($("portion").value || "1.0");
-
-      const m = bestDbMatch(label, itemType);
-      let finalName = label;
-      let macros = null;
-      let source = "";
-
-      if (m.best && m.bestScore >= 0.35) {
-        finalName = m.best.name;
-        macros = { kcal: m.best.kcal, p: m.best.p, c: m.best.c, f: m.best.f };
-        source = `SG Dish DB match (${Math.round(m.bestScore*100)}%)`;
-      } else {
-        macros = heuristicMacros(label, itemType);
-        source = "Heuristic estimate (no strong SG match)";
-      }
-
-      macros = {
-        kcal: Math.round(macros.kcal * portion),
-        p: round1(macros.p * portion),
-        c: round1(macros.c * portion),
-        f: round1(macros.f * portion),
-      };
-
-      $("itemLabel").value = finalName;
-      $("itemKcal").value = macros.kcal;
-      $("itemP").value = macros.p;
-      $("itemC").value = macros.c;
-      $("itemF").value = macros.f;
-
-      const confPct = Math.round((prob || 0) * 100);
-      $("metaLine").textContent = `Detected: "${label}" (${confPct}%). ${source}. You can edit name/macros.`;
-
-      if ((prob || 0) < 0.45) setStatus("danger", `Low confidence (${confPct}%). Please confirm/edit. ${source}`);
-      else if ((prob || 0) < 0.65) setStatus("warn", `Medium confidence (${confPct}%). Quick check recommended. ${source}`);
-      else setStatus("ok", `High confidence (${confPct}%). ${source}`);
-
-      saveDay();
-    }
-
     /*************************************************************
-     * Manual SG dish picker behavior
+     * 7) OCR (Tesseract.js)
      *************************************************************/
-    function fillSgPicker() {
-      const sel = $("sgDishSel");
-      sel.innerHTML = "";
-      const opt0 = document.createElement("option");
-      opt0.value = "";
-      opt0.textContent = "— Select a SG dish (20) —";
-      sel.appendChild(opt0);
+    let ocrWorker = null;
 
-      FOOD_DB.forEach((d) => {
-        const o = document.createElement("option");
-        o.value = d.name;
-        o.textContent = `${d.name} — ${d.kcal} kcal`;
-        sel.appendChild(o);
-      });
-
-      // drinks separator
-      const sep = document.createElement("option");
-      sep.disabled = true;
-      sep.textContent = "──────── Drinks ────────";
-      sel.appendChild(sep);
-
-      DRINK_DB.forEach((d) => {
-        const o = document.createElement("option");
-        o.value = d.name;
-        o.textContent = `${d.name} — ${d.kcal} kcal`;
-        sel.appendChild(o);
-      });
+    async function ensureOcrWorker() {
+      if (ocrWorker) return;
+      $("modelStatus").textContent = "Model: OCR loading…";
+      ocrWorker = await Tesseract.createWorker("eng", 1, { logger: () => {} });
+      $("modelStatus").textContent = "Model: OCR ready ✅";
     }
 
-    function applyDishByName(name) {
-      const itemType = $("itemType").value;
+    function cropCanvasFromImage(imgOrCanvas, region = "full") {
+      const srcCanvas = document.createElement("canvas");
+      const sctx = srcCanvas.getContext("2d");
 
-      let row = FOOD_DB.find(x => x.name === name) || DRINK_DB.find(x => x.name === name);
-      if (!row) return;
+      let w, h;
+      if (imgOrCanvas instanceof HTMLImageElement) {
+        w = imgOrCanvas.naturalWidth; h = imgOrCanvas.naturalHeight;
+        srcCanvas.width = w; srcCanvas.height = h;
+        sctx.drawImage(imgOrCanvas, 0, 0);
+      } else {
+        w = imgOrCanvas.width; h = imgOrCanvas.height;
+        srcCanvas.width = w; srcCanvas.height = h;
+        sctx.drawImage(imgOrCanvas, 0, 0);
+      }
 
-      // auto set itemType (if picked a drink dish)
-      const isDrink = !!DRINK_DB.find(x => x.name === name);
-      if (isDrink) $("itemType").value = "drink";
+      let x=0, y=0, cw=w, ch=h;
+      if (region === "label") {
+        x = 0; y = 0; cw = w; ch = Math.floor(h * 0.60);
+      } else if (region === "nutrition") {
+        x = Math.floor(w * 0.45);
+        y = Math.floor(h * 0.10);
+        cw = Math.floor(w * 0.55);
+        ch = Math.floor(h * 0.75);
+      }
 
-      const portion = parseFloat($("portion").value || "1.0");
+      const out = document.createElement("canvas");
+      out.width = cw; out.height = ch;
+      out.getContext("2d").drawImage(srcCanvas, x, y, cw, ch, 0, 0, cw, ch);
 
-      $("itemLabel").value = row.name;
-      $("itemKcal").value = Math.round(row.kcal * portion);
-      $("itemP").value = round1(row.p * portion);
-      $("itemC").value = round1(row.c * portion);
-      $("itemF").value = round1(row.f * portion);
+      // mild contrast boost
+      const octx = out.getContext("2d");
+      const imgData = octx.getImageData(0,0,cw,ch);
+      const d = imgData.data;
+      for (let i=0;i<d.length;i+=4){
+        d[i]   = clamp((d[i]-128)*1.25 + 128, 0, 255);
+        d[i+1] = clamp((d[i+1]-128)*1.25 + 128, 0, 255);
+        d[i+2] = clamp((d[i+2]-128)*1.25 + 128, 0, 255);
+      }
+      octx.putImageData(imgData,0,0);
 
-      $("metaLine").textContent = `Manual selection: "${row.name}" from SG Dish DB. Edit kcal/P/C/F if needed.`;
-      setStatus("ok", "Dish selected ✅ You can edit numbers freely.");
-      saveDay();
+      return out;
+    }
+
+    async function runOcr(region) {
+      if (!currentImageDataUrl) {
+        setStatus("warn","No image yet. Snap or Upload first.");
+        return { text: "" };
+      }
+      await ensureOcrWorker();
+      setStatus("warn", `Running OCR (${region})…`);
+
+      const img = new Image();
+      img.src = currentImageDataUrl;
+      await new Promise(res => img.onload = res);
+
+      const crop = cropCanvasFromImage(img, region);
+      const { data } = await ocrWorker.recognize(crop);
+      const text = (data && data.text) ? data.text : "";
+      return { text };
+    }
+
+    function cleanOcrText(t) {
+      return (t || "")
+        .replace(/\u00A0/g, " ")
+        .replace(/[^\S\r\n]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function parseNutritionFromText(text) {
+      const t = (text || "").toLowerCase();
+
+      let kcal = null;
+      const kcal1 = t.match(/calories[^0-9]{0,10}(\d{2,5})/i);
+      const kcal2 = t.match(/energy[^0-9]{0,10}(\d{2,5})\s*k?cal/i);
+      const kcal3 = t.match(/(\d{2,5})\s*k?cal/);
+
+      if (kcal1) kcal = Number(kcal1[1]);
+      else if (kcal2) kcal = Number(kcal2[1]);
+      else if (kcal3) kcal = Number(kcal3[1]);
+
+      function findGram(labelRegexList) {
+        for (const r of labelRegexList) {
+          const m = t.match(r);
+          if (m) return Number(m[1]);
+        }
+        return null;
+      }
+
+      const protein = findGram([/protein[^0-9]{0,10}(\d{1,4}(?:\.\d)?)\s*g/i]);
+      const carbs = findGram([
+        /total\s*carbohydrate[^0-9]{0,10}(\d{1,4}(?:\.\d)?)\s*g/i,
+        /carbohydrates?[^0-9]{0,10}(\d{1,4}(?:\.\d)?)\s*g/i,
+        /\bcarb[s]?\b[^0-9]{0,10}(\d{1,4}(?:\.\d)?)\s*g/i
+      ]);
+      const fat = findGram([
+        /total\s*fat[^0-9]{0,10}(\d{1,4}(?:\.\d)?)\s*g/i,
+        /\bfat\b[^0-9]{0,10}(\d{1,4}(?:\.\d)?)\s*g/i
+      ]);
+
+      return {
+        kcal: (Number.isFinite(kcal) ? kcal : null),
+        p: (Number.isFinite(protein) ? protein : null),
+        c: (Number.isFinite(carbs) ? carbs : null),
+        f: (Number.isFinite(fat) ? fat : null),
+      };
     }
 
     /*************************************************************
-     * Meal builder (FIX: delete removes immediately)
+     * 8) MEAL BUILDER
      *************************************************************/
     function sumMealItems() {
       return mealItems.reduce((acc, it) => {
@@ -1274,54 +1074,48 @@
       }, {kcal:0, p:0, c:0, f:0});
     }
 
-    function updateMealSumsOnly() {
-      const t = sumMealItems();
-      $("mealSumKcal").textContent = round1(t.kcal);
-      $("mealSumP").textContent = round1(t.p);
-      $("mealSumC").textContent = round1(t.c);
-      $("mealSumF").textContent = round1(t.f);
-    }
-
     function renderMealItems() {
       const list = $("mealItemsList");
       list.innerHTML = "";
 
       if (!mealItems.length) {
-        list.innerHTML = `<div class="text-sm text-gray-500">No items yet. Snap/upload or pick SG dish, then “Add item”.</div>`;
-        updateMealSumsOnly();
-        saveDay();
-        return;
-      }
-
-      mealItems.forEach((it, idx) => {
-        const row = document.createElement("div");
-        row.className = "bg-white border rounded-xl p-3 flex items-start gap-3";
-        row.innerHTML = `
-          <div class="flex-1">
-            <div class="font-extrabold">${escapeHtml(it.label)}
-              <span class="text-xs text-gray-500">(${escapeHtml(it.itemType)})</span>
+        list.innerHTML = `<div class="text-sm text-gray-500">No items yet. Select dish/OCR, edit macros, then “Add item”.</div>`;
+      } else {
+        mealItems.forEach((it, idx) => {
+          const row = document.createElement("div");
+          row.className = "bg-white border rounded-xl p-3 flex items-start gap-3";
+          row.innerHTML = `
+            <div class="flex-1">
+              <div class="font-extrabold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
+              <div class="text-xs text-gray-500">Source: ${escapeHtml(it.source)} • portion x${it.portion.toFixed(1)}</div>
+              <div class="text-sm mono font-bold mt-1">${it.kcal} kcal | P ${it.p}g | C ${it.c}g | F ${it.f}g</div>
             </div>
-            <div class="text-xs text-gray-500">From: ${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
-            <div class="text-sm mono font-bold mt-1">${it.kcal} kcal | P ${it.p}g | C ${it.c}g | F ${it.f}g</div>
-          </div>
-          <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
-        `;
-        list.appendChild(row);
-      });
-
-      // FIX: after deletion, re-render immediately so the deleted item disappears
-      list.querySelectorAll("button[data-del-item]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const i = parseInt(btn.getAttribute("data-del-item"), 10);
-          mealItems.splice(i, 1);
-          renderMealItems();   // <- critical fix
-          render();            // update totals tables
-          saveDay();
+            <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
+          `;
+          list.appendChild(row);
         });
-      });
 
-      updateMealSumsOnly();
-      saveDay();
+        list.querySelectorAll("button[data-del-item]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const i = parseInt(btn.getAttribute("data-del-item"), 10);
+            mealItems.splice(i, 1);
+            // IMPORTANT: re-render after delete (so it disappears)
+            renderMealItems();
+            updateMealSums();
+            saveDay();
+          });
+        });
+      }
+      updateMealSums();
+    }
+
+    function updateMealSums() {
+      const t = sumMealItems();
+      $("mealSumKcal").textContent = round1(t.kcal);
+      $("mealSumP").textContent = round1(t.p);
+      $("mealSumC").textContent = round1(t.c);
+      $("mealSumF").textContent = round1(t.f);
+      render();
     }
 
     function addItem() {
@@ -1331,29 +1125,23 @@
 
       const portion = parseFloat($("portion").value || "1.0");
 
-      // Allow large numbers (3-4 digits etc.)
-      const kcal = clamp(safeNum($("itemKcal").value), 0, 99999);
+      // Allow large digits (3-5 digits kcal, 3-4 digits grams)
+      const kcal = clamp(Math.round(safeNum($("itemKcal").value)), 0, 99999);
       const p = clamp(safeNum($("itemP").value), 0, 9999);
       const c = clamp(safeNum($("itemC").value), 0, 9999);
       const f = clamp(safeNum($("itemF").value), 0, 9999);
 
-      const confPct = Math.round((lastLive.prob || 0) * 100);
-
-      const m = bestDbMatch(label, itemType);
-      const source = (m.best && m.bestScore >= 0.35) ? "SG Dish DB" : ($("aiMode").value === "generic" ? "Generic AI / Heuristic" : "Manual");
-
-      mealItems.push({ itemType, label, kcal, p, c, f, portion, confPct, source });
+      const source = $("aiMode").value.startsWith("ocr") ? "OCR" : "Manual";
+      mealItems.push({ itemType, label, kcal, p, c, f, portion, source });
 
       // reset editor
       $("itemLabel").value = "";
-      $("itemKcal").value = 0;
-      $("itemP").value = 0;
-      $("itemC").value = 0;
-      $("itemF").value = 0;
-      $("metaLine").textContent = "Item added. Add next item.";
-
+      $("itemKcal").value = "";
+      $("itemP").value = "";
+      $("itemC").value = "";
+      $("itemF").value = "";
+      $("metaLine").textContent = "Item added. Add next item or finalize meal.";
       renderMealItems();
-      render();
       saveDay();
     }
 
@@ -1361,13 +1149,11 @@
       if (!confirm("Clear current meal items?")) return;
       mealItems = [];
       renderMealItems();
-      render();
       saveDay();
     }
 
     function finalizeMealToLog() {
       if (!mealItems.length) { alert("No items yet. Add items first."); return; }
-
       const mealSlot = $("mealSlot").value;
       const notes = ($("mealNotes").value || "").trim();
       const sum = sumMealItems();
@@ -1387,7 +1173,6 @@
 
       mealItems = [];
       $("mealNotes").value = "";
-
       renderMealItems();
       render();
       saveDay();
@@ -1395,8 +1180,24 @@
     }
 
     /*************************************************************
-     * Render log (entries) + meal tables
+     * 9) DAILY TOTALS + ADEQUACY + RENDER
      *************************************************************/
+    function calcTotals() {
+      return entries.reduce((acc, e) => {
+        acc.kcal += e.macros.kcal;
+        acc.p += e.macros.p;
+        acc.c += e.macros.c;
+        acc.f += e.macros.f;
+        return acc;
+      }, {kcal:0, p:0, c:0, f:0});
+    }
+
+    function adequacyLabel(value, lo, hi) {
+      if (value < lo) return "Insufficient";
+      if (value > hi) return "Excess (maybe ok depending on training)";
+      return "Sufficient";
+    }
+
     function render() {
       const targets = computeTargets();
       const totals = calcTotals();
@@ -1411,6 +1212,7 @@
 
       const pVer = adequacyLabel(totals.p, targets.pRange[0], targets.pRange[1]);
       const cVer = adequacyLabel(totals.c, targets.cRange[0], targets.cRange[1]);
+
       const fatTarget = targets.fTarget;
       const fatTol = Math.max(10, 0.15 * fatTarget);
       let fVer = "On target-ish";
@@ -1420,7 +1222,7 @@
       $("verC").textContent = `${cVer} (target ${targets.cRange[0]}–${targets.cRange[1]} g)`;
       $("verF").textContent = `${fVer} (target ~${targets.fTarget} g; fat AMDR ${targets.fatRatioPct}% kcal)`;
 
-      // by slot table
+      // Meal table
       const bySlot = {};
       MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
       entries.forEach(e => {
@@ -1447,15 +1249,14 @@
         tbody.appendChild(tr);
       });
 
-      // entries list
+      // Entries list
       const list = $("entriesList");
       list.innerHTML = "";
-
       entries.forEach((e, idx) => {
-        const itemsHtml = (e.items || []).map((it) => `
+        const itemsHtml = (e.items || []).map(it => `
           <div class="border rounded-lg p-2 bg-gray-50">
-            <div class="text-sm font-bold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${escapeHtml(it.itemType)})</span></div>
-            <div class="text-xs text-gray-500">${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
+            <div class="text-sm font-bold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
+            <div class="text-xs text-gray-500">${escapeHtml(it.source)} • portion x${it.portion.toFixed(1)}</div>
             <div class="text-xs mono font-bold mt-1">${it.kcal} kcal | P ${it.p} C ${it.c} F ${it.f}</div>
           </div>
         `).join("");
@@ -1467,19 +1268,16 @@
             ${e.imgDataUrl ? `<img src="${e.imgDataUrl}" class="w-full h-full object-cover" alt="thumb">` : ""}
           </div>
           <div class="flex-1">
-            <div class="font-extrabold">${escapeHtml(e.mealSlot)} — ${escapeHtml(e.label)}</div>
-            <div class="text-sm mt-1 mono font-bold">
-              ${e.macros.kcal} kcal | P ${e.macros.p}g | C ${e.macros.c}g | F ${e.macros.f}g
-            </div>
+            <div class="font-extrabold">${e.mealSlot} — ${escapeHtml(e.label)}</div>
+            <div class="text-sm mt-1 mono font-bold">${e.macros.kcal} kcal | P ${e.macros.p}g | C ${e.macros.c}g | F ${e.macros.f}g</div>
             ${e.notes ? `<div class="text-xs text-gray-600 mt-1">Notes: ${escapeHtml(e.notes)}</div>` : ""}
-            <div class="mt-2 space-y-2">${itemsHtml || ""}</div>
+            <div class="mt-2 space-y-2">${itemsHtml}</div>
           </div>
           <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del="${idx}">🗑️</button>
         `;
         list.appendChild(card);
       });
 
-      // FIX: delete entry removes immediately
       list.querySelectorAll("button[data-del]").forEach(btn => {
         btn.addEventListener("click", () => {
           const i = parseInt(btn.getAttribute("data-del"), 10);
@@ -1489,33 +1287,31 @@
         });
       });
 
+      // auto-save after render changes
       saveDay();
     }
 
     /*************************************************************
-     * PDF export
+     * 10) PDF EXPORT
      *************************************************************/
     async function exportPdf() {
       const targets = computeTargets();
       const totals = calcTotals();
       const { jsPDF } = window.jspdf;
-
       const doc = new jsPDF({ unit: "pt", format: "a4" });
       const pageH = doc.internal.pageSize.getHeight();
       const margin = 40;
       let y = margin;
 
-      const dateStr = $("dateSel").value || todayISO();
-
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
-      doc.text(`MacroVision — Athlete Daily Fueling Report (SG)`, margin, y);
+      doc.text("MacroVision — Athlete Daily Fueling Report (SG)", margin, y);
       y += 18;
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(120);
-      doc.text(`Date: ${dateStr} • Generated: ${new Date().toLocaleString()}`, margin, y);
+      doc.text(`Date: ${$("dateSel").value} • Generated: ${new Date().toLocaleString()}`, margin, y);
       y += 18;
       doc.setTextColor(0);
 
@@ -1555,6 +1351,7 @@
       });
 
       if (y > pageH - 220) { doc.addPage(); y = margin; }
+
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.text("Macrodistribution by Meal Timing", margin, y);
@@ -1578,7 +1375,7 @@
       const detailRows = [];
       entries.forEach(e => {
         (e.items || []).forEach(it => {
-          detailRows.push([ e.mealSlot, it.itemType, it.label, it.kcal, it.p, it.c, it.f, `${it.confPct}%`, it.source ]);
+          detailRows.push([ e.mealSlot, it.itemType, it.label, it.kcal, it.p, it.c, it.f, it.source ]);
         });
       });
 
@@ -1587,9 +1384,10 @@
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
         doc.text("Item-level Details", margin, margin);
+
         doc.autoTable({
           startY: margin + 12,
-          head: [["Meal", "Type", "Item", "kcal", "P", "C", "F", "Conf", "Source"]],
+          head: [["Meal", "Type", "Item", "kcal", "P", "C", "F", "Source"]],
           body: detailRows,
           margin: { left: margin, right: margin },
           styles: { font: "helvetica", fontSize: 8 },
@@ -1602,61 +1400,48 @@
       doc.text(`© ${new Date().getFullYear()} Ng Jun Wei & Ng Hong Wei.`, margin, pageH - 24);
       doc.setTextColor(0);
 
-      doc.save(`MacroVision_${dateStr}_Report.pdf`);
+      doc.save(`MacroVision_${$("dateSel").value}.pdf`);
     }
 
     /*************************************************************
-     * Profile save/restore
+     * 11) EVENTS / INIT
      *************************************************************/
-    function getProfileState() {
-      return {
-        sex: $("sex").value,
-        age: $("age").value,
-        heightCm: $("heightCm").value,
-        weightKg: $("weightKg").value,
-        athleteType: $("athleteType").value,
-        seasonPhase: $("seasonPhase").value,
-        dayIntensity: $("dayIntensity").value,
-        equation: $("equation").value,
-        bfPercent: $("bfPercent").value,
-        activity: $("activity").value,
-        goal: $("goal").value,
-        fatPref: $("fatPref").value,
-        aiMode: $("aiMode").value,
-        aiStrict: $("aiStrict").value,
-        itemType: $("itemType").value,
-        mealSlot: $("mealSlot").value,
-        portion: $("portion").value
-      };
-    }
-    function setProfileState(p) {
-      const setIf = (id, val) => { if (val !== undefined && $(id)) $(id).value = val; };
-      setIf("sex", p.sex);
-      setIf("age", p.age);
-      setIf("heightCm", p.heightCm);
-      setIf("weightKg", p.weightKg);
-      setIf("athleteType", p.athleteType);
-      setIf("seasonPhase", p.seasonPhase);
-      setIf("dayIntensity", p.dayIntensity);
-      setIf("equation", p.equation);
-      setIf("bfPercent", p.bfPercent);
-      setIf("activity", p.activity);
-      setIf("goal", p.goal);
-      setIf("fatPref", p.fatPref);
-      setIf("aiMode", p.aiMode);
-      setIf("aiStrict", p.aiStrict);
-      setIf("itemType", p.itemType);
-      setIf("mealSlot", p.mealSlot);
-      setIf("portion", p.portion);
+    function fillDishDropdown() {
+      const sel = $("sgDish");
+      sel.innerHTML = "";
+      const opt0 = document.createElement("option");
+      opt0.value = "";
+      opt0.textContent = "Select a dish...";
+      sel.appendChild(opt0);
 
-      $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
-      $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
-      $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+      SG_DISHES.forEach((d, idx) => {
+        const opt = document.createElement("option");
+        opt.value = String(idx);
+        opt.textContent = d.name;
+        sel.appendChild(opt);
+      });
     }
 
-    /*************************************************************
-     * Events / init
-     *************************************************************/
+    function applySelectedDish() {
+      const idx = parseInt($("sgDish").value, 10);
+      if (!Number.isFinite(idx) || idx < 0 || idx >= SG_DISHES.length) {
+        setStatus("warn", "Please select a dish first.");
+        return;
+      }
+      const d = SG_DISHES[idx];
+      const portion = parseFloat($("portion").value || "1.0");
+
+      $("itemLabel").value = d.name;
+      $("itemKcal").value = Math.round(d.kcal * portion);
+      $("itemP").value = round1(d.p * portion);
+      $("itemC").value = round1(d.c * portion);
+      $("itemF").value = round1(d.f * portion);
+
+      $("metaLine").textContent = `Dish applied: ${d.name} (x${portion.toFixed(1)}). You can edit kcal/P/C/F freely.`;
+      setStatus("ok", "Dish macros loaded ✅ (editable)");
+      saveDay();
+    }
+
     function bindEvents() {
       $("equation").addEventListener("change", () => {
         $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
@@ -1672,34 +1457,63 @@
           $(id).addEventListener("change", render);
         });
 
-      $("aiMode").addEventListener("change", async () => {
-        if ($("aiMode").value === "generic") {
-          try { await ensureMobileNet(); setStatus("ok","Generic AI ready ✅"); }
-          catch(e){ setStatus("danger","Failed to load Generic AI. Check internet/CDN."); }
-        } else {
-          setStatus("ok","Manual mode ✅ Use SG dish picker.");
-        }
-        render();
-        saveDay();
-      });
+      $("dateSel").addEventListener("change", loadDay);
 
-      $("aiStrict").addEventListener("change", () => { render(); saveDay(); });
+      $("saveBtn").addEventListener("click", () => { saveDay(); setStatus("ok","Saved ✅"); });
+      $("resetDayBtn").addEventListener("click", () => {
+        if (!confirm("Reset this day (delete saved log for selected date)?")) return;
+        const dateStr = $("dateSel").value;
+        localStorage.removeItem(storageKeyForDate(dateStr));
+        entries = [];
+        mealItems = [];
+        renderMealItems();
+        render();
+        setStatus("warn","Day reset.");
+      });
 
       $("startCamBtn").addEventListener("click", startCamera);
       $("stopCamBtn").addEventListener("click", stopCamera);
       $("snapBtn").addEventListener("click", snapPhoto);
       $("uploadInput").addEventListener("change", (e) => handleUpload(e.target.files[0]));
-
       $("portion").addEventListener("input", () => {
         $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+      });
+
+      $("applyDishBtn").addEventListener("click", applySelectedDish);
+
+      $("ocrLabelBtn").addEventListener("click", async () => {
+        const { text } = await runOcr("label");
+        const cleaned = cleanOcrText(text);
+        if (!cleaned) {
+          setStatus("danger","OCR found no readable label text. Try closer, brighter, less glare.");
+          $("metaLine").textContent = "OCR label failed — use manual dish picker or type name.";
+          return;
+        }
+        const suggestion = cleaned.split(" ").slice(0, 8).join(" ");
+        $("itemLabel").value = suggestion;
+        $("metaLine").textContent = `OCR Label detected: "${suggestion}". You can edit it.`;
+        setStatus("ok","OCR label read ✅ (check/edit)");
         saveDay();
       });
 
-      $("itemType").addEventListener("change", () => { saveDay(); });
+      $("ocrNutriBtn").addEventListener("click", async () => {
+        const { text } = await runOcr("nutrition");
+        const cleaned = cleanOcrText(text);
+        if (!cleaned) {
+          setStatus("danger","OCR found no readable nutrition text. Zoom into the nutrition panel.");
+          $("metaLine").textContent = "Nutrition OCR failed — manually edit kcal/P/C/F.";
+          return;
+        }
+        const parsed = parseNutritionFromText(cleaned);
 
-      $("sgDishSel").addEventListener("change", () => {
-        const v = $("sgDishSel").value;
-        if (v) applyDishByName(v);
+        if (parsed.kcal !== null) $("itemKcal").value = parsed.kcal;
+        if (parsed.p !== null) $("itemP").value = parsed.p;
+        if (parsed.c !== null) $("itemC").value = parsed.c;
+        if (parsed.f !== null) $("itemF").value = parsed.f;
+
+        $("metaLine").textContent = `Nutrition OCR parsed: kcal=${parsed.kcal ?? "?"}, P=${parsed.p ?? "?"}, C=${parsed.c ?? "?"}, F=${parsed.f ?? "?"}. Verify + edit.`;
+        setStatus("ok","Nutrition OCR parsed ✅ (verify)");
+        saveDay();
       });
 
       $("addItemBtn").addEventListener("click", addItem);
@@ -1708,47 +1522,34 @@
 
       $("exportPdfBtn").addEventListener("click", exportPdf);
       $("clearBtn").addEventListener("click", () => {
-        if (!confirm("Clear all logged meals for this date?")) return;
+        if (!confirm("Clear all logged meals for this day?")) return;
         entries = [];
         mealItems = [];
-        currentImageDataUrl = null;
         renderMealItems();
         render();
         saveDay();
       });
 
       window.addEventListener("resize", resizeOverlay);
-
-      $("dateSel").addEventListener("change", () => {
-        const d = $("dateSel").value || todayISO();
-        loadDay(d);
-      });
-
-      window.addEventListener("beforeunload", () => {
-        stopCamera();
-        saveDay();
-      });
+      window.addEventListener("beforeunload", stopCamera);
     }
 
-    // init
-    (function init() {
-      $("yearNow").textContent = new Date().getFullYear();
-      $("yearNow2").textContent = new Date().getFullYear();
+    // Init
+    $("yearNow").textContent = new Date().getFullYear();
+    $("yearNow2").textContent = new Date().getFullYear();
 
-      const d = todayISO();
-      $("dateSel").value = d;
+    $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
+    $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
 
-      fillSgPicker();
+    $("dateSel").value = isoDateLocal(new Date());
+    $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
 
-      $("fatPrefLabel").textContent = `${$("fatPref").value}%`;
-      $("bfWrap").classList.toggle("hidden", $("equation").value !== "katch");
-      $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+    fillDishDropdown();
+    bindEvents();
 
-      bindEvents();
-      loadDay(d);
-      renderMealItems();
-      render();
-    })();
+    loadDay();
+    renderMealItems();
+    render();
   </script>
 </body>
 </html>
