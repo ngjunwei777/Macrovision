@@ -149,7 +149,7 @@
     details summary::-webkit-details-marker{ display:none; }
 
     .hscroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    .minw-log{ min-width: 1020px; }
+    .minw-log{ min-width: 1080px; }
 
     .fab{
       position: fixed;
@@ -164,7 +164,7 @@
     .backdrop{ position:absolute; inset:0; background: rgba(2,6,23,.55); }
     .sheet{
       position: relative;
-      max-width: 820px;
+      max-width: 860px;
       margin: 24px auto;
       background:#fff;
       border-radius: 18px;
@@ -228,6 +228,7 @@
     <div class="mv-top-inner">
       <div class="mv-brand">
         <div class="mv-logo" aria-label="MacroVision logo">
+          <!-- Minimal wellness icon (leaf + lens) -->
           <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
             <circle cx="32" cy="32" r="22" stroke="currentColor" stroke-width="2.6" opacity="0.40"/>
             <path d="M42.5 22.5c-9.5 1.2-17 8.2-18.6 17.7-.4 2.3 1.5 4.2 3.8 3.8 9.5-1.6 16.5-9.1 17.7-18.6.2-1.7-1.2-3.1-2.9-2.9Z"
@@ -238,7 +239,7 @@
         </div>
         <div class="mv-brand-text">
           <div class="mv-title">MacroVision</div>
-          <div class="mv-sub">Minimal wellness • SG food log • OCR label scan • Targets from TDEE + AMDR/IOC + micronutrients</div>
+          <div class="mv-sub">Minimal wellness • SG food log • 24-hour recall • OCR label scan • Targets from TDEE + AMDR/IOC</div>
         </div>
       </div>
 
@@ -400,9 +401,7 @@
                 <div class="pill">F: <span id="calcF" style="margin-left:6px;font-weight:900">—</span></div>
                 <div class="pill">Macro kcal: <span id="calcMacroKcal" style="margin-left:6px;font-weight:900">—</span></div>
               </div>
-              <div class="hint mt-2" id="calcNote">
-                Set your Profile to calculate TDEE + targets using either AMDR (%) or IOC (g/kg).
-              </div>
+              <div class="hint mt-2" id="calcNote"></div>
             </div>
           </div>
 
@@ -414,8 +413,7 @@
                 <div class="tag">estimates</div>
               </div>
               <div class="hint mt-1">
-                These are <b>rough estimates</b> from your logged items’ micronutrient tags (not a lab-accurate database).
-                Use this as a “did I include key micronutrients today?” checklist.
+                These are <b>rough estimates</b> from your logged items’ micronutrient tags (not a full nutrient database).
               </div>
 
               <div class="microGrid mt-3">
@@ -452,7 +450,7 @@
               </div>
 
               <div class="hint mt-2">
-                Athlete highlights: <b>Iron</b> (oxygen transport), <b>Calcium + Vit D</b> (bone health), <b>Vit C</b> (collagen/iron absorption), <b>B12 + Folate</b> (RBC formation).
+                Athlete highlights: <b>Iron</b> (oxygen transport), <b>Calcium + Vit D</b> (bone), <b>Vit C</b> (collagen/iron absorption), <b>B12 + Folate</b> (RBC formation).
               </div>
             </div>
           </div>
@@ -466,6 +464,9 @@
         <div class="flex items-center justify-between">
           <div class="font-extrabold text-lg">Quick add (Singapore)</div>
           <div class="text-sm muted">Tap → edit → save</div>
+        </div>
+        <div class="hint mt-1">
+          Presets auto-assign a <b>meal occasion</b> (24-hour food recall).
         </div>
       </div>
       <div class="card-b">
@@ -491,7 +492,7 @@
     <section class="card">
       <div class="card-h">
         <div class="flex items-center justify-between">
-          <div class="font-extrabold text-lg">Food log</div>
+          <div class="font-extrabold text-lg">Food log (24-hour recall)</div>
           <div class="text-sm muted">Swipe horizontally on mobile</div>
         </div>
       </div>
@@ -500,7 +501,7 @@
           <div class="minw-log">
             <div class="grid grid-cols-12 text-xs muted px-2 py-2 border-b" style="border-color:rgba(15,23,42,.08)">
               <div class="col-span-3">Item</div>
-              <div class="col-span-2">Category</div>
+              <div class="col-span-2">Meal / Category</div>
               <div class="col-span-1 text-right" style="color:rgba(6,95,70,.95); font-weight:900;">P</div>
               <div class="col-span-1 text-right" style="color:rgba(30,64,175,.95); font-weight:900;">C</div>
               <div class="col-span-1 text-right" style="color:rgba(146,64,14,.95); font-weight:900;">F</div>
@@ -532,12 +533,28 @@
         </div>
         <button id="btnCloseEditor" class="btn btn-soft">Close</button>
       </div>
+
       <div class="sheetBody space-y-3">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <label class="text-sm">
+        <!-- NAME + MEAL + CATEGORY -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <label class="text-sm md:col-span-2">
             <div class="muted mb-1 font-extrabold">Item name</div>
             <input id="editName" class="in" placeholder="e.g., whey protein shake" />
           </label>
+
+          <label class="text-sm">
+            <div class="muted mb-1 font-extrabold">Meal occasion</div>
+            <select id="editMeal" class="in">
+              <option value="Breakfast">Breakfast</option>
+              <option value="Tea break">Tea break</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Snack">Snack</option>
+              <option value="Dinner">Dinner</option>
+              <option value="Supper">Supper</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+
           <label class="text-sm">
             <div class="muted mb-1 font-extrabold">Category</div>
             <select id="editCategory" class="in">
@@ -574,7 +591,7 @@
 
         <div class="text-xs muted" id="kcalLine">kcal = 4×P + 4×C + 9×F</div>
 
-        <!-- Micronutrient toggle + quick assign -->
+        <!-- Micronutrient tags -->
         <div class="card" style="box-shadow:none;border-radius:16px;">
           <div class="p-3">
             <div class="flex items-center justify-between">
@@ -597,10 +614,6 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
               <button class="btn btn-soft" id="btnTagDefaultFood">Auto-tag common foods</button>
               <button class="btn btn-soft" id="btnClearTags">Clear tags</button>
-            </div>
-
-            <div class="hint mt-2">
-              Example: <b>Whey</b> → Calcium + B12 • <b>Spinach</b> → Iron + Folate • <b>Orange</b> → Vit C.
             </div>
           </div>
         </div>
@@ -696,9 +709,9 @@
             </div>
 
             <div class="hint mt-2">
-              <b>AMDR:</b> Protein 10–35%, Carbs 45–65%, Fat 20–35%.
+              <b>AMDR (% kcal):</b> Carbohydrate <b>45–65%</b>, Fat <b>20–35%</b>, Protein <b>10–35%</b>.
               <br/>
-              <b>IOC:</b> choose a sport type template (e.g., endurance, team sport, strength) to auto-set carbs g/kg ranges.
+              <b>IOC:</b> choose an athlete template to auto-set carbs g/kg ranges.
             </div>
           </div>
         </div>
@@ -714,17 +727,17 @@
               <label class="text-sm">
                 <div class="muted mb-1 font-extrabold" style="color:rgba(6,95,70,.95)">Protein %</div>
                 <input id="amdrP" type="number" class="in no-spin" min="10" max="35" step="1" />
-                <div class="hint">Typical: 20–30%</div>
+                <div class="hint">Range: 10–35%</div>
               </label>
               <label class="text-sm">
                 <div class="muted mb-1 font-extrabold" style="color:rgba(30,64,175,.95)">Carbs %</div>
                 <input id="amdrC" type="number" class="in no-spin" min="45" max="65" step="1" />
-                <div class="hint">Typical: 45–55%</div>
+                <div class="hint">Range: 45–65%</div>
               </label>
               <label class="text-sm">
                 <div class="muted mb-1 font-extrabold" style="color:rgba(146,64,14,.95)">Fat %</div>
                 <input id="amdrF" type="number" class="in no-spin" min="20" max="35" step="1" />
-                <div class="hint">Typical: 20–30%</div>
+                <div class="hint">Range: 20–35%</div>
               </label>
             </div>
 
@@ -732,7 +745,7 @@
           </div>
         </div>
 
-        <!-- IOC updated with athlete templates + g/kg standards -->
+        <!-- IOC -->
         <div class="card hidden" id="iocBox" style="box-shadow:none;border-radius:16px;">
           <div class="p-3">
             <div class="flex items-center justify-between">
@@ -784,10 +797,6 @@
                 <div class="hint">Common: 20–35%</div>
               </label>
             </div>
-
-            <div class="hint mt-2">
-              Reminder: These are practical sport nutrition ranges. Adjust day-to-day for training load, recovery, and total kcal.
-            </div>
           </div>
         </div>
 
@@ -817,7 +826,7 @@
               </div>
             </div>
 
-            <div class="hint mt-2" id="profileNote">
+            <div class="hint mt-2">
               Tap <b>Use calculated</b> on the main screen to apply these values as your day targets.
             </div>
           </div>
@@ -889,8 +898,8 @@
       return local.toISOString().slice(0,10);
     }
 
-    const APP_KEY = "macrovision_minwell_v3_days";
-    const PROFILE_KEY = "macrovision_minwell_v3_profile";
+    const APP_KEY = "macrovision_minwell_v4_days";
+    const PROFILE_KEY = "macrovision_minwell_v4_profile";
 
     const defaultDay = () => ({
       goals: { kcal: 2000, p: 140, c: 220, f: 60 },
@@ -921,7 +930,6 @@
     };
 
     // Micronutrient "points" model (rough estimates)
-    // Each tag adds a standard dose-like estimate per serving/item.
     const MICRO_DOSES = {
       iron:   { unit:"mg", add: 2.0 },
       vitc:   { unit:"mg", add: 30 },
@@ -942,6 +950,32 @@
     }
     function saveAll(obj) { localStorage.setItem(APP_KEY, JSON.stringify(obj)); }
 
+    function num(v){ const n = parseFloat(v); return Number.isFinite(n) ? n : 0; }
+    function round1(n){ return Math.round(n*10)/10; }
+    function clamp(n,min=0,max=9999){ return Math.min(max, Math.max(min, n)); }
+    function kcalFromMacros(p,c,f){ return Math.round(4*p + 4*c + 9*f); }
+
+    function nowStr(){
+      const d = new Date();
+      return d.toLocaleString(undefined, { year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+    }
+
+    function esc(s){
+      return String(s).replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
+    }
+
+    // Auto meal based on current time (24-h recall)
+    function autoMealFromTime(dateObj = new Date()){
+      const h = dateObj.getHours();
+      // Typical SG pattern:
+      if (h >= 5 && h < 10) return "Breakfast";
+      if (h >= 10 && h < 12) return "Tea break";
+      if (h >= 12 && h < 15) return "Lunch";
+      if (h >= 15 && h < 18) return "Snack";
+      if (h >= 18 && h < 21) return "Dinner";
+      return "Supper";
+    }
+
     function loadDay(dateISO) {
       const all = loadAll();
       const d = all[dateISO] || null;
@@ -951,12 +985,14 @@
         const p = num(x.p), c = num(x.c), f = num(x.f);
         const kcal = Number.isFinite(x.kcal) ? x.kcal : kcalFromMacros(p,c,f);
         const micro = x.micro || {};
-        return { ...x, p, c, f, kcal, micro };
+        const meal = x.meal || "Other";
+        return { ...x, p, c, f, kcal, micro, meal };
       });
 
       if (!d.goals) d.goals = defaultDay().goals;
       return d;
     }
+
     function saveDay(dateISO, dstate) {
       const all = loadAll();
       all[dateISO] = dstate;
@@ -982,21 +1018,6 @@
       localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
     }
 
-    function num(v){ const n = parseFloat(v); return Number.isFinite(n) ? n : 0; }
-    function round1(n){ return Math.round(n*10)/10; }
-    function clamp(n,min=0,max=9999){ return Math.min(max, Math.max(min, n)); }
-    function kcalFromMacros(p,c,f){ return Math.round(4*p + 4*c + 9*f); }
-    function fmt1(n){ return String(round1(n)); }
-    function nowStr(){
-      const d = new Date();
-      return d.toLocaleString(undefined, { year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
-    }
-    function esc(s){
-      return String(s).replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
-    }
-
-    function setTodayChip(){ $("todayText").textContent = activeDate; }
-
     function bmrMifflin(sex, weightKg, heightCm, age){
       const base = 10*weightKg + 6.25*heightCm - 5*age;
       return Math.round(base + (sex === "male" ? 5 : -161));
@@ -1006,7 +1027,6 @@
       if (goal === "hypertrophy") return 300;
       return 0;
     }
-
     function pickFromRange(min, max, preset){
       if (preset === "low") return min;
       if (preset === "high") return max;
@@ -1041,7 +1061,6 @@
         c = round1((kcalGoal*(ac/100))/4);
         f = round1((kcalGoal*(af/100))/9);
       } else {
-        // IOC template drives carbs g/kg default
         const type = profile.ioc.type || "team_mod";
         const preset = profile.ioc.carbPreset || "mid";
         const range = IOC_CARB_RANGES[type] || IOC_CARB_RANGES.team_mod;
@@ -1057,7 +1076,6 @@
         const fatK = Math.max(0, kcalGoal * (fatPct/100));
         f = round1(fatK/9);
 
-        // balance to kcal goal
         let macroK = 4*p + 4*c + 9*f;
         if (macroK > kcalGoal){
           const over = macroK - kcalGoal;
@@ -1075,63 +1093,77 @@
       return { bmr, tdee, kcalGoal, p, c, f, macroKcal, method };
     }
 
-    // Presets (expanded)
+    // ===== Presets (AUTO-ASSIGN MEAL) =====
     const presets = {
       foods: [
-        { name:"Chicken rice (avg)", category:"Food", p: 28, c: 75, f: 18, micro: { b12:true } },
-        { name:"Cai fan (2 veg 1 meat)", category:"Food", p: 25, c: 80, f: 22, micro: { iron:true, folate:true } },
-        { name:"Cai fan (2 meat 1 veg)", category:"Food", p: 35, c: 75, f: 28, micro: { iron:true, b12:true } },
-        { name:"Cai fan (fish + veg + egg)", category:"Food", p: 32, c: 70, f: 20, micro: { vitd:true, b12:true } },
-        { name:"Bak chor mee (dry)", category:"Food", p: 26, c: 85, f: 22, micro: { iron:true } },
-        { name:"Char kway teow", category:"Food", p: 20, c: 90, f: 28, micro: {} },
-        { name:"Hokkien mee", category:"Food", p: 24, c: 88, f: 26, micro: {} },
-        { name:"Laksa (avg)", category:"Food", p: 22, c: 78, f: 30, micro: { calcium:true } },
-        { name:"Roti prata (2) + curry", category:"Food", p: 12, c: 70, f: 28, micro: {} },
-        { name:"Mee goreng", category:"Food", p: 18, c: 95, f: 24, micro: {} },
-        { name:"Economy bee hoon (egg + sausage)", category:"Food", p: 20, c: 85, f: 20, micro: { b12:true } },
-        { name:"Yong tau foo (7 pcs + soup)", category:"Food", p: 28, c: 45, f: 14, micro: { calcium:true } },
-        { name:"Fish soup + rice", category:"Food", p: 30, c: 60, f: 10, micro: { vitd:true } },
-        { name:"Sliced fish porridge", category:"Food", p: 18, c: 55, f: 6, micro: { vitd:true } },
-        { name:"Ban mian soup", category:"Food", p: 22, c: 70, f: 12, micro: {} },
-        { name:"Nasi lemak (avg)", category:"Food", p: 18, c: 85, f: 28, micro: {} },
+        { name:"Chicken rice (avg)", meal:"Lunch", category:"Food", p: 28, c: 75, f: 18, micro: { b12:true } },
+        { name:"Cai fan (2 veg 1 meat)", meal:"Lunch", category:"Food", p: 25, c: 80, f: 22, micro: { iron:true, folate:true } },
+        { name:"Cai fan (2 meat 1 veg)", meal:"Lunch", category:"Food", p: 35, c: 75, f: 28, micro: { iron:true, b12:true } },
+        { name:"Cai fan (fish + veg + egg)", meal:"Lunch", category:"Food", p: 32, c: 70, f: 20, micro: { vitd:true, b12:true } },
+        { name:"Bak chor mee (dry)", meal:"Lunch", category:"Food", p: 26, c: 85, f: 22, micro: { iron:true } },
+        { name:"Char kway teow", meal:"Dinner", category:"Food", p: 20, c: 90, f: 28, micro: {} },
+        { name:"Hokkien mee", meal:"Dinner", category:"Food", p: 24, c: 88, f: 26, micro: {} },
+        { name:"Laksa (avg)", meal:"Lunch", category:"Food", p: 22, c: 78, f: 30, micro: { calcium:true } },
+        { name:"Roti prata (2) + curry", meal:"Breakfast", category:"Food", p: 12, c: 70, f: 28, micro: {} },
+        { name:"Mee goreng", meal:"Lunch", category:"Food", p: 18, c: 95, f: 24, micro: {} },
+        { name:"Economy bee hoon (egg + sausage)", meal:"Breakfast", category:"Food", p: 20, c: 85, f: 20, micro: { b12:true } },
+        { name:"Yong tau foo (7 pcs + soup)", meal:"Dinner", category:"Food", p: 28, c: 45, f: 14, micro: { calcium:true } },
+        { name:"Fish soup + rice", meal:"Lunch", category:"Food", p: 30, c: 60, f: 10, micro: { vitd:true } },
+        { name:"Sliced fish porridge", meal:"Dinner", category:"Food", p: 18, c: 55, f: 6, micro: { vitd:true } },
+        { name:"Ban mian soup", meal:"Dinner", category:"Food", p: 22, c: 70, f: 12, micro: {} },
+        { name:"Nasi lemak (avg)", meal:"Breakfast", category:"Food", p: 18, c: 85, f: 28, micro: {} },
       ],
       fruits: [
-        { name:"Banana (1 med)", category:"Fruit", p: 1.3, c: 27, f: 0.3, micro: { vitc:false } },
-        { name:"Apple (1 med)", category:"Fruit", p: 0.5, c: 25, f: 0.3, micro: { vitc:false } },
-        { name:"Orange (1 med)", category:"Fruit", p: 1.2, c: 15.4, f: 0.2, micro: { vitc:true } },
-        { name:"Papaya (1 cup)", category:"Fruit", p: 0.9, c: 15, f: 0.4, micro: { vitc:true } },
-        { name:"Mango (1 cup)", category:"Fruit", p: 1.4, c: 25, f: 0.6, micro: { vitc:true, folate:true } },
-        { name:"Kiwi (1 med)", category:"Fruit", p: 0.8, c: 10, f: 0.4, micro: { vitc:true } },
-        { name:"Strawberries (1 cup)", category:"Fruit", p: 1.0, c: 12, f: 0.5, micro: { vitc:true } },
-        { name:"Guava (1 med)", category:"Fruit", p: 2.6, c: 14, f: 1.0, micro: { vitc:true, folate:true } },
-        { name:"Dragon fruit (1 cup)", category:"Fruit", p: 1.2, c: 14, f: 0.4, micro: { vitc:true } },
+        { name:"Banana (1 med)", meal:"Snack", category:"Fruit", p: 1.3, c: 27, f: 0.3, micro: {} },
+        { name:"Apple (1 med)", meal:"Snack", category:"Fruit", p: 0.5, c: 25, f: 0.3, micro: {} },
+        { name:"Orange (1 med)", meal:"Snack", category:"Fruit", p: 1.2, c: 15.4, f: 0.2, micro: { vitc:true } },
+        { name:"Papaya (1 cup)", meal:"Snack", category:"Fruit", p: 0.9, c: 15, f: 0.4, micro: { vitc:true } },
+        { name:"Mango (1 cup)", meal:"Snack", category:"Fruit", p: 1.4, c: 25, f: 0.6, micro: { vitc:true, folate:true } },
+        { name:"Kiwi (1 med)", meal:"Snack", category:"Fruit", p: 0.8, c: 10, f: 0.4, micro: { vitc:true } },
+        { name:"Strawberries (1 cup)", meal:"Snack", category:"Fruit", p: 1.0, c: 12, f: 0.5, micro: { vitc:true } },
+        { name:"Guava (1 med)", meal:"Snack", category:"Fruit", p: 2.6, c: 14, f: 1.0, micro: { vitc:true, folate:true } },
+        { name:"Dragon fruit (1 cup)", meal:"Snack", category:"Fruit", p: 1.2, c: 14, f: 0.4, micro: { vitc:true } },
       ],
       beverages: [
-        { name:"Kopi-O (no sugar)", category:"Beverage", p: 0, c: 0, f: 0, micro: {} },
-        { name:"Cappuccino (12oz)", category:"Beverage", p: 8, c: 12, f: 6, micro: { calcium:true, b12:true } },
-        { name:"Latte (12oz)", category:"Beverage", p: 10, c: 14, f: 8, micro: { calcium:true, b12:true } },
-        { name:"Teh-C (less sugar)", category:"Beverage", p: 2, c: 18, f: 3, micro: { calcium:true } },
-        { name:"Milo (packet, made)", category:"Beverage", p: 6, c: 27, f: 7, micro: { calcium:true } },
-        { name:"100Plus (500ml)", category:"Beverage", p: 0, c: 32, f: 0, micro: {} },
-        { name:"Whey protein (1 scoop w/ water)", category:"Beverage", p: 24, c: 3, f: 2, micro: { calcium:true, b12:true } },
-        { name:"Whey + milk (1 scoop)", category:"Beverage", p: 32, c: 18, f: 6, micro: { calcium:true, b12:true, vitd:true } },
-        { name:"Soy milk (unsweetened, 250ml)", category:"Beverage", p: 7, c: 4, f: 4, micro: { calcium:true } },
-        { name:"Chocolate milk (250ml)", category:"Beverage", p: 9, c: 26, f: 5, micro: { calcium:true, b12:true, vitd:true } },
+        { name:"Kopi-O (no sugar)", meal:"Tea break", category:"Beverage", p: 0, c: 0, f: 0, micro: {} },
+        { name:"Cappuccino (12oz)", meal:"Tea break", category:"Beverage", p: 8, c: 12, f: 6, micro: { calcium:true, b12:true } },
+        { name:"Latte (12oz)", meal:"Tea break", category:"Beverage", p: 10, c: 14, f: 8, micro: { calcium:true, b12:true } },
+        { name:"Teh-C (less sugar)", meal:"Tea break", category:"Beverage", p: 2, c: 18, f: 3, micro: { calcium:true } },
+        { name:"Milo (packet, made)", meal:"Tea break", category:"Beverage", p: 6, c: 27, f: 7, micro: { calcium:true } },
+        { name:"100Plus (500ml)", meal:"During training", category:"Beverage", p: 0, c: 32, f: 0, micro: {} },
+        { name:"Whey protein (1 scoop w/ water)", meal:"Snack", category:"Beverage", p: 24, c: 3, f: 2, micro: { calcium:true, b12:true } },
+        { name:"Whey + milk (1 scoop)", meal:"Snack", category:"Beverage", p: 32, c: 18, f: 6, micro: { calcium:true, b12:true, vitd:true } },
+        { name:"Soy milk (unsweetened, 250ml)", meal:"Breakfast", category:"Beverage", p: 7, c: 4, f: 4, micro: { calcium:true } },
+        { name:"Chocolate milk (250ml)", meal:"Snack", category:"Beverage", p: 9, c: 26, f: 5, micro: { calcium:true, b12:true, vitd:true } },
       ]
     };
+
+    // Make sure preset meal values are valid options in UI
+    const MEAL_OPTIONS = ["Breakfast","Tea break","Lunch","Snack","Dinner","Supper","Other"];
+    function normalizeMeal(m){
+      if (!m) return "Other";
+      if (MEAL_OPTIONS.includes(m)) return m;
+      // allow special labels like "During training" -> map to Snack (or Other)
+      if (String(m).toLowerCase().includes("training")) return "Snack";
+      return "Other";
+    }
 
     function renderQuickList(containerId, items){
       const el = $(containerId);
       el.innerHTML = "";
       items.forEach(it => {
         const kcal = kcalFromMacros(it.p, it.c, it.f);
+        const meal = normalizeMeal(it.meal);
         const btn = document.createElement("button");
         btn.className = "listBtn";
         btn.innerHTML = `
           <div class="flex items-start justify-between gap-3">
             <div>
               <div class="font-extrabold">${esc(it.name)}</div>
-              <div class="text-xs muted">${esc(it.category)} • P ${fmt1(it.p)} / C ${fmt1(it.c)} / F ${fmt1(it.f)}</div>
+              <div class="text-xs muted">
+                <span class="tag" style="margin-right:6px;">${esc(meal)}</span>
+                ${esc(it.category)} • P ${round1(it.p)} / C ${round1(it.c)} / F ${round1(it.f)}
+              </div>
             </div>
             <div class="text-right">
               <div class="font-extrabold">${kcal}</div>
@@ -1139,7 +1171,7 @@
             </div>
           </div>
         `;
-        btn.addEventListener("click", () => openEditor({ ...it }, false));
+        btn.addEventListener("click", () => openEditor({ ...it, meal }, false));
         el.appendChild(btn);
       });
     }
@@ -1180,9 +1212,9 @@
     function renderSummary(){
       const t = computeTotals();
       $("sumKcal").textContent = String(t.kcal);
-      $("sumP").textContent = fmt1(t.p);
-      $("sumC").textContent = fmt1(t.c);
-      $("sumF").textContent = fmt1(t.f);
+      $("sumP").textContent = String(t.p);
+      $("sumC").textContent = String(t.c);
+      $("sumF").textContent = String(t.f);
 
       const g = dayState.goals;
       const pct = (val, goal) => goal > 0 ? Math.min(999, Math.round((val/goal)*100)) : 0;
@@ -1224,10 +1256,13 @@
         div.className = "grid grid-cols-12 items-center px-2 py-2 text-sm";
         div.innerHTML = `
           <div class="col-span-3 font-extrabold">${esc(row.name)}</div>
-          <div class="col-span-2 muted">${esc(row.category)}</div>
-          <div class="col-span-1 text-right" style="font-weight:900;color:rgba(6,95,70,.95)">${fmt1(row.p)}</div>
-          <div class="col-span-1 text-right" style="font-weight:900;color:rgba(30,64,175,.95)">${fmt1(row.c)}</div>
-          <div class="col-span-1 text-right" style="font-weight:900;color:rgba(146,64,14,.95)">${fmt1(row.f)}</div>
+          <div class="col-span-2 muted">
+            <div class="font-extrabold text-xs">${esc(row.meal || "—")}</div>
+            <div class="text-xs muted">${esc(row.category)}</div>
+          </div>
+          <div class="col-span-1 text-right" style="font-weight:900;color:rgba(6,95,70,.95)">${row.p}</div>
+          <div class="col-span-1 text-right" style="font-weight:900;color:rgba(30,64,175,.95)">${row.c}</div>
+          <div class="col-span-1 text-right" style="font-weight:900;color:rgba(146,64,14,.95)">${row.f}</div>
           <div class="col-span-1 text-right font-extrabold">${row.kcal}</div>
           <div class="col-span-2 muted text-xs md:text-sm">${esc(row.time || "")}</div>
           <div class="col-span-1 text-right">
@@ -1262,9 +1297,11 @@
       $("calcC").textContent = `${r.c} g`;
       $("calcF").textContent = `${r.f} g`;
       $("calcMacroKcal").textContent = `${r.macroKcal} kcal`;
-      $("calcNote").textContent = (r.method === "amdr")
-        ? "AMDR method: macro grams derived from your kcal goal and macro %."
-        : "IOC method: carbs g/kg based on athlete template range (e.g., 5–7, 6–8), protein g/kg, and fat %.";
+
+      $("calcNote").textContent =
+        (r.method === "amdr")
+          ? "AMDR (% kcal): Carbohydrate 45–65, Fat 20–35, Protein 10–35. Macro grams are derived from your kcal goal + selected macro %."
+          : "IOC method: carbs g/kg uses athlete template ranges (e.g., 5–7, 6–8), plus protein g/kg and fat %.";
     }
 
     function renderAll(){
@@ -1279,13 +1316,13 @@
       saveDay(activeDate, dayState);
     }
 
-    function setDatePickerValue(dateISO){ $("datePicker").value = dateISO; }
     function loadDate(dateISO){
       activeDate = dateISO;
       dayState = loadDay(activeDate);
       renderAll();
     }
 
+    // ===== Editor =====
     let editor = { isEdit:false, id:null };
 
     function showModal(id){ $(id).classList.add("show"); }
@@ -1317,7 +1354,7 @@
       const f = clamp(num($("editF").value),0,9999);
       const kcal = kcalFromMacros(p,c,f);
       $("editKcal").textContent = String(kcal);
-      $("kcalLine").textContent = `kcal = 4×${fmt1(p)} + 4×${fmt1(c)} + 9×${fmt1(f)} = ${kcal}`;
+      $("kcalLine").textContent = `kcal = 4×${round1(p)} + 4×${round1(c)} + 9×${round1(f)} = ${kcal}`;
       return kcal;
     }
 
@@ -1327,17 +1364,18 @@
 
       $("editorMode").textContent = isEdit ? "Edit item" : "Add item";
       $("editorTitle").textContent = isEdit ? (data.name || "Item") : "New item";
-
       $("btnDeleteItem").classList.toggle("hidden", !isEdit);
 
       $("editName").value = data?.name || "";
+      // auto-assign meal: preset -> use it, else time-based default
+      $("editMeal").value = normalizeMeal(data?.meal || autoMealFromTime(new Date()));
       $("editCategory").value = data?.category || "Custom";
+
       $("editP").value = data?.p ?? 0;
       $("editC").value = data?.c ?? 0;
       $("editF").value = data?.f ?? 0;
 
       setTagCheckboxes(data?.micro || {});
-
       syncEditorKcal();
       showModal("modalEditor");
     }
@@ -1346,7 +1384,9 @@
 
     function saveEditor(){
       const name = ($("editName").value || "").trim() || "Untitled";
+      const meal = normalizeMeal($("editMeal").value || "Other");
       const category = $("editCategory").value || "Custom";
+
       const p = round1(clamp(num($("editP").value),0,9999));
       const c = round1(clamp(num($("editC").value),0,9999));
       const f = round1(clamp(num($("editF").value),0,9999));
@@ -1356,11 +1396,11 @@
       if (editor.isEdit && editor.id){
         const idx = dayState.log.findIndex(x => x.id === editor.id);
         if (idx >= 0){
-          dayState.log[idx] = { ...dayState.log[idx], name, category, p, c, f, kcal, micro };
+          dayState.log[idx] = { ...dayState.log[idx], name, meal, category, p, c, f, kcal, micro };
         }
       } else {
         const id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
-        dayState.log.push({ id, name, category, p, c, f, kcal, micro, time: nowStr() });
+        dayState.log.push({ id, name, meal, category, p, c, f, kcal, micro, time: nowStr() });
       }
 
       closeEditor();
@@ -1377,8 +1417,6 @@
     function autoTagFromName(){
       const name = ($("editName").value || "").toLowerCase();
       const micro = readTagCheckboxes();
-
-      // simple heuristics
       const has = (s) => name.includes(s);
 
       if (has("whey") || has("milk") || has("latte") || has("cappuccino") || has("yogurt")){
@@ -1405,9 +1443,7 @@
       setTagCheckboxes(micro);
     }
 
-    function clearTags(){
-      setTagCheckboxes({});
-    }
+    function clearTags(){ setTagCheckboxes({}); }
 
     function updateGoals(){
       dayState.goals.kcal = clamp(parseInt($("goalKcal").value || "0",10),0,9999);
@@ -1425,6 +1461,7 @@
       renderAll();
     }
 
+    // ===== Profile =====
     function openProfile(){
       $("prSex").value = profile.sex;
       $("prAge").value = profile.age;
@@ -1537,6 +1574,7 @@
       closeProfile();
     }
 
+    // ===== Reset =====
     function resetDay(){
       if (!confirm("Reset this day’s log + targets?")) return;
       dayState = defaultDay();
@@ -1552,6 +1590,7 @@
       loadDate(todayISO());
     }
 
+    // ===== PDF Export (includes meal) =====
     async function exportPDF(){
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit:"pt", format:"a4" });
@@ -1564,7 +1603,7 @@
       let y = 56;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
-      doc.text("MacroVision Daily Log", 40, y);
+      doc.text("MacroVision Daily Log (24-hour recall)", 40, y);
 
       doc.setFontSize(11);
       doc.setFont("helvetica","normal");
@@ -1607,7 +1646,12 @@
             .map(([k]) => k.toUpperCase())
             .join(", ");
 
-          const line = `${it.name} [${it.category}]  P ${it.p}  C ${it.c}  F ${it.f}  kcal ${it.kcal}` + (microTags ? `  | micro: ${microTags}` : "") + `  (${it.time || ""})`;
+          const meal = it.meal || "—";
+          const line =
+            `${meal} • ${it.name} [${it.category}]  P ${it.p}  C ${it.c}  F ${it.f}  kcal ${it.kcal}`
+            + (microTags ? `  | micro: ${microTags}` : "")
+            + `  (${it.time || ""})`;
+
           const split = doc.splitTextToSize(line, 520);
           doc.text(split, 40, y);
           y += split.length * 12 + 6;
@@ -1626,7 +1670,7 @@
       doc.save(`MacroVision_${activeDate}.pdf`);
     }
 
-    // OCR (same as before - omitted here for brevity? NO: keep fully)
+    // ===== OCR =====
     let stream = null;
     let frozen = false;
 
@@ -1769,13 +1813,22 @@
       const p = num($("ocrP").textContent);
       const c = num($("ocrC").textContent);
       const f = num($("ocrF").textContent);
-      openEditor({ name:"OCR label item", category:"Custom", p:p||0, c:c||0, f:f||0, micro:{} }, false);
+
+      openEditor({
+        name:"OCR label item",
+        meal: autoMealFromTime(new Date()),
+        category:"Custom",
+        p:p||0, c:c||0, f:f||0,
+        micro:{}
+      }, false);
+
       hideModal("modalOCR");
     }
 
     function openOCR(){ showModal("modalOCR"); $("ocrStatus").textContent = "Status: idle"; }
     function closeOCR(){ hideModal("modalOCR"); }
 
+    // ===== Bind / Init =====
     function bind(){
       $("btnLoadDate").addEventListener("click", () => loadDate($("datePicker").value || todayISO()));
 
@@ -1785,12 +1838,11 @@
       });
 
       $("btnApplyCalculatedTargets").addEventListener("click", applyCalculatedTargets);
-
       $("btnResetDay").addEventListener("click", resetDay);
       $("btnResetAll").addEventListener("click", resetAll);
 
       $("btnAddFood").addEventListener("click", () => openEditor(null,false));
-      $("btnCloseEditor").addEventListener("click", closeEditor);
+      $("btnCloseEditor").addEventListener("click", () => hideModal("modalEditor"));
       $("btnSaveItem").addEventListener("click", saveEditor);
       $("btnDeleteItem").addEventListener("click", deleteEditor);
 
@@ -1802,7 +1854,7 @@
       $("btnTagDefaultFood").addEventListener("click", autoTagFromName);
       $("btnClearTags").addEventListener("click", clearTags);
 
-      $("modalEditor").querySelector(".backdrop").addEventListener("click", closeEditor);
+      $("modalEditor").querySelector(".backdrop").addEventListener("click", () => hideModal("modalEditor"));
       $("modalOCR").querySelector(".backdrop").addEventListener("click", closeOCR);
       $("modalProfile").querySelector(".backdrop").addEventListener("click", closeProfile);
 
@@ -1810,7 +1862,6 @@
       $("btnCloseProfile").addEventListener("click", closeProfile);
       $("btnSaveProfile").addEventListener("click", commitProfile);
 
-      // IOC template selectors
       $("iocType").addEventListener("change", () => { applyIOCTemplateToCarbs(); syncProfileUI(); });
       $("iocCarbPreset").addEventListener("change", () => { applyIOCTemplateToCarbs(); syncProfileUI(); });
 
@@ -1838,11 +1889,11 @@
       $("datePicker").value = t;
       loadDate(t);
       bind();
-      // ensure IOC range hint is correct on load
-      if ($("iocRangeHint")) {
-        const range = IOC_CARB_RANGES[profile.ioc.type] || IOC_CARB_RANGES.team_mod;
-        $("iocRangeHint").textContent = `Range: ${range.min}–${range.max} g/kg bw`;
-      }
+
+      // Ensure IOC hint is set on load
+      const range = IOC_CARB_RANGES[profile.ioc.type] || IOC_CARB_RANGES.team_mod;
+      $("iocRangeHint").textContent = `Range: ${range.min}–${range.max} g/kg bw`;
+
       renderAll();
     }
 
