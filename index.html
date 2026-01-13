@@ -8,7 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
-  <!-- TensorFlow.js (we will load YOUR SG model from GitHub Pages static files) -->
+  <!-- TensorFlow.js (for your own TFJS model hosted on GitHub Pages) -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 
   <!-- jsPDF + AutoTable -->
@@ -30,15 +30,17 @@
     .overlayWrap { position: relative; }
     #overlayCanvas { position:absolute; inset:0; pointer-events:none; border-radius:12px; }
     .stickyBar { position: sticky; top: 0; z-index: 20; }
+    .btn { transition: 150ms; }
   </style>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
-
+  <!-- NAV -->
   <nav class="bg-white shadow-sm stickyBar">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+          <!-- simple clean food logo -->
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
             <path d="M4 12c0 4.418 3.582 8 8 8s8-3.582 8-8H4Z" stroke="#ea580c" stroke-width="2" stroke-linejoin="round"/>
             <path d="M8 8c2-3 6-3 8 0" stroke="#ea580c" stroke-width="2" stroke-linecap="round"/>
@@ -47,36 +49,37 @@
         </div>
         <div class="leading-tight">
           <div class="text-lg font-extrabold text-gray-900">MacroVision</div>
-          <div class="text-xs text-gray-500">Singapore hawker macros • AI or Manual</div>
+          <div class="text-xs text-gray-500">GitHub Pages • SG hawker macros • AI/Manual</div>
         </div>
       </div>
 
-      <div class="text-xs text-gray-500 hidden sm:block">
-        GitHub Pages friendly ✅
+      <div class="hidden sm:flex items-center gap-2">
+        <span class="text-xs px-3 py-1 pill bg-gray-100 text-gray-800 font-bold">Static-only</span>
+        <span class="text-xs px-3 py-1 pill bg-gray-100 text-gray-800 font-bold">No server</span>
       </div>
     </div>
   </nav>
 
+  <!-- HEADER -->
   <header class="bg-gray-900 text-white">
     <div class="max-w-7xl mx-auto px-4 py-10">
       <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
         <div>
           <div class="flex items-center gap-3 mb-3">
-            <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">
-              Athlete App
-            </span>
-            <span class="text-gray-300 text-sm">SG Macro DB • Camera capture • Editable • PDF export</span>
+            <span class="bg-white/20 text-white text-xs px-3 py-1 pill uppercase font-bold tracking-wide">Athlete App</span>
+            <span class="text-gray-300 text-sm">Singapore-aware macro DB • Editable • PDF export</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-3">📷 MacroVision</h1>
           <p class="text-gray-300 max-w-2xl">
-            Choose <b>Singapore AI (your TFJS model)</b> or <b>Manual mode</b>. AI suggests a dish label, then we estimate macros using a
-            Singapore-aware database + portion slider. Always editable.
+            Clean GitHub Pages approach: use <b>Singapore AI (your TFJS model)</b> or <b>Manual mode</b>.
+            If model files are missing, the app shows a red warning and falls back to Manual automatically.
+            You can also save “custom foods” (HPB-assisted manual entry) on-device.
           </p>
         </div>
 
         <div class="flex flex-wrap gap-2">
           <span class="bg-orange-600 text-white text-xs px-3 py-1.5 pill">Singapore AI</span>
-          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">Manual Mode</span>
+          <span class="bg-purple-600 text-white text-xs px-3 py-1.5 pill">Manual + Custom</span>
           <span class="bg-blue-600 text-white text-xs px-3 py-1.5 pill">PDF Report</span>
         </div>
       </div>
@@ -84,57 +87,61 @@
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
-
+    <!-- IMPORTANT -->
     <section class="card p-5 bg-white">
       <div class="warn rounded-xl p-3">
         <div class="font-extrabold">Important</div>
         <div class="text-sm text-gray-700 mt-1">
-          Macros are <b>estimates</b>. Oil, gravy, sugar, portion size vary. Use the portion slider + edit macros if needed.
+          Macros are <b>estimates</b>. Portion size and oil/sugar/gravy vary. Always edit if needed.
         </div>
         <div class="text-xs text-gray-600 mt-2">
-          Singapore AI requires your model files inside this repo at <span class="mono">models/sg-food/</span>.
-          Manual mode works immediately even without any model.
+          Singapore AI requires model files hosted inside this repo at:
+          <span class="mono">/models/sg-food/model.json</span>,
+          <span class="mono">/models/sg-food/labels.json</span>,
+          and shard <span class="mono">.bin</span> files referenced by model.json.
         </div>
       </div>
     </section>
 
-    <!-- CAPTURE + LOG (keeping your original structure but focusing on model dropdown + manual list) -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-      <!-- Capture -->
+      <!-- CAPTURE -->
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4">
           <div>
             <h2 class="text-xl font-extrabold">📸 Camera → (Singapore AI / Manual) → Macro Estimate</h2>
             <p class="text-sm text-gray-600">
-              Use the dropdown to switch between <b>Singapore AI</b> (your model) and <b>Manual</b> selection.
+              Manual works immediately. Singapore AI runs only if model files are detected.
             </p>
           </div>
         </div>
 
         <div class="mt-4 hint rounded-xl p-3">
-          <div class="font-bold text-sm">Mode</div>
+          <div class="font-bold text-sm">Mode selector</div>
           <div class="small text-gray-700 mt-1">
-            <b>Singapore AI</b>: predicts one dish label from camera. <b>Manual</b>: you select from common hawker dishes list.
+            <b>Singapore AI</b>: your TFJS model predicts a dish label (live overlay + snap).
+            <b>Manual</b>: pick dish from list (plus your saved custom foods).
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <!-- LEFT: camera -->
           <div class="space-y-3">
-
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Select mode</div>
               <select id="modeSelect" class="w-full border rounded-lg px-3 py-2">
                 <option value="sgai" selected>Singapore AI (My SG Model)</option>
                 <option value="manual">Manual mode (No AI)</option>
               </select>
+              <div id="modelHealth" class="mt-2 text-xs rounded-lg p-2 border bg-gray-50">
+                Checking Singapore AI model files…
+              </div>
             </label>
 
             <div class="flex gap-2">
-              <button id="startCamBtn" class="flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
+              <button id="startCamBtn" class="btn flex-1 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
                 <i class="fa fa-camera mr-2"></i>Start Camera
               </button>
-              <button id="stopCamBtn" class="flex-1 bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200">
+              <button id="stopCamBtn" class="btn flex-1 bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200">
                 Stop
               </button>
             </div>
@@ -145,8 +152,8 @@
             </div>
 
             <div class="grid grid-cols-2 gap-2">
-              <button id="snapBtn" class="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">📸 Snap</button>
-              <label class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-center">
+              <button id="snapBtn" class="btn bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">📸 Snap</button>
+              <label class="btn bg-white border px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer text-center">
                 <input id="uploadInput" type="file" accept="image/*" class="hidden" />
                 ⬆️ Upload
               </label>
@@ -161,12 +168,12 @@
                 <span class="mono text-gray-700 ml-2" id="liveConf">—</span>
               </div>
               <div class="text-xs text-gray-500 mt-2" id="liveTip">
-                In Manual mode, live detection is off (use dish picker on the right).
+                Tip: closer shot + less background clutter = higher confidence.
               </div>
             </div>
           </div>
 
-          <!-- Editor -->
+          <!-- RIGHT: editor -->
           <div class="space-y-3">
             <div class="font-bold">Current capture</div>
             <div class="bg-gray-50 rounded-xl p-3">
@@ -213,7 +220,7 @@
                 <div class="text-gray-600 mb-1">Choose dish</div>
                 <select id="manualDish" class="w-full border rounded-lg px-3 py-2"></select>
               </label>
-              <button id="useManualBtn" class="mt-3 w-full bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
+              <button id="useManualBtn" class="btn mt-3 w-full bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800">
                 Use selected dish → Fill macros
               </button>
             </div>
@@ -223,7 +230,8 @@
               <div class="mt-3 space-y-2">
                 <label class="text-sm block">
                   <div class="text-gray-600 mb-1">Detected / selected name</div>
-                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2" placeholder="e.g., Chicken rice, Nasi lemak, Kopi C" />
+                  <input id="itemLabel" class="w-full border rounded-lg px-3 py-2"
+                    placeholder="e.g., Chicken rice, Nasi lemak, Kopi" />
                 </label>
 
                 <div class="grid grid-cols-4 gap-2">
@@ -247,18 +255,34 @@
 
                 <div class="text-xs text-gray-500" id="metaLine">No detection yet.</div>
 
-                <button id="addItemBtn" class="w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
+                <button id="addItemBtn" class="btn w-full bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700">
                   ➕ Add this item to current meal
                 </button>
               </div>
             </div>
 
+            <!-- Custom foods (HPB-assisted manual entry) -->
+            <div class="bg-white border rounded-xl p-3">
+              <div class="font-bold">Custom Foods (HPB-assisted manual entry)</div>
+              <div class="text-xs text-gray-500 mt-1">
+                If you look up nutrients elsewhere (e.g., HPB/labels), copy values into the editor and save.
+                Stored on this device (localStorage).
+              </div>
+              <button id="saveCustomBtn" class="btn mt-3 w-full bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700">
+                ➕ Save current item as Custom SG food
+              </button>
+              <button id="resetCustomBtn" class="btn mt-2 w-full bg-gray-100 text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-200">
+                Reset Custom Foods
+              </button>
+            </div>
+
             <label class="text-sm block">
               <div class="text-gray-600 mb-1">Meal notes (optional)</div>
-              <textarea id="mealNotes" class="w-full border rounded-lg px-3 py-2" rows="2" placeholder="e.g., extra oil, gravy heavy, added egg"></textarea>
+              <textarea id="mealNotes" class="w-full border rounded-lg px-3 py-2" rows="2"
+                placeholder="e.g., extra oil, gravy heavy, added egg"></textarea>
             </label>
 
-            <button id="finalizeMealBtn" class="w-full bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-gray-800">
+            <button id="finalizeMealBtn" class="btn w-full bg-gray-900 text-white px-4 py-3 rounded-xl hover:bg-gray-800">
               ✅ Finalize meal (sum items) → Add meal to log
             </button>
           </div>
@@ -271,7 +295,9 @@
               <div class="font-extrabold">Current meal items</div>
               <div class="text-xs text-gray-600">Add multiple items (food + drink), then finalize meal.</div>
             </div>
-            <button id="clearMealBtn" class="bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">Clear meal items</button>
+            <button id="clearMealBtn" class="btn bg-white border px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+              Clear meal items
+            </button>
           </div>
 
           <div id="mealItemsList" class="mt-3 space-y-2"></div>
@@ -297,16 +323,20 @@
         </div>
       </div>
 
-      <!-- Log / totals -->
+      <!-- LOG -->
       <div class="bg-white card p-5">
         <div class="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h2 class="text-xl font-extrabold">📋 Daily fueling check</h2>
-            <p class="text-sm text-gray-600">Intake vs targets + macrodistribution. Export PDF for reporting.</p>
+            <h2 class="text-xl font-extrabold">📋 Daily log + PDF</h2>
+            <p class="text-sm text-gray-600">Totals + meal breakdown. Export PDF for reporting.</p>
           </div>
           <div class="flex gap-2">
-            <button id="exportPdfBtn" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">📄 Export PDF</button>
-            <button id="clearBtn" class="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">Clear day</button>
+            <button id="exportPdfBtn" class="btn bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">
+              📄 Export PDF
+            </button>
+            <button id="clearBtn" class="btn bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200">
+              Clear day
+            </button>
           </div>
         </div>
 
@@ -314,22 +344,18 @@
           <div class="border rounded-xl p-3">
             <div class="text-xs text-gray-500">kcal (today)</div>
             <div class="text-2xl font-extrabold mono" id="totKcal">0</div>
-            <div class="text-xs text-gray-500">Δ <span class="mono font-bold" id="deltaKcal">0</span></div>
           </div>
           <div class="border rounded-xl p-3">
             <div class="text-xs text-gray-500">Protein (g)</div>
             <div class="text-2xl font-extrabold mono" id="totP">0</div>
-            <div class="text-xs" id="verP"></div>
           </div>
           <div class="border rounded-xl p-3">
             <div class="text-xs text-gray-500">Carbs (g)</div>
             <div class="text-2xl font-extrabold mono" id="totC">0</div>
-            <div class="text-xs" id="verC"></div>
           </div>
           <div class="border rounded-xl p-3">
             <div class="text-xs text-gray-500">Fat (g)</div>
             <div class="text-2xl font-extrabold mono" id="totF">0</div>
-            <div class="text-xs" id="verF"></div>
           </div>
         </div>
 
@@ -358,7 +384,7 @@
         </div>
 
         <div class="text-xs text-gray-500 mt-4">
-          Disclaimer: AI label is approximate; macro estimates vary by portion/oil/sauce. Always sanity-check.
+          Note: Singapore AI only works if model files are present in your repo. Manual + Custom always works.
         </div>
       </div>
     </section>
@@ -366,13 +392,14 @@
 
   <footer class="py-8">
     <div class="max-w-7xl mx-auto px-4 text-xs text-gray-500">
-      © <span id="yearNow"></span> MacroVision.
+      © <span id="yearNow"></span> MacroVision. Built for GitHub Pages.
     </div>
   </footer>
 
   <script>
     /*************************************************************
-     * A) SG MACRO DB (20 hawker foods + drinks)
+     * 1) SG MACRO DB (built-in list)
+     *    - You can add/remove anytime
      *************************************************************/
     const FOOD_DB = [
       { name: "Chicken Rice", keys: ["chicken rice"], kcal: 650, p: 35, c: 75, f: 20 },
@@ -405,76 +432,165 @@
       { name: "Plain Water", keys: ["water"], kcal: 0, p: 0, c: 0, f: 0 },
     ];
 
-    function normalize(s){ return (s||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim(); }
-    function similarity(a,b){
-      a=normalize(a); b=normalize(b);
-      if(!a||!b) return 0; if(a===b) return 1;
-      const bigrams=(str)=>{ const arr=[]; for(let i=0;i<str.length-1;i++) arr.push(str.slice(i,i+2)); return arr; };
-      const A=bigrams(a), B=bigrams(b); const map=new Map();
-      A.forEach(x=>map.set(x,(map.get(x)||0)+1));
-      let inter=0;
-      B.forEach(x=>{ const c=map.get(x)||0; if(c>0){ inter++; map.set(x,c-1); } });
-      return (2*inter)/(A.length+B.length);
+    const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
+
+    /*************************************************************
+     * 2) Custom Foods stored locally (HPB-assisted manual entry)
+     *************************************************************/
+    const CUSTOM_KEY = "macrovision_custom_foods_v1";
+
+    function loadCustomFoods() {
+      try {
+        const raw = localStorage.getItem(CUSTOM_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
     }
-    function bestDbMatch(label, type){
-      const db = (type==="drink") ? DRINK_DB : FOOD_DB;
+    function saveCustomFoods(arr) {
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr));
+    }
+
+    /*************************************************************
+     * 3) TFJS SG MODEL PATHS (hosted in THIS repo)
+     *************************************************************/
+    const SG_MODEL_URL = new URL("models/sg-food/model.json", window.location.href).toString();
+    const SG_LABELS_URL = new URL("models/sg-food/labels.json", window.location.href).toString();
+
+    let modelOk = false;
+    let sgModel = null;
+    let sgLabels = null;
+    let modelInputSize = 224;
+
+    /*************************************************************
+     * 4) State
+     *************************************************************/
+    let entries = [];
+    let mealItems = [];
+    let currentImageDataUrl = null;
+
+    let stream = null;
+    let liveLoopRunning = false;
+    let lastLive = { label: "", prob: 0, top3: [] };
+
+    /*************************************************************
+     * 5) Utils
+     *************************************************************/
+    const $ = (id) => document.getElementById(id);
+    const round1 = (x) => Math.round(x * 10) / 10;
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const safeNum = (x) => {
+      const n = Number(x);
+      return Number.isFinite(n) ? n : 0;
+    };
+    function escapeHtml(s) {
+      return (s || "").replace(/[&<>"']/g, (c) => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+      }[c]));
+    }
+    function setStatus(kind, text) {
+      const el = $("statusBox");
+      el.classList.remove("hidden","warn","ok","danger");
+      if (kind === "ok") el.classList.add("ok");
+      else if (kind === "danger") el.classList.add("danger");
+      else el.classList.add("warn");
+      el.textContent = text;
+    }
+    function currentMode() { return $("modeSelect").value; }
+    function macroPercentages(p, c, f) {
+      const pK = p * 4, cK = c * 4, fK = f * 9;
+      const total = Math.max(1, pK + cK + fK);
+      return { p: round1(100*pK/total), c: round1(100*cK/total), f: round1(100*fK/total) };
+    }
+    const normalize = (s) => (s || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    function similarity(a, b) {
+      a = normalize(a); b = normalize(b);
+      if (!a || !b) return 0;
+      if (a === b) return 1;
+      const bigrams = (str) => {
+        const arr = [];
+        for (let i = 0; i < str.length - 1; i++) arr.push(str.slice(i, i+2));
+        return arr;
+      };
+      const A = bigrams(a), B = bigrams(b);
+      const map = new Map();
+      A.forEach(x => map.set(x, (map.get(x) || 0) + 1));
+      let inter = 0;
+      B.forEach(x => {
+        const c = map.get(x) || 0;
+        if (c > 0) { inter++; map.set(x, c - 1); }
+      });
+      return (2 * inter) / (A.length + B.length);
+    }
+    function bestDbMatch(label, type) {
+      const db = (type === "drink") ? DRINK_DB : FOOD_DB;
       const q = normalize(label);
-      let best=null, bestScore=0;
-      for(const row of db){
-        for(const k of row.keys){
-          const score = similarity(q,k);
-          if(score>bestScore){ bestScore=score; best=row; }
+      let best = null, bestScore = 0;
+      for (const row of db) {
+        for (const k of row.keys) {
+          const score = similarity(q, k);
+          if (score > bestScore) { bestScore = score; best = row; }
         }
       }
       return { best, bestScore };
     }
 
     /*************************************************************
-     * B) MODE: Singapore AI (your TFJS model) OR Manual
+     * 6) Model files detected ✅ / missing ❌
      *************************************************************/
-    const SG_MODEL_URL = new URL("models/sg-food/model.json", window.location.href).toString();
-    const SG_LABELS_URL = new URL("models/sg-food/labels.json", window.location.href).toString();
+    async function checkModelFiles() {
+      const box = $("modelHealth");
 
-    let sgModel = null;
-    let sgLabels = null;
-    let modelInputSize = 224;
+      async function tryGet(url) {
+        try {
+          const r = await fetch(url, { method: "GET", cache: "no-store" });
+          return r.ok;
+        } catch {
+          return false;
+        }
+      }
 
-    let stream = null;
-    let liveLoopRunning = false;
-    let lastLive = { label:"", prob:0, top3:[] };
+      const hasModel = await tryGet(SG_MODEL_URL);
+      const hasLabels = await tryGet(SG_LABELS_URL);
 
-    const $ = (id) => document.getElementById(id);
-    const round1 = (x) => Math.round(x*10)/10;
-    const clamp = (x,lo,hi) => Math.max(lo, Math.min(hi,x));
-    const safeNum = (x) => { const n=Number(x); return Number.isFinite(n)?n:0; };
-
-    function escapeHtml(s){
-      return (s||"").replace(/[&<>"']/g,(c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
+      if (hasModel && hasLabels) {
+        box.className = "mt-2 text-xs rounded-lg p-2 border bg-green-50 border-green-200 text-green-900";
+        box.textContent = "Model files detected ✅ Singapore AI is ready.";
+        return true;
+      } else {
+        box.className = "mt-2 text-xs rounded-lg p-2 border bg-red-50 border-red-200 text-red-900";
+        box.textContent =
+          "Model files missing ❌ Upload model.json + labels.json (+ shard .bin) into /models/sg-food/. Manual mode will still work.";
+        return false;
+      }
     }
-    function setStatus(kind, text){
-      const el = $("statusBox");
-      el.classList.remove("hidden","warn","ok","danger");
-      if(kind==="ok") el.classList.add("ok");
-      else if(kind==="danger") el.classList.add("danger");
-      else el.classList.add("warn");
-      el.textContent = text;
-    }
 
-    function currentMode(){ return $("modeSelect").value; }
+    /*************************************************************
+     * 7) Load SG model (TFJS)
+     *************************************************************/
+    async function loadSingaporeModel() {
+      if (!modelOk) throw new Error("Singapore AI model files are missing.");
+      if (sgModel && sgLabels) return;
 
-    async function loadSingaporeModel(){
-      if(sgModel && sgLabels) return;
-      setStatus("warn","Loading Singapore AI model…");
+      setStatus("warn", "Loading Singapore AI model…");
 
-      // labels.json is REQUIRED to map prediction index -> dish name
-      const labResp = await fetch(SG_LABELS_URL, { cache:"no-store" });
-      if(!labResp.ok) throw new Error("labels.json not found at " + SG_LABELS_URL);
+      // labels.json must be an array of class names in output order
+      const labResp = await fetch(SG_LABELS_URL, { cache: "no-store" });
+      if (!labResp.ok) throw new Error("labels.json not found at " + SG_LABELS_URL);
       sgLabels = await labResp.json();
+      if (!Array.isArray(sgLabels) || sgLabels.length < 2) {
+        throw new Error("labels.json invalid. It must be a JSON array of class names.");
+      }
 
       sgModel = await tf.loadLayersModel(SG_MODEL_URL);
 
       // warm up
-      tf.tidy(()=>{
+      tf.tidy(() => {
         const x = tf.zeros([1, modelInputSize, modelInputSize, 3]);
         sgModel.predict(x);
       });
@@ -482,15 +598,15 @@
       setStatus("ok", `Singapore AI loaded ✅ (${sgLabels.length} classes)`);
     }
 
-    function topK(probArray, k=3){
-      const pairs = probArray.map((p,i)=>({i,p})).sort((a,b)=>b.p-a.p);
-      return pairs.slice(0,k).map(x=>({ label: sgLabels?.[x.i] ?? `Class ${x.i}`, prob: x.p }));
+    function topK(probArray, k = 3) {
+      const pairs = probArray.map((p, i) => ({ i, p })).sort((a, b) => b.p - a.p);
+      return pairs.slice(0, k).map(x => ({ label: sgLabels?.[x.i] ?? `Class ${x.i}`, prob: x.p }));
     }
 
-    async function classifyWithSGModel(el){
+    async function classifyWithSGModel(el) {
       await loadSingaporeModel();
 
-      const logits = tf.tidy(()=>{
+      const logits = tf.tidy(() => {
         let img = tf.browser.fromPixels(el);
         img = tf.image.resizeBilinear(img, [modelInputSize, modelInputSize]);
         img = img.toFloat().div(255.0).expandDims(0);
@@ -504,268 +620,295 @@
     }
 
     /*************************************************************
-     * C) Camera + Overlay
+     * 8) Camera + overlay
      *************************************************************/
-    async function startCamera(){
-      try{
-        // only load SG model if in sgai mode
-        if(currentMode()==="sgai"){
-          await loadSingaporeModel();
+    async function startCamera() {
+      try {
+        // If SG AI mode, ensure model exists + load
+        if (currentMode() === "sgai") {
+          modelOk = await checkModelFiles();
+          if (!modelOk) {
+            $("modeSelect").value = "manual";
+            applyModeUI();
+            setStatus("warn", "Singapore AI not ready. Switched to Manual mode.");
+          } else {
+            await loadSingaporeModel();
+          }
         } else {
-          setStatus("ok","Manual mode: Camera works for photo capture. No live detection.");
+          setStatus("ok", "Manual mode: camera used for capture only. No live detection.");
         }
 
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode:"environment" },
-          audio:false
+          video: { facingMode: "environment" },
+          audio: false
         });
 
         $("video").srcObject = stream;
-        $("video").onloadedmetadata = ()=>{
+        $("video").onloadedmetadata = () => {
           resizeOverlay();
-          if(!liveLoopRunning){
+          if (!liveLoopRunning) {
             liveLoopRunning = true;
             liveLoop();
           }
         };
-      } catch(e){
-        setStatus("danger", "Camera/model error: " + e.message + " (Tip: must be HTTPS + allow camera permission.)");
+      } catch (e) {
+        setStatus("danger", "Camera/model error: " + e.message + " (Tip: use HTTPS + allow camera permission.)");
       }
     }
 
-    function stopCamera(){
+    function stopCamera() {
       liveLoopRunning = false;
-      if(stream){
-        stream.getTracks().forEach(t=>t.stop());
-        stream=null;
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
       }
-      $("video").srcObject=null;
+      $("video").srcObject = null;
       clearOverlay();
-      $("liveLabelBadge").textContent="—";
-      $("liveConf").textContent="—";
+      $("liveLabelBadge").textContent = "—";
+      $("liveConf").textContent = "—";
     }
 
-    function resizeOverlay(){
-      const v=$("video");
-      const c=$("overlayCanvas");
-      if(!v.videoWidth) return;
-      c.width=v.videoWidth; c.height=v.videoHeight;
-      c.style.width=v.clientWidth+"px";
-      c.style.height=v.clientHeight+"px";
+    function resizeOverlay() {
+      const v = $("video");
+      const c = $("overlayCanvas");
+      if (!v.videoWidth) return;
+      c.width = v.videoWidth;
+      c.height = v.videoHeight;
+      c.style.width = v.clientWidth + "px";
+      c.style.height = v.clientHeight + "px";
     }
 
-    function clearOverlay(){
-      const c=$("overlayCanvas");
-      const ctx=c.getContext("2d");
-      ctx.clearRect(0,0,c.width,c.height);
+    function clearOverlay() {
+      const c = $("overlayCanvas");
+      const ctx = c.getContext("2d");
+      ctx.clearRect(0, 0, c.width, c.height);
     }
 
-    function drawOverlay(label, prob, mappedName, source){
-      const c=$("overlayCanvas");
-      const ctx=c.getContext("2d");
-      ctx.clearRect(0,0,c.width,c.height);
+    function drawOverlay(label, prob, mappedName, source) {
+      const c = $("overlayCanvas");
+      const ctx = c.getContext("2d");
+      ctx.clearRect(0, 0, c.width, c.height);
 
-      const pad=18, w=c.width;
-      const confPct=Math.round(prob*100);
-      const line1=`${label} (${confPct}%)`;
-      const line2=mappedName ? `→ ${mappedName} [${source}]` : "";
-      const line3=`Mode: Singapore AI • Edit if wrong`;
+      const pad = 18;
+      const w = c.width;
+      const confPct = Math.round(prob * 100);
+      const line1 = `${label} (${confPct}%)`;
+      const line2 = mappedName ? `→ ${mappedName} [${source}]` : "";
+      const line3 = `Mode: Singapore AI • Edit if wrong`;
 
       ctx.save();
-      ctx.globalAlpha=0.92;
-      ctx.fillStyle="#111827";
-      ctx.fillRect(0,0,w,88);
-      ctx.globalAlpha=1;
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = "#111827";
+      ctx.fillRect(0, 0, w, 88);
+      ctx.globalAlpha = 1;
 
-      ctx.fillStyle="#fff";
-      ctx.font="bold 20px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 20px system-ui, -apple-system, Segoe UI, Roboto";
       ctx.fillText(line1, pad, 30);
 
-      ctx.font="14px system-ui, -apple-system, Segoe UI, Roboto";
-      ctx.fillStyle="#e5e7eb";
+      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillStyle = "#e5e7eb";
       ctx.fillText(line2, pad, 55);
 
-      ctx.fillStyle="#d1d5db";
+      ctx.fillStyle = "#d1d5db";
       ctx.fillText(line3, pad, 77);
       ctx.restore();
     }
 
-    async function liveLoop(){
-      if(!liveLoopRunning) return;
+    async function liveLoop() {
+      if (!liveLoopRunning) return;
 
-      const v=$("video");
-      if(!v || !v.videoWidth){
+      const v = $("video");
+      if (!v || !v.videoWidth) {
         requestAnimationFrame(liveLoop);
         return;
       }
 
-      // Manual mode: no inference, just clear overlay and show tip
-      if(currentMode()==="manual"){
+      // Manual mode: no inference
+      if (currentMode() === "manual") {
         clearOverlay();
         $("liveLabelBadge").textContent = "Manual mode";
         $("liveConf").textContent = "—";
-        setTimeout(()=>requestAnimationFrame(liveLoop), 700);
+        setTimeout(() => requestAnimationFrame(liveLoop), 700);
         return;
       }
 
-      // Singapore AI mode
-      try{
-        if(!sgModel){ requestAnimationFrame(liveLoop); return; }
+      // SG AI mode: if model isn't ready, don’t spam errors—just show status
+      if (!modelOk || !sgModel || !sgLabels) {
+        $("liveLabelBadge").textContent = "AI not ready";
+        $("liveConf").textContent = "—";
+        setTimeout(() => requestAnimationFrame(liveLoop), 700);
+        return;
+      }
+
+      try {
         const top3 = await classifyWithSGModel(v);
         const top = top3[0];
         lastLive = { label: top.label, prob: top.prob, top3 };
 
         const itemType = $("itemType").value;
         const m = bestDbMatch(top.label, itemType);
-        let mappedName="", source="";
 
-        if(m.best && m.bestScore>=0.35){
-          mappedName=m.best.name; source="SG Macro DB";
+        let mappedName = "";
+        let source = "";
+        if (m.best && m.bestScore >= 0.35) {
+          mappedName = m.best.name;
+          source = "SG Macro DB";
         } else {
-          mappedName="No strong match"; source="Edit manually";
+          mappedName = "Edit manually";
+          source = "No match";
         }
 
         $("liveLabelBadge").textContent = top.label;
-        $("liveConf").textContent = `Confidence: ${Math.round(top.prob*100)}%`;
+        $("liveConf").textContent = `Confidence: ${Math.round(top.prob * 100)}%`;
         drawOverlay(top.label, top.prob, mappedName, source);
-
-      } catch(e){
+      } catch {
         // ignore transient
       }
 
-      setTimeout(()=>requestAnimationFrame(liveLoop), 700);
+      setTimeout(() => requestAnimationFrame(liveLoop), 700);
     }
 
     /*************************************************************
-     * D) Snap / Upload
+     * 9) Snap / Upload -> estimate
      *************************************************************/
-    let currentImageDataUrl = null;
-
-    function setPreview(dataUrl){
-      currentImageDataUrl=dataUrl;
-      $("previewImg").src=dataUrl;
+    function setPreview(dataUrl) {
+      currentImageDataUrl = dataUrl;
+      $("previewImg").src = dataUrl;
       $("previewImg").classList.remove("hidden");
       $("noPreview").classList.add("hidden");
       $("statusBox").classList.add("hidden");
-      $("metaLine").textContent="Ready. Edit if needed, then add to meal.";
+      $("metaLine").textContent = "Ready. Edit if needed, then add to meal.";
     }
 
-    async function snapPhoto(){
-      const v=$("video");
-      if(!v || !v.videoWidth){
-        setStatus("warn","Camera not ready. Start camera first, or upload an image.");
+    async function snapPhoto() {
+      const v = $("video");
+      if (!v || !v.videoWidth) {
+        setStatus("warn", "Camera not ready. Start camera first, or upload an image.");
         return;
       }
-      const canvas=$("captureCanvas");
-      canvas.width=v.videoWidth; canvas.height=v.videoHeight;
-      canvas.getContext("2d").drawImage(v,0,0);
-      const dataUrl=canvas.toDataURL("image/jpeg",0.85);
+      const canvas = $("captureCanvas");
+      canvas.width = v.videoWidth;
+      canvas.height = v.videoHeight;
+      canvas.getContext("2d").drawImage(v, 0, 0);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       setPreview(dataUrl);
 
-      if(currentMode()==="sgai"){
+      if (currentMode() === "sgai") {
         await estimateFromCanvas(canvas);
       } else {
-        setStatus("ok","Manual mode: choose dish from the picker → Fill macros.");
+        setStatus("ok", "Manual mode: choose dish from picker → Fill macros.");
       }
     }
 
-    function handleUpload(file){
-      if(!file) return;
-      const reader=new FileReader();
-      reader.onload=async ()=>{
+    function handleUpload(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
         setPreview(reader.result);
-        if(currentMode()==="sgai") await estimateFromDataUrl(reader.result);
-        else setStatus("ok","Manual mode: choose dish from the picker → Fill macros.");
+        if (currentMode() === "sgai") await estimateFromDataUrl(reader.result);
+        else setStatus("ok", "Manual mode: choose dish from picker → Fill macros.");
       };
       reader.readAsDataURL(file);
     }
 
-    async function estimateFromCanvas(canvasEl){
-      try{
+    async function estimateFromCanvas(canvasEl) {
+      try {
+        if (!modelOk) throw new Error("Model files missing. Use Manual mode.");
         const top3 = await classifyWithSGModel(canvasEl);
         const top = top3[0];
         lastLive = { label: top.label, prob: top.prob, top3 };
         await estimateFromLabel(top.label, top.prob);
-      } catch(e){
-        setStatus("danger","AI detection failed. You can use Manual mode or type name/macros.");
+      } catch (e) {
+        setStatus("danger", "AI detection failed: " + e.message);
       }
     }
 
-    async function estimateFromDataUrl(dataUrl){
-      try{
+    async function estimateFromDataUrl(dataUrl) {
+      try {
+        if (!modelOk) throw new Error("Model files missing. Use Manual mode.");
         await loadSingaporeModel();
-        const img=new Image();
-        img.src=dataUrl;
-        await new Promise(res=>img.onload=res);
+        const img = new Image();
+        img.src = dataUrl;
+        await new Promise(res => img.onload = res);
         const top3 = await classifyWithSGModel(img);
-        const top=top3[0];
-        lastLive={ label:top.label, prob:top.prob, top3 };
+        const top = top3[0];
+        lastLive = { label: top.label, prob: top.prob, top3 };
         await estimateFromLabel(top.label, top.prob);
-      } catch(e){
-        setStatus("danger","Upload AI detection failed. Use Manual mode or type name/macros.");
+      } catch (e) {
+        setStatus("danger", "Upload AI detection failed: " + e.message);
       }
     }
 
-    async function estimateFromLabel(label, prob){
-      const itemType=$("itemType").value;
-      const portion=parseFloat($("portion").value||"1.0");
+    async function estimateFromLabel(label, prob) {
+      const itemType = $("itemType").value;
+      const portion = parseFloat($("portion").value || "1.0");
 
-      const m=bestDbMatch(label,itemType);
-      let finalName=label;
-      let macros=null;
-      let source="";
+      const m = bestDbMatch(label, itemType);
 
-      if(m.best && m.bestScore>=0.35){
-        finalName=m.best.name;
-        macros={ kcal:m.best.kcal, p:m.best.p, c:m.best.c, f:m.best.f };
-        source=`SG Macro DB match (${Math.round(m.bestScore*100)}%)`;
-      } else {
-        // fallback: just fill label, user edits macros
-        macros={ kcal:0, p:0, c:0, f:0 };
-        source="No strong match. Please edit macros.";
+      let finalName = label;
+      let macros = { kcal: 0, p: 0, c: 0, f: 0 };
+      let source = "No match. Please edit.";
+
+      if (m.best && m.bestScore >= 0.35) {
+        finalName = m.best.name;
+        macros = { kcal: m.best.kcal, p: m.best.p, c: m.best.c, f: m.best.f };
+        source = `SG Macro DB match (${Math.round(m.bestScore * 100)}%)`;
       }
 
-      macros={
-        kcal: Math.round(macros.kcal*portion),
-        p: round1(macros.p*portion),
-        c: round1(macros.c*portion),
-        f: round1(macros.f*portion),
+      macros = {
+        kcal: Math.round(macros.kcal * portion),
+        p: round1(macros.p * portion),
+        c: round1(macros.c * portion),
+        f: round1(macros.f * portion),
       };
 
-      $("itemLabel").value=finalName;
-      $("itemKcal").value=macros.kcal;
-      $("itemP").value=macros.p;
-      $("itemC").value=macros.c;
-      $("itemF").value=macros.f;
+      $("itemLabel").value = finalName;
+      $("itemKcal").value = macros.kcal;
+      $("itemP").value = macros.p;
+      $("itemC").value = macros.c;
+      $("itemF").value = macros.f;
 
-      const confPct=Math.round((prob||0)*100);
-      $("metaLine").textContent = `AI: "${label}" (${confPct}%). ${source}.`;
+      const confPct = Math.round((prob || 0) * 100);
+      $("metaLine").textContent = `AI: "${label}" (${confPct}%). ${source}`;
 
-      if((prob||0)<0.45) setStatus("warn",`Lower confidence (${confPct}%). Please confirm/edit.`);
-      else setStatus("ok",`Detected (${confPct}%). ${source}`);
+      if ((prob || 0) < 0.45) setStatus("warn", `Low confidence (${confPct}%). Please confirm/edit.`);
+      else setStatus("ok", `Detected (${confPct}%). ${source}`);
     }
 
     /*************************************************************
-     * E) Manual dish fill
+     * 10) Manual picker + Custom foods
      *************************************************************/
-    function populateManualDishList(){
+    function populateManualDishList() {
       const sel = $("manualDish");
       sel.innerHTML = "";
 
-      // show foods first, then drinks
+      const custom = loadCustomFoods();
+      if (custom.length) {
+        const groupCustom = document.createElement("optgroup");
+        groupCustom.label = "⭐ Custom SG Foods (Saved)";
+        custom.forEach(row => {
+          const opt = document.createElement("option");
+          opt.value = row.name;
+          opt.textContent = row.name + (row.itemType === "drink" ? " (Drink)" : "");
+          groupCustom.appendChild(opt);
+        });
+        sel.appendChild(groupCustom);
+      }
+
       const groupFood = document.createElement("optgroup");
-      groupFood.label = "Hawker Foods (20)";
-      FOOD_DB.forEach(row=>{
-        const opt=document.createElement("option");
+      groupFood.label = "Hawker Foods (Built-in)";
+      FOOD_DB.forEach(row => {
+        const opt = document.createElement("option");
         opt.value = row.name;
         opt.textContent = row.name;
         groupFood.appendChild(opt);
       });
 
       const groupDrink = document.createElement("optgroup");
-      groupDrink.label = "Common Drinks";
-      DRINK_DB.forEach(row=>{
-        const opt=document.createElement("option");
+      groupDrink.label = "Common Drinks (Built-in)";
+      DRINK_DB.forEach(row => {
+        const opt = document.createElement("option");
         opt.value = row.name;
         opt.textContent = row.name;
         groupDrink.appendChild(opt);
@@ -775,14 +918,17 @@
       sel.appendChild(groupDrink);
     }
 
-    function fillFromManualSelection(){
+    function fillFromManualSelection() {
       const name = $("manualDish").value;
-      const portion=parseFloat($("portion").value||"1.0");
+      const portion = parseFloat($("portion").value || "1.0");
 
-      // find in db
-      let row = FOOD_DB.find(x=>x.name===name) || DRINK_DB.find(x=>x.name===name);
-      if(!row){
-        setStatus("danger","Manual dish not found. (Unexpected)");
+      const custom = loadCustomFoods();
+      let row = custom.find(x => x.name === name);
+      if (!row) row = FOOD_DB.find(x => x.name === name);
+      if (!row) row = DRINK_DB.find(x => x.name === name);
+
+      if (!row) {
+        alert("Dish not found.");
         return;
       }
 
@@ -792,103 +938,146 @@
       $("itemC").value = round1(row.c * portion);
       $("itemF").value = round1(row.f * portion);
 
-      $("metaLine").textContent = `Manual: "${row.name}" from SG Macro DB. Adjust portion/macros if needed.`;
-      setStatus("ok","Manual selection applied ✅");
+      $("metaLine").textContent = `Manual: "${row.name}". Adjust portion/macros if needed.`;
+      setStatus("ok", "Manual selection applied ✅");
+    }
+
+    function addCustomFoodFromEditor() {
+      const itemType = $("itemType").value;
+      const name = ($("itemLabel").value || "").trim();
+      if (!name) return alert("Please enter a name first.");
+
+      const kcal = safeNum($("itemKcal").value);
+      const p = safeNum($("itemP").value);
+      const c = safeNum($("itemC").value);
+      const f = safeNum($("itemF").value);
+
+      if (!Number.isFinite(kcal) || kcal < 0) return alert("kcal invalid");
+      if (!Number.isFinite(p) || p < 0) return alert("protein invalid");
+      if (!Number.isFinite(c) || c < 0) return alert("carbs invalid");
+      if (!Number.isFinite(f) || f < 0) return alert("fat invalid");
+
+      const entry = {
+        name,
+        itemType,
+        kcal: Math.round(kcal),
+        p: round1(p),
+        c: round1(c),
+        f: round1(f),
+      };
+
+      const arr = loadCustomFoods();
+      const filtered = arr.filter(x => !(x.name.toLowerCase() === name.toLowerCase() && x.itemType === itemType));
+      filtered.unshift(entry);
+      saveCustomFoods(filtered);
+
+      populateManualDishList();
+      setStatus("ok", `Saved custom item ✅ ${name}`);
+    }
+
+    function resetCustomFoods() {
+      if (!confirm("Reset all custom foods on this device?")) return;
+      localStorage.removeItem(CUSTOM_KEY);
+      populateManualDishList();
+      setStatus("warn", "Custom foods cleared.");
     }
 
     /*************************************************************
-     * F) Meal + Log + PDF (same logic as your previous version)
+     * 11) Meal builder + log
      *************************************************************/
-    let entries = [];
-    let mealItems = [];
-
-    const MEAL_SLOTS = ["Breakfast","Snack (AM)","Lunch","Snack (PM)","Dinner","Pre-workout","Post-workout"];
-
-    function sumMealItems(){
-      return mealItems.reduce((acc,it)=>{
-        acc.kcal += it.kcal; acc.p += it.p; acc.c += it.c; acc.f += it.f;
+    function sumMealItems() {
+      return mealItems.reduce((acc, it) => {
+        acc.kcal += it.kcal;
+        acc.p += it.p;
+        acc.c += it.c;
+        acc.f += it.f;
         return acc;
-      }, {kcal:0,p:0,c:0,f:0});
+      }, {kcal:0, p:0, c:0, f:0});
     }
 
-    function renderMealItems(){
-      const list=$("mealItemsList");
-      list.innerHTML="";
-      if(!mealItems.length){
+    function renderMealItems() {
+      const list = $("mealItemsList");
+      list.innerHTML = "";
+
+      if (!mealItems.length) {
         list.innerHTML = `<div class="text-sm text-gray-500">No items yet. Snap/upload or use Manual picker, then “Add item”.</div>`;
       } else {
-        mealItems.forEach((it,idx)=>{
-          const row=document.createElement("div");
-          row.className="bg-white border rounded-xl p-3 flex items-start gap-3";
-          row.innerHTML=`
+        mealItems.forEach((it, idx) => {
+          const row = document.createElement("div");
+          row.className = "bg-white border rounded-xl p-3 flex items-start gap-3";
+          row.innerHTML = `
             <div class="flex-1">
               <div class="font-extrabold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
               <div class="text-xs text-gray-500">Source: ${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
               <div class="text-sm mono font-bold mt-1">${it.kcal} kcal | P ${it.p}g | C ${it.c}g | F ${it.f}g</div>
             </div>
-            <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
+            <button class="btn bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del-item="${idx}">🗑️</button>
           `;
           list.appendChild(row);
         });
 
-        list.querySelectorAll("button[data-del-item]").forEach(btn=>{
-          btn.addEventListener("click", ()=>{
-            const i=parseInt(btn.getAttribute("data-del-item"),10);
-            mealItems.splice(i,1);
+        list.querySelectorAll("button[data-del-item]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const i = parseInt(btn.getAttribute("data-del-item"), 10);
+            mealItems.splice(i, 1);
             updateMealSums();
           });
         });
       }
+
       updateMealSums();
     }
 
-    function updateMealSums(){
-      const t=sumMealItems();
-      $("mealSumKcal").textContent=round1(t.kcal);
-      $("mealSumP").textContent=round1(t.p);
-      $("mealSumC").textContent=round1(t.c);
-      $("mealSumF").textContent=round1(t.f);
+    function updateMealSums() {
+      const t = sumMealItems();
+      $("mealSumKcal").textContent = round1(t.kcal);
+      $("mealSumP").textContent = round1(t.p);
+      $("mealSumC").textContent = round1(t.c);
+      $("mealSumF").textContent = round1(t.f);
       render();
     }
 
-    function addItem(){
-      const itemType=$("itemType").value;
-      const label=($("itemLabel").value||"").trim();
-      if(!label){ alert("Please enter a name (food or drink)."); return; }
+    function addItem() {
+      const itemType = $("itemType").value;
+      const label = ($("itemLabel").value || "").trim();
+      if (!label) return alert("Please enter a name (food or drink).");
 
-      const portion=parseFloat($("portion").value||"1.0");
-      const kcal=clamp(safeNum($("itemKcal").value),0,5000);
-      const p=clamp(safeNum($("itemP").value),0,400);
-      const c=clamp(safeNum($("itemC").value),0,700);
-      const f=clamp(safeNum($("itemF").value),0,300);
+      const portion = parseFloat($("portion").value || "1.0");
+      const kcal = clamp(safeNum($("itemKcal").value), 0, 5000);
+      const p = clamp(safeNum($("itemP").value), 0, 400);
+      const c = clamp(safeNum($("itemC").value), 0, 700);
+      const f = clamp(safeNum($("itemF").value), 0, 300);
 
-      const confPct = currentMode()==="sgai" ? Math.round((lastLive.prob||0)*100) : 0;
-      const source = currentMode()==="sgai" ? "Singapore AI / SG DB" : "Manual / SG DB";
+      const confPct = (currentMode() === "sgai") ? Math.round((lastLive.prob || 0) * 100) : 0;
+      const source = (currentMode() === "sgai") ? "Singapore AI / SG DB" : "Manual / SG DB";
 
       mealItems.push({ itemType, label, kcal, p, c, f, portion, confPct, source });
 
-      $("itemLabel").value="";
-      $("itemKcal").value=0;
-      $("itemP").value=0;
-      $("itemC").value=0;
-      $("itemF").value=0;
-      $("metaLine").textContent="Item added. Add another item or finalize meal.";
+      $("itemLabel").value = "";
+      $("itemKcal").value = 0;
+      $("itemP").value = 0;
+      $("itemC").value = 0;
+      $("itemF").value = 0;
+      $("metaLine").textContent = "Item added. Add another item or finalize meal.";
       renderMealItems();
     }
 
-    function clearMeal(){
-      if(!confirm("Clear current meal items?")) return;
-      mealItems=[];
+    function clearMeal() {
+      if (!confirm("Clear current meal items?")) return;
+      mealItems = [];
       renderMealItems();
     }
 
-    function finalizeMealToLog(){
-      if(!mealItems.length){ alert("No items yet. Add items first."); return; }
-      const mealSlot=$("mealSlot").value;
-      const notes=($("mealNotes").value||"").trim();
-      const sum=sumMealItems();
-      const label = mealItems.length===1 ? mealItems[0].label
-        : `Meal (${mealItems.length} items): ` + mealItems.map(i=>i.label).slice(0,4).join(" + ") + (mealItems.length>4 ? " + ..." : "");
+    function finalizeMealToLog() {
+      if (!mealItems.length) return alert("No items yet. Add items first.");
+
+      const mealSlot = $("mealSlot").value;
+      const notes = ($("mealNotes").value || "").trim();
+      const sum = sumMealItems();
+
+      const label = (mealItems.length === 1)
+        ? mealItems[0].label
+        : `Meal (${mealItems.length} items): ` + mealItems.map(i => i.label).slice(0,4).join(" + ") + (mealItems.length > 4 ? " + ..." : "");
 
       entries.push({
         ts: new Date().toISOString(),
@@ -896,68 +1085,54 @@
         label,
         notes,
         imgDataUrl: currentImageDataUrl,
-        items: mealItems.map(i=>({ ...i })),
+        items: mealItems.map(i => ({ ...i })),
         macros: { kcal: round1(sum.kcal), p: round1(sum.p), c: round1(sum.c), f: round1(sum.f) }
       });
 
-      mealItems=[];
-      $("mealNotes").value="";
+      mealItems = [];
+      $("mealNotes").value = "";
       renderMealItems();
       render();
       alert("Meal logged ✅");
     }
 
-    function calcTotals(){
-      return entries.reduce((acc,e)=>{
+    /*************************************************************
+     * 12) Totals + render
+     *************************************************************/
+    function calcTotals() {
+      return entries.reduce((acc, e) => {
         acc.kcal += e.macros.kcal;
         acc.p += e.macros.p;
         acc.c += e.macros.c;
         acc.f += e.macros.f;
         return acc;
-      }, {kcal:0,p:0,c:0,f:0});
+      }, {kcal:0, p:0, c:0, f:0});
     }
 
-    function adequacyLabel(value, lo, hi){
-      if(value<lo) return "Insufficient";
-      if(value>hi) return "Excess (maybe ok)";
-      return "Sufficient";
-    }
-
-    // Minimal target logic (reuse your earlier computeTargets if you want full TDEE block)
-    // For now, keep totals working without requiring your full profile module.
-    function render(){
-      const totals=calcTotals();
-      $("totKcal").textContent=round1(totals.kcal);
-      $("totP").textContent=round1(totals.p);
-      $("totC").textContent=round1(totals.c);
-      $("totF").textContent=round1(totals.f);
-
-      $("deltaKcal").textContent="0";
-      $("verP").textContent="";
-      $("verC").textContent="";
-      $("verF").textContent="";
+    function render() {
+      const totals = calcTotals();
+      $("totKcal").textContent = round1(totals.kcal);
+      $("totP").textContent = round1(totals.p);
+      $("totC").textContent = round1(totals.c);
+      $("totF").textContent = round1(totals.f);
 
       // by meal slot table
-      const bySlot={};
-      MEAL_SLOTS.forEach(s=>bySlot[s]={kcal:0,p:0,c:0,f:0});
-      entries.forEach(e=>{
+      const bySlot = {};
+      MEAL_SLOTS.forEach(s => bySlot[s] = {kcal:0, p:0, c:0, f:0});
+      entries.forEach(e => {
         bySlot[e.mealSlot].kcal += e.macros.kcal;
         bySlot[e.mealSlot].p += e.macros.p;
         bySlot[e.mealSlot].c += e.macros.c;
         bySlot[e.mealSlot].f += e.macros.f;
       });
 
-      const tbody=$("mealTableBody");
-      tbody.innerHTML="";
-      MEAL_SLOTS.forEach(slot=>{
-        const t=bySlot[slot];
-        const pct = (function(p,c,f){
-          const pK=p*4,cK=c*4,fK=f*9,total=Math.max(1,pK+cK+fK);
-          return {p:round1(100*pK/total), c:round1(100*cK/total), f:round1(100*fK/total)};
-        })(t.p,t.c,t.f);
-
-        const tr=document.createElement("tr");
-        tr.innerHTML=`
+      const tbody = $("mealTableBody");
+      tbody.innerHTML = "";
+      MEAL_SLOTS.forEach(slot => {
+        const t = bySlot[slot];
+        const pct = macroPercentages(t.p, t.c, t.f);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
           <td class="p-3 border-b font-semibold">${slot}</td>
           <td class="p-3 border-b text-center mono">${round1(t.kcal)}</td>
           <td class="p-3 border-b text-center mono">${round1(t.p)}</td>
@@ -968,11 +1143,10 @@
         tbody.appendChild(tr);
       });
 
-      // entries list
-      const list=$("entriesList");
-      list.innerHTML="";
-      entries.forEach((e,idx)=>{
-        const itemsHtml=(e.items||[]).map(it=>`
+      const list = $("entriesList");
+      list.innerHTML = "";
+      entries.forEach((e, idx) => {
+        const itemsHtml = (e.items || []).map(it => `
           <div class="border rounded-lg p-2 bg-gray-50">
             <div class="text-sm font-bold">${escapeHtml(it.label)} <span class="text-xs text-gray-500">(${it.itemType})</span></div>
             <div class="text-xs text-gray-500">${escapeHtml(it.source)} • conf ${it.confPct}% • portion x${it.portion.toFixed(1)}</div>
@@ -980,9 +1154,9 @@
           </div>
         `).join("");
 
-        const card=document.createElement("div");
-        card.className="border rounded-xl p-3 flex gap-3 items-start";
-        card.innerHTML=`
+        const card = document.createElement("div");
+        card.className = "border rounded-xl p-3 flex gap-3 items-start";
+        card.innerHTML = `
           <div class="thumb w-24 h-24 bg-gray-100 flex-shrink-0">
             ${e.imgDataUrl ? `<img src="${e.imgDataUrl}" class="w-full h-full object-cover" alt="thumb">` : ""}
           </div>
@@ -990,35 +1164,40 @@
             <div class="font-extrabold">${e.mealSlot} — ${escapeHtml(e.label)}</div>
             <div class="text-sm mt-1 mono font-bold">${e.macros.kcal} kcal | P ${e.macros.p}g | C ${e.macros.c}g | F ${e.macros.f}g</div>
             ${e.notes ? `<div class="text-xs text-gray-600 mt-1">Notes: ${escapeHtml(e.notes)}</div>` : ""}
-            <div class="mt-2 space-y-2">${itemsHtml||""}</div>
+            <div class="mt-2 space-y-2">${itemsHtml || ""}</div>
           </div>
-          <button class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del="${idx}">🗑️</button>
+          <button class="btn bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-lg text-sm" data-del="${idx}">🗑️</button>
         `;
         list.appendChild(card);
       });
 
-      list.querySelectorAll("button[data-del]").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const i=parseInt(btn.getAttribute("data-del"),10);
-          entries.splice(i,1);
+      list.querySelectorAll("button[data-del]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const i = parseInt(btn.getAttribute("data-del"), 10);
+          entries.splice(i, 1);
           render();
         });
       });
     }
 
-    async function exportPdf(){
-      const totals=calcTotals();
+    /*************************************************************
+     * 13) PDF export
+     *************************************************************/
+    async function exportPdf() {
+      const totals = calcTotals();
       const { jsPDF } = window.jspdf;
-      const doc=new jsPDF({ unit:"pt", format:"a4" });
-      const margin=40;
-      let y=margin;
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
 
-      doc.setFont("helvetica","bold");
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 40;
+      let y = margin;
+
+      doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
       doc.text("MacroVision — Daily Food Log (SG)", margin, y);
       y += 18;
 
-      doc.setFont("helvetica","normal");
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(120);
       doc.text(`Generated: ${new Date().toLocaleString()}`, margin, y);
@@ -1040,15 +1219,15 @@
       });
 
       const detailRows = [];
-      entries.forEach(e=>{
-        (e.items||[]).forEach(it=>{
+      entries.forEach(e => {
+        (e.items || []).forEach(it => {
           detailRows.push([e.mealSlot, it.itemType, it.label, it.kcal, it.p, it.c, it.f, `${it.confPct}%`, it.source]);
         });
       });
 
-      if(detailRows.length){
+      if (detailRows.length) {
         doc.addPage();
-        doc.setFont("helvetica","bold");
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
         doc.text("Item-level Details", margin, margin);
         doc.autoTable({
@@ -1061,72 +1240,98 @@
         });
       }
 
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text(`Site: ${window.location.href}`, margin, pageH - 24);
+      doc.setTextColor(0);
+
       doc.save(`MacroVision_Log_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"")}.pdf`);
     }
 
     /*************************************************************
-     * G) Mode switching UI behavior
+     * 14) Mode UI
      *************************************************************/
-    function applyModeUI(){
-      const mode = currentMode();
-      const manualOn = mode === "manual";
-
+    function applyModeUI() {
+      const manualOn = (currentMode() === "manual");
       $("manualWrap").classList.toggle("hidden", !manualOn);
 
-      if(manualOn){
-        $("liveTip").textContent = "Manual mode: live detection is off. Use dish picker on the right.";
+      if (manualOn) {
+        $("liveTip").textContent = "Manual mode: live detection is off. Use dish picker (includes custom foods).";
         $("liveLabelBadge").textContent = "Manual mode";
         $("liveConf").textContent = "—";
-        setStatus("ok","Manual mode enabled ✅");
       } else {
-        $("liveTip").textContent = "Singapore AI mode: live detection uses your TFJS model from /models/sg-food/";
-        setStatus("warn","Singapore AI mode: click Start Camera. If model files missing, it will show an error.");
+        $("liveTip").textContent = "Singapore AI mode: needs model files in /models/sg-food/. If missing, it will fall back to Manual.";
       }
     }
 
     /*************************************************************
-     * INIT + EVENTS
+     * 15) Events + init
      *************************************************************/
-    function bindEvents(){
+    function bindEvents() {
       $("startCamBtn").addEventListener("click", startCamera);
       $("stopCamBtn").addEventListener("click", stopCamera);
       $("snapBtn").addEventListener("click", snapPhoto);
-      $("uploadInput").addEventListener("change", (e)=>handleUpload(e.target.files[0]));
-      $("portion").addEventListener("input", ()=> $("portionLabel").textContent = parseFloat($("portion").value||"1.0").toFixed(1));
+      $("uploadInput").addEventListener("change", (e) => handleUpload(e.target.files[0]));
+      $("portion").addEventListener("input", () => {
+        $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
+      });
+
+      $("useManualBtn").addEventListener("click", fillFromManualSelection);
       $("addItemBtn").addEventListener("click", addItem);
       $("clearMealBtn").addEventListener("click", clearMeal);
       $("finalizeMealBtn").addEventListener("click", finalizeMealToLog);
       $("exportPdfBtn").addEventListener("click", exportPdf);
-      $("clearBtn").addEventListener("click", ()=>{
-        if(!confirm("Clear all logged meals for today?")) return;
+      $("clearBtn").addEventListener("click", () => {
+        if (!confirm("Clear all logged meals for today?")) return;
         entries = [];
         render();
       });
 
-      $("modeSelect").addEventListener("change", async ()=>{
+      $("saveCustomBtn").addEventListener("click", addCustomFoodFromEditor);
+      $("resetCustomBtn").addEventListener("click", resetCustomFoods);
+
+      $("modeSelect").addEventListener("change", async () => {
         applyModeUI();
         clearOverlay();
 
-        // if switching to SG AI and camera already running, we can lazily load model
-        if(currentMode()==="sgai"){
-          try { await loadSingaporeModel(); }
-          catch(e){ setStatus("danger", "Singapore AI load failed: " + e.message); }
+        if (currentMode() === "sgai") {
+          modelOk = await checkModelFiles();
+          if (!modelOk) {
+            alert("Singapore AI model files are missing. Switching to Manual mode.");
+            $("modeSelect").value = "manual";
+            applyModeUI();
+          } else {
+            try { await loadSingaporeModel(); }
+            catch (e) {
+              setStatus("danger", "Model load failed: " + e.message);
+              $("modeSelect").value = "manual";
+              applyModeUI();
+            }
+          }
         }
       });
 
-      $("useManualBtn").addEventListener("click", fillFromManualSelection);
       window.addEventListener("resize", resizeOverlay);
       window.addEventListener("beforeunload", stopCamera);
     }
 
+    // INIT
     $("yearNow").textContent = new Date().getFullYear();
-    $("portionLabel").textContent = parseFloat($("portion").value||"1.0").toFixed(1);
+    $("portionLabel").textContent = parseFloat($("portion").value || "1.0").toFixed(1);
 
     populateManualDishList();
-    bindEvents();
     applyModeUI();
+    bindEvents();
     renderMealItems();
     render();
+
+    window.addEventListener("load", async () => {
+      modelOk = await checkModelFiles();
+      if ($("modeSelect").value === "sgai" && !modelOk) {
+        $("modeSelect").value = "manual";
+        applyModeUI();
+      }
+    });
   </script>
 </body>
 </html>
